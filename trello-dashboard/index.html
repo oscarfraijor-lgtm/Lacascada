@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trello Dashboard - Indie Pro Marketing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'anton': ['Anton', 'sans-serif'],
+                        'montserrat': ['Montserrat', 'sans-serif']
+                    },
+                    colors: {
+                        'indie-red': '#ED2450',
+                        'indie-red-dark': '#E4003B',
+                        'indie-black': '#010101',
+                        'indie-yellow': '#FDD811',
+                        'indie-blue': '#00C1B2'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        .card-shadow {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+        }
+        .card-shadow:hover {
+            box-shadow: 0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.12);
+        }
+        .glass {
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.45);
+        }
+        .glass-strong {
+            background: rgba(255,255,255,0.78);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+        .glass-dark {
+            background: rgba(15,15,15,0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+        }
+        .glass-pill {
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .glass-selected {
+            background: rgba(15,15,15,0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        @keyframes listening-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(237,36,80,0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(237,36,80,0); }
+        }
+        .listening-ring { animation: listening-pulse 1.5s ease-in-out infinite; }
+        
+        /* Print Styles for PDF Export */
+        @media print {
+            @page {
+                size: letter;
+                margin: 0.5in;
+            }
+            
+            html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            
+            header, nav, button, .print\\:hidden {
+                display: none !important;
+            }
+            
+            body {
+                background: white !important;
+            }
+            
+            .space-y-6 > *, .card-shadow, .border-2 {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 min-h-screen font-montserrat">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Trello API Configuration
+        const TRELLO_API_KEY = 'cbde3fc64bf4f52c6bf13a28b431ce06';
+        const TRELLO_TOKEN = 'ATTA236f6926324c8495e332bf97d9caf12ea6bd5b49ccb6dd24a659400781cdeefb02C49F43';
+        const TRELLO_API_BASE = 'https://api.trello.com/1';
+
+        function TrelloDashboard() {
+            const [loading, setLoading] = useState(true);
+            const [boards, setBoards] = useState([]);
+            const [selectedBoard, setSelectedBoard] = useState(null);
+            const [lists, setLists] = useState([]);
+            const [cards, setCards] = useState([]);
+            const [members, setMembers] = useState([]);
+            const [allMembers, setAllMembers] = useState([]);
+            const [view, setView] = useState('resumen'); // resumen, equipo, timeline, analytics, taskcreator
+            const [searchQuery, setSearchQuery] = useState('');
+            const [error, setError] = useState(null);
+            const [showCreateCard, setShowCreateCard] = useState(false);
+            const [creating, setCreating] = useState(false);
+            const [filterPending, setFilterPending] = useState(false);
+            const [hasMembersToAdd, setHasMembersToAdd] = useState(false);
+            const [hasNewBoards, setHasNewBoards] = useState(false);
+            const [lastRefreshTime, setLastRefreshTime] = useState(null);
+
+            useEffect(() => {
+                fetchBoards();
+                fetchAllMembers();
+            }, []);
+
+            const fetchAllMembers = async () => {
+                try {
+                    // Fetch all organizations
+                    const orgsResponse = await fetch(
+                        `${TRELLO_API_BASE}/members/me/organizations?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                    );
+                    const orgs = await orgsResponse.json();
+                    
+                    let allMembersSet = new Set();
+                    
+                    // Fetch members from each organization
+                    for (const org of orgs) {
+                        const membersResponse = await fetch(
+                            `${TRELLO_API_BASE}/organizations/${org.id}/members?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                        );
+                        const orgMembers = await membersResponse.json();
+                        orgMembers.forEach(member => {
+                            allMembersSet.add(JSON.stringify(member));
+                        });
+                    }
+                    
+                    const uniqueMembers = Array.from(allMembersSet).map(m => JSON.parse(m));
+                    setAllMembers(uniqueMembers);
+                } catch (err) {
+                    console.error('Error fetching all members:', err);
+                }
+            };
+
+            const checkMembersToAdd = async (boardsList) => {
+                if (allMembers.length === 0 || boardsList.length === 0) return;
+                try {
+                    for (const board of boardsList) {
+                        const boardMembersResponse = await fetch(
+                            `${TRELLO_API_BASE}/boards/${board.id}/members?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                        );
+                        const boardMembers = await boardMembersResponse.json();
+                        const boardMemberIds = new Set(boardMembers.map(m => m.id));
+                        const missingMembers = allMembers.filter(m => !boardMemberIds.has(m.id));
+                        if (missingMembers.length > 0) {
+                            setHasMembersToAdd(true);
+                            return;
+                        }
+                    }
+                    setHasMembersToAdd(false);
+                } catch (err) {
+                    console.error('Error checking members:', err);
+                }
+            };
+
+            const checkBoardsNeedingStandardization = async (boardsList) => {
+                const standardLists = [
+                    'docs / recursos', 'en construcción', 'tareas', 'en proceso',
+                    'revisión interna', 'primer ajuste', 'revisión cliente',
+                    'segundo ajuste', 'aprobado / programado'
+                ];
+
+                try {
+                    for (const board of boardsList) {
+                        const listsResponse = await fetch(
+                            `${TRELLO_API_BASE}/boards/${board.id}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                        );
+                        const existingLists = await listsResponse.json();
+                        const existingListNames = existingLists
+                            .filter(list => !list.closed)
+                            .map(list => list.name.toLowerCase().trim());
+                        
+                        const missingLists = standardLists.filter(sl => !existingListNames.includes(sl));
+                        if (missingLists.length > 0) {
+                            setHasNewBoards(true);
+                            return;
+                        }
+                    }
+                    setHasNewBoards(false);
+                } catch (err) {
+                    console.error('Error checking boards:', err);
+                }
+            };
+
+            const fetchBoards = async () => {
+                try {
+                    setLoading(true);
+                    const response = await fetch(
+                        `${TRELLO_API_BASE}/members/me/boards?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al conectar con Trello');
+                    }
+                    
+                    const data = await response.json();
+                    const activeBoards = data.filter(board => !board.closed);
+                    setBoards(activeBoards);
+                    
+                    // Fetch all cards from all boards for overview stats
+                    const allCardsPromises = activeBoards.map(board => 
+                        fetch(`${TRELLO_API_BASE}/boards/${board.id}/cards?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`)
+                            .then(res => res.json())
+                    );
+                    const allCardsArrays = await Promise.all(allCardsPromises);
+                    const allCards = allCardsArrays.flat().filter(card => !card.closed);
+                    setCards(allCards);
+                    
+                    // Fetch all lists from all boards
+                    const allListsPromises = activeBoards.map(board => 
+                        fetch(`${TRELLO_API_BASE}/boards/${board.id}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`)
+                            .then(res => res.json())
+                    );
+                    const allListsArrays = await Promise.all(allListsPromises);
+                    const allLists = allListsArrays.flat().filter(list => !list.closed);
+                    setLists(allLists);
+                    
+                    setLoading(false);
+                    setLastRefreshTime(new Date());
+                    checkMembersToAdd(activeBoards);
+                    checkBoardsNeedingStandardization(activeBoards);
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const fetchBoardDetails = async (boardId) => {
+                try {
+                    setLoading(true);
+                    
+                    // Fetch lists
+                    const listsResponse = await fetch(
+                        `${TRELLO_API_BASE}/boards/${boardId}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                    );
+                    const listsData = await listsResponse.json();
+                    setLists(listsData.filter(list => !list.closed));
+                    
+                    // Fetch cards
+                    const cardsResponse = await fetch(
+                        `${TRELLO_API_BASE}/boards/${boardId}/cards?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                    );
+                    const cardsData = await cardsResponse.json();
+                    setCards(cardsData.filter(card => !card.closed));
+                    
+                    // Fetch members
+                    const membersResponse = await fetch(
+                        `${TRELLO_API_BASE}/boards/${boardId}/members?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                    );
+                    const membersData = await membersResponse.json();
+                    setMembers(membersData);
+                    
+                    setLoading(false);
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                }
+            };
+
+            const selectBoard = (board) => {
+                setSelectedBoard(board);
+                fetchBoardDetails(board.id);
+                setView('board');
+            };
+
+            const getAllCards = () => {
+                return cards;
+            };
+
+            const getOverdueCards = () => {
+                const now = new Date();
+                return cards.filter(card => {
+                    if (!card.due) return false;
+                    return new Date(card.due) < now && !card.dueComplete;
+                });
+            };
+
+            const getUpcomingCards = () => {
+                const now = new Date();
+                const threeDaysFromNow = new Date(now.getTime() + (3 * 24 * 60 * 60 * 1000));
+                return cards.filter(card => {
+                    if (!card.due || card.dueComplete) return false;
+                    const dueDate = new Date(card.due);
+                    return dueDate >= now && dueDate <= threeDaysFromNow;
+                });
+            };
+
+            const getCardsByMember = () => {
+                const cardsByMember = {};
+                const memberList = allMembers.length > 0 ? allMembers : members;
+                const excludeNames = ['recursos', 'docs', 'docs /', 'resources'];
+                const activeExclude = ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado', 'en construcción', 'construcción'];
+                const completedMatch = ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'];
+                memberList.forEach(member => {
+                    const allMemberCards = cards.filter(card => (card.idMembers || []).includes(member.id));
+                    const workCards = allMemberCards.filter(card => {
+                        const list = lists.find(l => l.id === card.idList);
+                        if (!list) return false;
+                        return !excludeNames.some(k => list.name.toLowerCase().includes(k));
+                    });
+                    const activeTasks = workCards.filter(card => {
+                        const list = lists.find(l => l.id === card.idList);
+                        if (!list) return false;
+                        const ln = list.name.toLowerCase();
+                        return !activeExclude.some(k => ln.includes(k));
+                    });
+                    const completedTasks = workCards.filter(card => {
+                        const list = lists.find(l => l.id === card.idList);
+                        if (!list) return false;
+                        const ln = list.name.toLowerCase();
+                        return completedMatch.some(k => ln.includes(k));
+                    });
+                    cardsByMember[member.id] = {
+                        member: member,
+                        cards: allMemberCards,
+                        activeTasks: activeTasks,
+                        completedTasks: completedTasks
+                    };
+                });
+                return cardsByMember;
+            };
+
+            const getCompletionRate = () => {
+                const excludeNames = ['recursos', 'docs', 'docs /', 'resources'];
+                const workCards = cards.filter(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    if (!list) return false;
+                    return !excludeNames.some(k => list.name.toLowerCase().includes(k));
+                });
+                if (workCards.length === 0) return 0;
+                const completedCards = workCards.filter(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+                });
+                return Math.round((completedCards.length / workCards.length) * 100);
+            };
+
+            const createCard = async (cardData) => {
+                try {
+                    setCreating(true);
+                    
+                    const params = new URLSearchParams({
+                        key: TRELLO_API_KEY,
+                        token: TRELLO_TOKEN,
+                        idList: cardData.listId,
+                        name: cardData.name,
+                        desc: cardData.description || '',
+                        pos: 'top'
+                    });
+
+                    if (cardData.dueDate) {
+                        params.append('due', cardData.dueDate);
+                    }
+
+                    const response = await fetch(
+                        `${TRELLO_API_BASE}/cards?${params.toString()}`,
+                        { method: 'POST' }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error('Error al crear la tarjeta');
+                    }
+
+                    const newCard = await response.json();
+
+                    // Assign members if provided
+                    if (cardData.memberIds && cardData.memberIds.length > 0) {
+                        for (const memberId of cardData.memberIds) {
+                            await fetch(
+                                `${TRELLO_API_BASE}/cards/${newCard.id}/idMembers?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}&value=${memberId}`,
+                                { method: 'POST' }
+                            );
+                        }
+                    }
+
+                    // Refresh board details
+                    await fetchBoardDetails(selectedBoard.id);
+                    setShowCreateCard(false);
+                    setCreating(false);
+                    
+                    alert('✅ ¡Tarjeta creada exitosamente en Trello!');
+                } catch (err) {
+                    setError(err.message);
+                    setCreating(false);
+                    alert('❌ Error al crear tarjeta: ' + err.message);
+                }
+            };
+
+            const addBoardDescriptions = async () => {
+                const boardDescriptions = {
+                    'jira field': 'Plataforma de gestión de proyectos y seguimiento de tareas para el equipo. Organización de sprints y workflows de desarrollo.',
+                    'vive orgánico': 'Marca de productos orgánicos y saludables. Estrategia de contenido para redes sociales y ecommerce.',
+                    'indie pro marketing': 'Agencia de marketing digital especializada en redes sociales y TikTok Shop. Gestión interna de proyectos.',
+                    'tiktok shop': 'Estrategia y gestión de tiendas en TikTok Shop. Campañas de marketing y optimización de ventas.',
+                    'social media': 'Gestión de contenido y estrategias para redes sociales de clientes. Calendarios editoriales y campañas.',
+                    'content creation': 'Producción de contenido creativo para marcas. Videos, imágenes y copy para diferentes plataformas.',
+                    'client projects': 'Proyectos activos de clientes. Seguimiento de deliverables y comunicación con stakeholders.',
+                    'marketing campaigns': 'Campañas de marketing digital. Planificación, ejecución y análisis de resultados.',
+                    'team management': 'Gestión del equipo interno. Asignación de tareas, evaluaciones y desarrollo profesional.',
+                    'analytics': 'Análisis de métricas y reportes. Seguimiento de KPIs y optimización de estrategias.'
+                };
+
+                try {
+                    setLoading(true);
+                    let updatedCount = 0;
+
+                    for (const board of boards) {
+                        // Skip if board already has description
+                        if (board.desc && board.desc.trim().length > 0) {
+                            continue;
+                        }
+
+                        // Find matching description
+                        const boardNameLower = board.name.toLowerCase();
+                        let description = '';
+                        
+                        for (const [key, desc] of Object.entries(boardDescriptions)) {
+                            if (boardNameLower.includes(key)) {
+                                description = desc;
+                                break;
+                            }
+                        }
+
+                        // If no match, create generic description
+                        if (!description) {
+                            description = `Proyecto ${board.name} - Gestión y seguimiento de tareas del equipo.`;
+                        }
+
+                        // Update board description
+                        try {
+                            await fetch(
+                                `${TRELLO_API_BASE}/boards/${board.id}?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}&desc=${encodeURIComponent(description)}`,
+                                { method: 'PUT' }
+                            );
+                            updatedCount++;
+                        } catch (err) {
+                            console.error(`Error updating ${board.name}:`, err);
+                        }
+                    }
+
+                    setLoading(false);
+                    alert(`✅ ${updatedCount} boards actualizados con descripciones!`);
+                    await fetchBoards();
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                    alert('❌ Error: ' + err.message);
+                }
+            };
+
+            const createStandardLists = async () => {
+                const standardLists = [
+                    'Docs / Recursos',
+                    'En construcción',
+                    'Tareas',
+                    'En Proceso',
+                    'Revisión Interna',
+                    'Primer Ajuste',
+                    'Revisión Cliente',
+                    'Segundo Ajuste',
+                    'Aprobado / Programado'
+                ];
+
+                if (!confirm(`¿Crear listas estándar en todos los ${boards.length} boards?\n\nListas a crear:\n${standardLists.join('\n')}\n\nSolo se crearán las que no existan. No se moverán tarjetas.`)) {
+                    return;
+                }
+
+                try {
+                    setLoading(true);
+                    let totalCreated = 0;
+                    let totalSkipped = 0;
+                    const results = [];
+
+                    for (const board of boards) {
+                        // Get existing lists
+                        const listsResponse = await fetch(
+                            `${TRELLO_API_BASE}/boards/${board.id}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                        );
+                        const existingLists = await listsResponse.json();
+                        const existingListNames = existingLists
+                            .filter(list => !list.closed)
+                            .map(list => list.name.toLowerCase().trim());
+
+                        let createdInBoard = 0;
+                        let skippedInBoard = 0;
+
+                        for (const listName of standardLists) {
+                            const normalizedName = listName.toLowerCase().trim();
+                            
+                            if (existingListNames.includes(normalizedName)) {
+                                skippedInBoard++;
+                                totalSkipped++;
+                                continue;
+                            }
+
+                            try {
+                                const createResponse = await fetch(
+                                    `${TRELLO_API_BASE}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`,
+                                    {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            name: listName,
+                                            idBoard: board.id,
+                                            pos: 'bottom'
+                                        })
+                                    }
+                                );
+                                
+                                if (createResponse.ok) {
+                                    createdInBoard++;
+                                    totalCreated++;
+                                } else {
+                                    console.error(`Error creating "${listName}" in ${board.name}`);
+                                }
+                                
+                                await new Promise(resolve => setTimeout(resolve, 150));
+                            } catch (err) {
+                                console.error(`Error creating "${listName}" in ${board.name}:`, err);
+                            }
+                        }
+
+                        results.push(`${board.name}: ${createdInBoard} creadas, ${skippedInBoard} omitidas`);
+                    }
+
+                    setLoading(false);
+                    alert(`✅ Proceso completado!\n\n${totalCreated} listas creadas\n${totalSkipped} ya existían\n\nDetalle:\n${results.join('\n')}\n\nAhora puedes acomodar las listas manualmente en Trello.`);
+                    await fetchBoards();
+                    checkBoardsNeedingStandardization(boards);
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                    alert('❌ Error: ' + err.message);
+                }
+            };
+
+            const addAllMembersToAllBoards = async () => {
+                if (!confirm(`¿Agregar todos los ${allMembers.length} miembros a todos los ${boards.length} boards?\n\nEsto puede tomar un momento.`)) {
+                    return;
+                }
+
+                try {
+                    setLoading(true);
+                    let addedCount = 0;
+                    let errorCount = 0;
+                    let skippedCount = 0;
+
+                    for (const board of boards) {
+                        // Get current board members
+                        const boardMembersResponse = await fetch(
+                            `${TRELLO_API_BASE}/boards/${board.id}/members?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`
+                        );
+                        const boardMembers = await boardMembersResponse.json();
+                        const boardMemberIds = new Set(boardMembers.map(m => m.id));
+
+                        for (const member of allMembers) {
+                            // Skip if already a member
+                            if (boardMemberIds.has(member.id)) {
+                                skippedCount++;
+                                continue;
+                            }
+
+                            try {
+                                await fetch(
+                                    `${TRELLO_API_BASE}/boards/${board.id}/members/${member.id}?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}&type=normal`,
+                                    { method: 'PUT' }
+                                );
+                                addedCount++;
+                            } catch (err) {
+                                errorCount++;
+                                console.error(`Error adding ${member.fullName} to ${board.name}:`, err);
+                            }
+                        }
+                    }
+
+                    setLoading(false);
+                    alert(`✅ Proceso completado!\n\n${addedCount} miembros agregados\n${skippedCount} ya existían\n${errorCount} errores`);
+                    await fetchBoards();
+                } catch (err) {
+                    setError(err.message);
+                    setLoading(false);
+                    alert('❌ Error: ' + err.message);
+                }
+            };
+
+            if (loading && boards.length === 0) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center">
+                        <div className="text-center">
+                            <div className="w-24 h-24 bg-gradient-to-br from-indie-red to-indie-red-dark rounded-full mx-auto mb-6 flex items-center justify-center animate-pulse-slow">
+                                <span className="text-white text-4xl font-anton">T</span>
+                            </div>
+                            <h2 className="text-3xl font-anton text-indie-red mb-4">CONECTANDO A TRELLO...</h2>
+                            <p className="text-gray-600">Cargando tus proyectos</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4">
+                        <div className="bg-red-50 border-2 border-red-500 rounded-xl p-8 max-w-md">
+                            <h2 className="text-2xl font-anton text-red-600 mb-4">ERROR DE CONEXIÓN</h2>
+                            <p className="text-gray-700 mb-4">{error}</p>
+                            <button
+                                onClick={fetchBoards}
+                                className="px-6 py-3 bg-indie-red text-white rounded-lg font-bold hover:bg-indie-red-dark transition"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen p-4 sm:p-8">
+                    {/* Header */}
+                    <div className="max-w-7xl mx-auto mb-8">
+                        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 animate-fade-in border-t-4 border-indie-red">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <div>
+                                    <h1 className="text-4xl sm:text-5xl font-anton text-indie-red mb-2">
+                                        TRELLO DASHBOARD
+                                    </h1>
+                                    <p className="text-gray-600 font-semibold">INDIE PRO MARKETING - Gestión de Proyectos</p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Global Search */}
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="🔍 Buscar tarea..."
+                                            className="w-44 px-3 py-2 bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indie-red focus:bg-white transition"
+                                        />
+                                        {searchQuery.length >= 2 && (
+                                            <div className="absolute top-full mt-1 left-0 w-96 max-h-80 overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
+                                                <div className="p-2 border-b border-gray-100 text-xs font-bold text-gray-500 flex justify-between">
+                                                    <span>RESULTADOS</span>
+                                                    <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-gray-700">✕</button>
+                                                </div>
+                                                {cards.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 10).map(card => {
+                                                    const list = lists.find(l => l.id === card.idList);
+                                                    const board = boards.find(b => b.id === card.idBoard);
+                                                    const assignees = (card.idMembers || []).map(mid => (allMembers.length > 0 ? allMembers : members).find(m => m.id === mid)).filter(Boolean);
+                                                    return (
+                                                        <div key={card.id} className="p-3 hover:bg-gray-50 border-b border-gray-50 cursor-default">
+                                                            <div className="font-bold text-sm text-gray-900">{card.name}</div>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                <span className="bg-indie-red/10 text-indie-red px-1.5 py-0.5 rounded text-[10px] font-bold">{board?.name}</span>
+                                                                <span className="bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">{list?.name}</span>
+                                                                {assignees.map(m => (
+                                                                    <span key={m.id} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px]">👤 {m.fullName?.split(' ')[0]}</span>
+                                                                ))}
+                                                                {card.due && (
+                                                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                                                                        new Date(card.due) < new Date() && !card.dueComplete ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                                                                    }`}>
+                                                                        📅 {new Date(card.due).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {cards.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                                                    <div className="p-4 text-center text-xs text-gray-400">Sin resultados para "{searchQuery}"</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="bg-green-100 text-green-800 px-3 py-2 rounded-lg font-bold text-xs">
+                                        ✓ Conectado
+                                    </div>
+                                    {lastRefreshTime && (
+                                        <div className="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-semibold text-xs">
+                                            🕐 {lastRefreshTime.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} {lastRefreshTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    )}
+                                    {hasMembersToAdd && (
+                                        <button
+                                            onClick={addAllMembersToAllBoards}
+                                            className="px-3 py-2 bg-indie-yellow text-indie-black rounded-lg font-bold hover:opacity-90 transition text-xs"
+                                            title="Agregar miembros nuevos a todos los boards"
+                                        >
+                                            👥 Agregar Miembros
+                                        </button>
+                                    )}
+                                    {hasNewBoards && (
+                                        <button
+                                            onClick={createStandardLists}
+                                            className="px-3 py-2 bg-purple-600 text-white rounded-lg font-bold hover:opacity-90 transition text-xs"
+                                            title="Crear listas estándar en todos los boards"
+                                        >
+                                            📋 Estandarizar Listas
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setView('reporte-semanal')}
+                                        className="px-3 py-2 bg-green-600 text-white rounded-lg font-bold hover:opacity-90 transition text-xs"
+                                        title="Generar reporte semanal de lunes"
+                                    >
+                                        📊 Reporte Semanal
+                                    </button>
+                                    <button
+                                        onClick={() => { fetchBoards(); fetchAllMembers(); }}
+                                        className="px-3 py-2 bg-indie-blue text-white rounded-full font-bold hover:opacity-90 transition text-xs w-9 h-9 flex items-center justify-center"
+                                        title="Refrescar datos"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="max-w-7xl mx-auto mb-6">
+                        <div className="bg-white rounded-xl shadow-lg p-4">
+                            <div className="flex gap-2 overflow-x-auto">
+                                <button
+                                    onClick={() => setView('resumen')}
+                                    className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
+                                        view === 'resumen' 
+                                            ? 'bg-indie-red text-white' 
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    📊 Resumen Ejecutivo
+                                </button>
+                                <button
+                                    onClick={() => setView('equipo')}
+                                    className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
+                                        view === 'equipo' 
+                                            ? 'bg-indie-red text-white' 
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    👥 Equipo
+                                </button>
+                                <button
+                                    onClick={() => setView('timeline')}
+                                    className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
+                                        view === 'timeline' 
+                                            ? 'bg-indie-red text-white' 
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    📅 Timeline
+                                </button>
+                                <button
+                                    onClick={() => setView('analytics')}
+                                    className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
+                                        view === 'analytics' 
+                                            ? 'bg-indie-red text-white' 
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    📈 Analytics
+                                </button>
+                                <button
+                                    onClick={() => setView('taskcreator')}
+                                    className={`px-6 py-3 rounded-lg font-bold transition whitespace-nowrap ${
+                                        view === 'taskcreator' 
+                                            ? 'bg-gray-900 text-white' 
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    ✨ Task Creator
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto">
+                        {view === 'resumen' && (
+                            <ResumenEjecutivoView 
+                                boards={boards} 
+                                cards={cards}
+                                lists={lists}
+                                members={allMembers.length > 0 ? allMembers : members}
+                            />
+                        )}
+                        
+                        {view === 'equipo' && (
+                            <TeamView 
+                                members={allMembers.length > 0 ? allMembers : members}
+                                cards={cards}
+                                lists={lists}
+                                boards={boards}
+                                getCardsByMember={getCardsByMember}
+                            />
+                        )}
+                        
+                        {view === 'timeline' && (
+                            <TimelineView 
+                                cards={cards}
+                                lists={lists}
+                                boards={boards}
+                                getOverdueCards={getOverdueCards}
+                                getUpcomingCards={getUpcomingCards}
+                            />
+                        )}
+                        
+                        {view === 'analytics' && (
+                            <AnalyticsView 
+                                boards={boards}
+                                cards={cards}
+                                lists={lists}
+                                members={members}
+                                getCompletionRate={getCompletionRate}
+                            />
+                        )}
+                        
+                        {view === 'taskcreator' && (
+                            <TaskCreatorView 
+                                boards={boards}
+                                lists={lists}
+                                members={allMembers.length > 0 ? allMembers : members}
+                                createCard={createCard}
+                                fetchBoardDetails={fetchBoardDetails}
+                            />
+                        )}
+                        
+                        {view === 'reporte-semanal' && (
+                            <ReporteSemanalView 
+                                boards={boards}
+                                cards={cards}
+                                lists={lists}
+                                members={allMembers.length > 0 ? allMembers : members}
+                                getCardsByMember={getCardsByMember}
+                            />
+                        )}
+                    </div>
+
+                    {/* Create Card Modal */}
+                    {showCreateCard && (
+                        <CreateCardModal
+                            board={selectedBoard}
+                            lists={lists}
+                            members={allMembers.length > 0 ? allMembers : members}
+                            onClose={() => setShowCreateCard(false)}
+                            onCreate={createCard}
+                            creating={creating}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        function CreateCardModal({ board, lists, members, onClose, onCreate, creating }) {
+            const [cardName, setCardName] = useState('');
+            const [cardDescription, setCardDescription] = useState('');
+            const [selectedList, setSelectedList] = useState('');
+            const [selectedMembers, setSelectedMembers] = useState([]);
+            const [dueDate, setDueDate] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!cardName || !selectedList) {
+                    alert('Por favor completa el nombre y selecciona una lista');
+                    return;
+                }
+
+                onCreate({
+                    name: cardName,
+                    description: cardDescription,
+                    listId: selectedList,
+                    memberIds: selectedMembers,
+                    dueDate: dueDate || null
+                });
+            };
+
+            const toggleMember = (memberId) => {
+                setSelectedMembers(prev => 
+                    prev.includes(memberId) 
+                        ? prev.filter(id => id !== memberId)
+                        : [...prev, memberId]
+                );
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 animate-fade-in">
+                        <div className="flex justify-between items-start mb-6">
+                            <h2 className="text-3xl font-anton text-indie-red">CREAR NUEVA TARJETA</h2>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">✕</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Nombre de la Tarjeta *</label>
+                                <input
+                                    type="text"
+                                    value={cardName}
+                                    onChange={(e) => setCardName(e.target.value)}
+                                    placeholder="Ej: Crear cuenta de marketing para TikTok Shop"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Descripción</label>
+                                <textarea
+                                    value={cardDescription}
+                                    onChange={(e) => setCardDescription(e.target.value)}
+                                    placeholder="Detalles de la tarea..."
+                                    rows="4"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Lista *</label>
+                                <select
+                                    value={selectedList}
+                                    onChange={(e) => setSelectedList(e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                    required
+                                >
+                                    <option value="">Seleccionar lista...</option>
+                                    {lists.map(list => (
+                                        <option key={list.id} value={list.id}>{list.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Asignar Miembros</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {members.map(member => (
+                                        <div
+                                            key={member.id}
+                                            onClick={() => toggleMember(member.id)}
+                                            className={`border-2 rounded-lg p-3 cursor-pointer transition ${
+                                                selectedMembers.includes(member.id)
+                                                    ? 'border-indie-red bg-red-50'
+                                                    : 'border-gray-300 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                                                    selectedMembers.includes(member.id)
+                                                        ? 'bg-indie-red border-indie-red'
+                                                        : 'border-gray-300'
+                                                }`}>
+                                                    {selectedMembers.includes(member.id) && (
+                                                        <span className="text-white text-xs">✓</span>
+                                                    )}
+                                                </div>
+                                                <span className="font-semibold text-sm">{member.fullName}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Fecha de Vencimiento</label>
+                                <input
+                                    type="date"
+                                    value={dueDate}
+                                    onChange={(e) => setDueDate(e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+                                    disabled={creating}
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-6 py-3 bg-indie-red text-white rounded-lg font-bold hover:bg-indie-red-dark transition disabled:opacity-50"
+                                    disabled={creating}
+                                >
+                                    {creating ? 'Creando...' : '✓ Crear Tarjeta'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        function ReporteSemanalView({ boards, cards, lists, members, getCardsByMember }) {
+            const cardsByMember = getCardsByMember();
+            
+            const exportToPDF = () => {
+                window.print();
+            };
+            
+            const today = new Date();
+            const weekStart = new Date(today);
+            weekStart.setDate(today.getDate() - today.getDay() + 1);
+            const weekEnd = new Date(weekStart);
+            weekEnd.setDate(weekStart.getDate() + 6);
+            
+            const formatDate = (date) => date.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+            
+            const activeExclude = ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado', 'en construcción', 'construcción'];
+            const excludeNames = ['recursos', 'docs', 'docs /', 'resources'];
+            
+            // Build detailed team data with exact tasks
+            const teamData = members.map(member => {
+                const memberData = cardsByMember[member.id];
+                if (!memberData) return null;
+                
+                const allMemberCards = memberData.cards || [];
+                // Get active tasks with full details
+                const activeTasks = allMemberCards.filter(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    if (excludeNames.some(k => ln.includes(k))) return false;
+                    return !activeExclude.some(k => ln.includes(k));
+                }).map(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    const board = boards.find(b => b.id === card.idBoard);
+                    const isOverdue = card.due && !card.dueComplete && new Date(card.due) < new Date();
+                    return {
+                        id: card.id,
+                        name: card.name,
+                        listName: list?.name || '',
+                        boardName: board?.name || '',
+                        due: card.due,
+                        isOverdue
+                    };
+                });
+                
+                const completedTasks = allMemberCards.filter(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+                }).length;
+                
+                if (activeTasks.length === 0 && completedTasks === 0) return null;
+                
+                return { member, activeTasks, completedTasks };
+            }).filter(Boolean).sort((a, b) => b.activeTasks.length - a.activeTasks.length);
+            
+            const totalActive = teamData.reduce((sum, m) => sum + m.activeTasks.length, 0);
+            const totalCompleted = teamData.reduce((sum, m) => sum + m.completedTasks, 0);
+            
+            return (
+                <div id="reporte-semanal" className="report-print-area">
+                    {/* Print-specific styles */}
+                    <style dangerouslySetInnerHTML={{ __html: `
+                        @media print {
+                            body > div > div > div:first-child,
+                            body > div > div > nav,
+                            .print-hide { display: none !important; }
+                            body { background: white !important; margin: 0; padding: 0; }
+                            #reporte-semanal { padding: 0 !important; }
+                            .report-print-area { max-width: 100% !important; }
+                            .report-header-print { 
+                                background: #059669 !important; color: white !important; 
+                                padding: 16px 24px !important; border-radius: 0 !important;
+                                -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+                            }
+                            .report-kpi-print { 
+                                background: rgba(255,255,255,0.2) !important;
+                                -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+                            }
+                            .member-section { page-break-inside: avoid; margin-bottom: 8px !important; }
+                            .task-row { padding: 2px 0 !important; font-size: 10px !important; }
+                            .report-member-header { font-size: 12px !important; }
+                            h1.report-title { font-size: 20px !important; margin: 0 !important; }
+                            .report-subtitle { font-size: 11px !important; }
+                            .report-section-title { font-size: 14px !important; margin-bottom: 8px !important; }
+                        }
+                    `}} />
+                    
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl p-6 mb-6 report-header-print">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-3xl font-anton report-title">REPORTE SEMANAL DE TRABAJO</h1>
+                                <p className="text-sm opacity-90 mt-1 report-subtitle">
+                                    {formatDate(weekStart)} — {formatDate(weekEnd)}
+                                </p>
+                            </div>
+                            <button onClick={exportToPDF} className="print-hide flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-700 rounded-lg font-bold hover:bg-gray-100 transition text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Imprimir / PDF
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3 mt-4">
+                            <div className="bg-white/15 rounded-lg p-3 text-center report-kpi-print">
+                                <div className="text-2xl font-black">{boards.length}</div>
+                                <div className="text-[10px] font-bold opacity-80">Proyectos</div>
+                            </div>
+                            <div className="bg-white/15 rounded-lg p-3 text-center report-kpi-print">
+                                <div className="text-2xl font-black">{totalActive}</div>
+                                <div className="text-[10px] font-bold opacity-80">En Proceso</div>
+                            </div>
+                            <div className="bg-white/15 rounded-lg p-3 text-center report-kpi-print">
+                                <div className="text-2xl font-black">{totalCompleted}</div>
+                                <div className="text-[10px] font-bold opacity-80">Completadas</div>
+                            </div>
+                            <div className="bg-white/15 rounded-lg p-3 text-center report-kpi-print">
+                                <div className="text-2xl font-black">{teamData.length}</div>
+                                <div className="text-[10px] font-bold opacity-80">Miembros</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Per-member task breakdown */}
+                    <div className="space-y-4">
+                        {teamData.map(({ member, activeTasks, completedTasks }) => (
+                            <div key={member.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden member-section">
+                                {/* Member header */}
+                                <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 border-b border-gray-200">
+                                    {member.avatarUrl ? (
+                                        <img src={`${member.avatarUrl}/50.png`} alt={member.fullName} className="w-8 h-8 rounded-full" />
+                                    ) : (
+                                        <div className="w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                            {member.initials || member.fullName?.charAt(0)}
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-gray-900 text-sm report-member-header">{member.fullName}</h3>
+                                    </div>
+                                    <div className="flex gap-3 text-xs">
+                                        <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-bold">{activeTasks.length} activas</span>
+                                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">{completedTasks} completadas</span>
+                                    </div>
+                                </div>
+                                
+                                {/* Task table */}
+                                {activeTasks.length > 0 && (
+                                    <div className="px-5 py-2">
+                                        <table className="w-full text-xs">
+                                            <thead>
+                                                <tr className="border-b border-gray-100">
+                                                    <th className="text-left py-1.5 font-bold text-gray-500 uppercase tracking-wider" style={{fontSize:'9px'}}>Tarea</th>
+                                                    <th className="text-left py-1.5 font-bold text-gray-500 uppercase tracking-wider w-28" style={{fontSize:'9px'}}>Proyecto</th>
+                                                    <th className="text-left py-1.5 font-bold text-gray-500 uppercase tracking-wider w-32" style={{fontSize:'9px'}}>Etapa</th>
+                                                    <th className="text-right py-1.5 font-bold text-gray-500 uppercase tracking-wider w-20" style={{fontSize:'9px'}}>Fecha</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {activeTasks.map(task => (
+                                                    <tr key={task.id} className="border-b border-gray-50 task-row">
+                                                        <td className="py-1.5 pr-2">
+                                                            <span className={`font-semibold ${task.isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                                                                {task.isOverdue && '⚠ '}{task.name}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-1.5 pr-2">
+                                                            <span className="text-gray-600">{task.boardName}</span>
+                                                        </td>
+                                                        <td className="py-1.5 pr-2">
+                                                            <span className="inline-block bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded text-[10px] font-semibold">{task.listName}</span>
+                                                        </td>
+                                                        <td className="py-1.5 text-right">
+                                                            {task.due ? (
+                                                                <span className={`font-semibold ${task.isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
+                                                                    {new Date(task.due).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-gray-300">—</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                                {activeTasks.length === 0 && (
+                                    <div className="px-5 py-3 text-xs text-gray-400 italic">Sin tareas activas en este momento</div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function ResumenEjecutivoView({ boards, cards, lists, members }) {
+            const [showOverdue, setShowOverdue] = useState(false);
+            const [expandedMember, setExpandedMember] = useState(null);
+
+            const excludeNames = ['recursos', 'docs', 'docs /', 'resources'];
+            const workCards = cards.filter(c => {
+                const list = lists.find(l => l.id === c.idList);
+                if (!list) return false;
+                return !excludeNames.some(k => list.name.toLowerCase().includes(k));
+            });
+
+            // Active = in the pipeline (Tareas → Segundo Ajuste), NOT completed/aprobado/construcción
+            const activeExclude = ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado', 'en construcción', 'construcción'];
+            const pendingCards = workCards.filter(c => {
+                const list = lists.find(l => l.id === c.idList);
+                if (!list) return false;
+                const ln = list.name.toLowerCase();
+                return !activeExclude.some(k => ln.includes(k));
+            });
+
+            // Completed = done, completado, aprobado, programado
+            const completedCards = workCards.filter(c => {
+                const list = lists.find(l => l.id === c.idList);
+                if (!list) return false;
+                const ln = list.name.toLowerCase();
+                return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+            });
+
+            const overdueCards = cards.filter(c => {
+                if (!c.due || c.dueComplete) return false;
+                return new Date(c.due) < new Date();
+            });
+
+            const completionRate = workCards.length > 0 ? Math.round((completedCards.length / workCards.length) * 100) : 0;
+
+            // Project health by board
+            const boardHealth = boards.map(board => {
+                const boardCards = workCards.filter(c => c.idBoard === board.id);
+                const boardPending = boardCards.filter(c => {
+                    const list = lists.find(l => l.id === c.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return !activeExclude.some(k => ln.includes(k));
+                });
+                const boardCompleted = boardCards.filter(c => {
+                    const list = lists.find(l => l.id === c.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+                });
+                const boardOverdue = boardCards.filter(c => {
+                    if (!c.due || c.dueComplete) return false;
+                    return new Date(c.due) < new Date();
+                });
+                return {
+                    board,
+                    total: boardCards.length,
+                    pending: boardPending.length,
+                    completed: boardCompleted.length,
+                    overdue: boardOverdue.length,
+                    health: boardCards.length > 0 ? Math.round((boardCompleted.length / boardCards.length) * 100) : 0
+                };
+            }).sort((a, b) => b.pending - a.pending);
+
+            // Team workload - show ONLY active tasks per member with task details
+            const teamWorkload = members.map(member => {
+                const memberCards = workCards.filter(c => (c.idMembers || []).includes(member.id));
+                const activeCards = memberCards.filter(c => {
+                    const list = lists.find(l => l.id === c.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return !activeExclude.some(k => ln.includes(k));
+                });
+                const memberCompleted = memberCards.filter(c => {
+                    const list = lists.find(l => l.id === c.idList);
+                    if (!list) return false;
+                    const ln = list.name.toLowerCase();
+                    return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+                });
+                // Get task details with list and board names
+                const taskDetails = activeCards.map(c => {
+                    const list = lists.find(l => l.id === c.idList);
+                    const board = boards.find(b => b.id === c.idBoard);
+                    return { id: c.id, name: c.name, listName: list?.name || '', boardName: board?.name || '', due: c.due };
+                });
+                return {
+                    member,
+                    active: activeCards.length,
+                    completed: memberCompleted.length,
+                    tasks: taskDetails
+                };
+            }).filter(m => m.active > 0 || m.completed > 0).sort((a, b) => b.active - a.active);
+
+            // Overdue cards with member info
+            const overdueDetails = overdueCards.map(card => {
+                const list = lists.find(l => l.id === card.idList);
+                const board = boards.find(b => b.id === card.idBoard);
+                const assignees = (card.idMembers || []).map(mid => members.find(m => m.id === mid)).filter(Boolean);
+                return { ...card, listName: list?.name, boardName: board?.name, assignees };
+            }).sort((a, b) => new Date(a.due) - new Date(b.due));
+
+            return (
+                <div className="space-y-6">
+                    {/* KPI Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-gradient-to-br from-indie-red to-indie-red-dark text-white rounded-xl p-6 card-shadow">
+                            <div className="text-xs font-bold opacity-75 mb-2">PROYECTOS ACTIVOS</div>
+                            <div className="text-5xl font-anton mb-2">{boards.length}</div>
+                            <div className="text-sm opacity-90">{workCards.length} tareas totales</div>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl p-6 card-shadow">
+                            <div className="text-xs font-bold opacity-75 mb-2">EN PROCESO</div>
+                            <div className="text-5xl font-anton mb-2">{pendingCards.length}</div>
+                            <div className="text-sm opacity-90">Tareas activas en pipeline</div>
+                        </div>
+                        
+                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl p-6 card-shadow">
+                            <div className="text-xs font-bold opacity-75 mb-2">COMPLETADAS</div>
+                            <div className="text-5xl font-anton mb-2">{completedCards.length}</div>
+                            <div className="text-sm opacity-90">{completionRate}% tasa de completación</div>
+                        </div>
+                        
+                        <div 
+                            className={`bg-gradient-to-br from-red-500 to-orange-600 text-white rounded-xl p-6 card-shadow cursor-pointer hover:scale-105 transition-transform ${showOverdue ? 'ring-4 ring-red-300' : ''}`}
+                            onClick={() => setShowOverdue(!showOverdue)}
+                        >
+                            <div className="text-xs font-bold opacity-75 mb-2">VENCIDAS ▼</div>
+                            <div className="text-5xl font-anton mb-2">{overdueCards.length}</div>
+                            <div className="text-sm opacity-90">Click para ver detalles</div>
+                        </div>
+                    </div>
+
+                    {/* Overdue Tasks Detail (expandable) */}
+                    {showOverdue && overdueDetails.length > 0 && (
+                        <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-6 animate-fade-in">
+                            <h2 className="text-2xl font-anton text-red-700 mb-4">⚠️ TAREAS VENCIDAS — REQUIEREN ATENCIÓN</h2>
+                            <div className="space-y-3">
+                                {overdueDetails.map(card => (
+                                    <div key={card.id} className="bg-white rounded-xl p-4 border-l-4 border-red-500 card-shadow">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-gray-900">{card.name}</h4>
+                                                <div className="flex flex-wrap gap-2 mt-2">
+                                                    <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">{card.boardName}</span>
+                                                    <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{card.listName}</span>
+                                                    <span className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                                                        Vencida: {new Date(card.due).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex-shrink-0 text-right">
+                                                {card.assignees.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {card.assignees.map(m => (
+                                                            <div key={m.id} className="text-xs font-bold text-gray-700 bg-yellow-100 px-2 py-1 rounded">
+                                                                👤 {m.fullName}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400 italic">Sin asignar</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Project Health */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h2 className="text-2xl font-anton text-indie-red mb-6">SALUD DE PROYECTOS</h2>
+                        <div className="space-y-3">
+                            {boardHealth.slice(0, 8).map(({ board, total, pending, completed, overdue, health }) => (
+                                <div key={board.id} className="border-2 border-gray-200 rounded-xl p-4 hover:border-indie-red transition">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h3 className="font-bold text-gray-900 text-lg">{board.name}</h3>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs px-3 py-1 rounded-full font-bold ${
+                                                health >= 70 ? 'bg-green-100 text-green-700' :
+                                                health >= 40 ? 'bg-yellow-100 text-yellow-700' :
+                                                'bg-red-100 text-red-700'
+                                            }`}>
+                                                {health}% completado
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-4 text-center">
+                                        <div>
+                                            <div className="text-2xl font-anton text-gray-900">{total}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">Total</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-anton text-purple-600">{pending}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">En Proceso</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-anton text-green-600">{completed}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">Completadas</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-2xl font-anton text-red-600">{overdue}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">Vencidas</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Team Workload Summary */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h2 className="text-2xl font-anton text-indie-red mb-6">EQUIPO — TAREAS ACTIVAS</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {teamWorkload.slice(0, 12).map(({ member, active, completed, tasks }) => (
+                                <div key={member.id} 
+                                    className={`border-2 rounded-xl p-4 cursor-pointer transition hover:shadow-lg ${
+                                        expandedMember === member.id ? 'border-indie-red bg-red-50' : 'border-gray-200 hover:border-gray-400'
+                                    }`}
+                                    onClick={() => setExpandedMember(expandedMember === member.id ? null : member.id)}
+                                >
+                                    <div className="flex items-center gap-3 mb-3">
+                                        {member.avatarUrl ? (
+                                            <img src={`${member.avatarUrl}/50.png`} alt={member.fullName} className="w-10 h-10 rounded-full" />
+                                        ) : (
+                                            <div className="w-10 h-10 bg-indie-red text-white rounded-full flex items-center justify-center font-anton">
+                                                {member.initials || member.fullName?.charAt(0)}
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="font-bold text-gray-900 text-sm truncate">{member.fullName}</h3>
+                                            <p className="text-xs text-gray-500">@{member.username}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="text-center flex-1">
+                                            <div className="text-2xl font-anton text-purple-600">{active}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">En Proceso</div>
+                                        </div>
+                                        <div className="text-center flex-1">
+                                            <div className="text-2xl font-anton text-green-600">{completed}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">Completadas</div>
+                                        </div>
+                                    </div>
+                                    {/* Expandable task list */}
+                                    {expandedMember === member.id && tasks.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 space-y-2 animate-fade-in">
+                                            {tasks.map(t => (
+                                                <div key={t.id} className="bg-white rounded-lg p-2 border border-gray-100 text-xs">
+                                                    <div className="font-bold text-gray-900 truncate">{t.name}</div>
+                                                    <div className="flex gap-1 mt-1 flex-wrap">
+                                                        <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold">{t.listName}</span>
+                                                        <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t.boardName}</span>
+                                                        {t.due && (
+                                                            <span className={`px-1.5 py-0.5 rounded font-semibold ${
+                                                                new Date(t.due) < new Date() ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                                                            }`}>
+                                                                {new Date(t.due).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {tasks.length > 0 && expandedMember !== member.id && (
+                                        <div className="text-center text-xs text-gray-400 mt-1">Click para ver tareas ▼</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function BoardView({ board, lists, cards, members, loading }) {
+            if (loading) {
+                return (
+                    <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
+                        <div className="animate-pulse-slow text-indie-red text-4xl mb-4">⏳</div>
+                        <p className="text-gray-600">Cargando board...</p>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h2 className="text-3xl font-anton text-indie-red mb-2">{board.name}</h2>
+                        {board.desc && <p className="text-gray-600 mb-4">{board.desc}</p>}
+                        <div className="flex gap-4 text-sm">
+                            <span className="bg-indie-red text-white px-3 py-1 rounded-full font-semibold">
+                                {lists.length} Listas
+                            </span>
+                            <span className="bg-indie-blue text-white px-3 py-1 rounded-full font-semibold">
+                                {cards.length} Tarjetas
+                            </span>
+                            <span className="bg-indie-yellow text-indie-black px-3 py-1 rounded-full font-semibold">
+                                {members.length} Miembros
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Kanban View */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6 overflow-x-auto">
+                        <div className="flex gap-4 min-w-max">
+                            {lists.map(list => {
+                                const listCards = cards.filter(card => card.idList === list.id);
+                                return (
+                                    <div key={list.id} className="w-80 flex-shrink-0">
+                                        <div className="bg-gray-100 rounded-xl p-4">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="font-bold text-gray-900">{list.name}</h3>
+                                                <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded-full text-xs font-bold">
+                                                    {listCards.length}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {listCards.map(card => (
+                                                    <div key={card.id} className="bg-white rounded-lg p-4 card-shadow">
+                                                        <h4 className="font-semibold text-gray-900 mb-2">{card.name}</h4>
+                                                        {card.desc && (
+                                                            <p className="text-sm text-gray-600 mb-2 line-clamp-2">{card.desc}</p>
+                                                        )}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            {card.due && (
+                                                                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                                                                    new Date(card.due) < new Date() && !card.dueComplete
+                                                                        ? 'bg-red-100 text-red-700'
+                                                                        : card.dueComplete
+                                                                        ? 'bg-green-100 text-green-700'
+                                                                        : 'bg-yellow-100 text-yellow-700'
+                                                                }`}>
+                                                                    📅 {new Date(card.due).toLocaleDateString('es-ES')}
+                                                                </span>
+                                                            )}
+                                                            {card.labels.length > 0 && (
+                                                                <div className="flex gap-1">
+                                                                    {card.labels.slice(0, 3).map((label, i) => (
+                                                                        <div
+                                                                            key={i}
+                                                                            className="w-8 h-2 rounded-full"
+                                                                            style={{ backgroundColor: label.color || '#ccc' }}
+                                                                        ></div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                            {card.idMembers.length > 0 && (
+                                                                <span className="text-xs text-gray-500">
+                                                                    👤 {card.idMembers.length}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TimelineView({ cards, lists, boards, getOverdueCards, getUpcomingCards }) {
+            const overdueCards = getOverdueCards();
+            const upcomingCards = getUpcomingCards();
+            const allCardsWithDue = cards.filter(c => c.due).sort((a, b) => new Date(a.due) - new Date(b.due));
+
+            return (
+                <div className="space-y-6">
+                    {/* Alerts */}
+                    {overdueCards.length > 0 && (
+                        <div className="bg-red-50 border-2 border-red-500 rounded-xl p-6">
+                            <h3 className="text-xl font-anton text-red-600 mb-4">
+                                ⚠️ TARJETAS VENCIDAS ({overdueCards.length})
+                            </h3>
+                            <div className="space-y-3">
+                                {overdueCards.map(card => {
+                                    const list = lists.find(l => l.id === card.idList);
+                                    return (
+                                        <div key={card.id} className="bg-white rounded-lg p-4 border-l-4 border-red-500">
+                                            <h4 className="font-bold text-gray-900">{card.name}</h4>
+                                            <p className="text-sm text-gray-600">{list?.name}</p>
+                                            <p className="text-xs text-red-600 font-semibold mt-2">
+                                                Vencido: {new Date(card.due).toLocaleDateString('es-ES')}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {upcomingCards.length > 0 && (
+                        <div className="bg-yellow-50 border-2 border-yellow-500 rounded-xl p-6">
+                            <h3 className="text-xl font-anton text-yellow-700 mb-4">
+                                📅 PRÓXIMOS 3 DÍAS ({upcomingCards.length})
+                            </h3>
+                            <div className="space-y-3">
+                                {upcomingCards.map(card => {
+                                    const list = lists.find(l => l.id === card.idList);
+                                    return (
+                                        <div key={card.id} className="bg-white rounded-lg p-4 border-l-4 border-yellow-500">
+                                            <h4 className="font-bold text-gray-900">{card.name}</h4>
+                                            <p className="text-sm text-gray-600">{list?.name}</p>
+                                            <p className="text-xs text-yellow-700 font-semibold mt-2">
+                                                Vence: {new Date(card.due).toLocaleDateString('es-ES')}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* All Cards Timeline */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h3 className="text-2xl font-anton text-indie-red mb-6">TIMELINE COMPLETO</h3>
+                        <div className="space-y-4">
+                            {allCardsWithDue.map(card => {
+                                const list = lists.find(l => l.id === card.idList);
+                                const dueDate = new Date(card.due);
+                                const isOverdue = dueDate < new Date() && !card.dueComplete;
+                                const isCompleted = card.dueComplete;
+                                
+                                return (
+                                    <div key={card.id} className={`border-l-4 rounded-lg p-4 ${
+                                        isCompleted ? 'bg-green-50 border-green-500' :
+                                        isOverdue ? 'bg-red-50 border-red-500' :
+                                        'bg-gray-50 border-indie-blue'
+                                    }`}>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-gray-900 mb-1">{card.name}</h4>
+                                                <p className="text-sm text-gray-600 mb-2">{list?.name}</p>
+                                                <div className="flex items-center gap-3 text-xs">
+                                                    <span className={`font-semibold ${
+                                                        isCompleted ? 'text-green-600' :
+                                                        isOverdue ? 'text-red-600' :
+                                                        'text-gray-600'
+                                                    }`}>
+                                                        {dueDate.toLocaleDateString('es-ES', { 
+                                                            weekday: 'long', 
+                                                            day: 'numeric', 
+                                                            month: 'long' 
+                                                        })}
+                                                    </span>
+                                                    {isCompleted && <span className="text-green-600">✓ Completada</span>}
+                                                    {isOverdue && <span className="text-red-600">⚠️ Vencida</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TeamView({ members, cards, lists, boards, getCardsByMember }) {
+            const cardsByMember = getCardsByMember();
+            const [expandedTeamMember, setExpandedTeamMember] = useState(null);
+            
+            const exportToPDF = () => {
+                window.print();
+            };
+
+            // Build sorted team list with task details
+            const teamList = Object.values(cardsByMember).map(({ member, activeTasks, completedTasks }) => {
+                const taskDetails = activeTasks.map(card => {
+                    const list = lists.find(l => l.id === card.idList);
+                    const board = boards.find(b => b.id === card.idBoard);
+                    return { id: card.id, name: card.name, listName: list?.name || '', boardName: board?.name || '', due: card.due, isOverdue: card.due && !card.dueComplete && new Date(card.due) < new Date() };
+                });
+                return { member, active: activeTasks.length, completed: completedTasks.length, tasks: taskDetails };
+            }).filter(m => m.active > 0 || m.completed > 0).sort((a, b) => b.active - a.active);
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-anton text-indie-red">EQUIPO Y CARGA DE TRABAJO</h2>
+                            <button
+                                onClick={exportToPDF}
+                                className="flex items-center gap-2 px-4 py-2 bg-indie-red text-white rounded-lg font-bold hover:bg-indie-red-dark transition text-sm print:hidden"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Exportar PDF
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {teamList.map(({ member, active, completed, tasks }) => (
+                                <div key={member.id} 
+                                    className={`border-2 rounded-xl p-5 card-shadow cursor-pointer transition hover:shadow-lg ${
+                                        expandedTeamMember === member.id ? 'border-indie-red bg-red-50' : 'border-gray-200'
+                                    }`}
+                                    onClick={() => setExpandedTeamMember(expandedTeamMember === member.id ? null : member.id)}
+                                >
+                                    <div className="flex items-center gap-3 mb-4">
+                                        {member.avatarUrl ? (
+                                            <img src={`${member.avatarUrl}/50.png`} alt={member.fullName} className="w-12 h-12 rounded-full" />
+                                        ) : (
+                                            <div className="w-12 h-12 bg-indie-red text-white rounded-full flex items-center justify-center font-anton text-xl">
+                                                {member.initials || member.fullName?.charAt(0)}
+                                            </div>
+                                        )}
+                                        <div>
+                                            <h3 className="font-bold text-gray-900">{member.fullName}</h3>
+                                            <p className="text-sm text-gray-600">@{member.username}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex justify-between items-center mb-2">
+                                        <div className="text-center flex-1">
+                                            <div className="font-anton text-2xl text-purple-600">{active}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">En Proceso</div>
+                                        </div>
+                                        <div className="text-center flex-1">
+                                            <div className="font-anton text-2xl text-green-600">{completed}</div>
+                                            <div className="text-xs text-gray-500 font-semibold">Completadas</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Expandable task detail */}
+                                    {expandedTeamMember === member.id && tasks.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200 space-y-2 animate-fade-in">
+                                            {tasks.map(t => (
+                                                <div key={t.id} className="bg-white rounded-lg p-2 border border-gray-100 text-xs">
+                                                    <div className={`font-bold truncate ${t.isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
+                                                        {t.isOverdue && '⚠ '}{t.name}
+                                                    </div>
+                                                    <div className="flex gap-1 mt-1 flex-wrap">
+                                                        <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold">{t.listName}</span>
+                                                        <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t.boardName}</span>
+                                                        {t.due && (
+                                                            <span className={`px-1.5 py-0.5 rounded font-semibold ${t.isOverdue ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                                {new Date(t.due).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {tasks.length > 0 && expandedTeamMember !== member.id && (
+                                        <div className="text-center text-xs text-gray-400 mt-1">Click para ver tareas ▼</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function AnalyticsView({ boards, cards, lists, members, getCompletionRate }) {
+            const excludeNames = ['recursos', 'docs', 'docs /', 'resources'];
+            const workCards = cards.filter(card => {
+                const list = lists.find(l => l.id === card.idList);
+                if (!list) return false;
+                return !excludeNames.some(k => list.name.toLowerCase().includes(k));
+            });
+            const completionRate = getCompletionRate();
+            const totalCards = workCards.length;
+            const completedCards = workCards.filter(card => {
+                const list = lists.find(l => l.id === card.idList);
+                if (!list) return false;
+                const ln = list.name.toLowerCase();
+                return ['done', 'completado', 'programado', 'publicado', 'terminado', 'aprobado'].some(k => ln.includes(k));
+            }).length;
+            const pendingCards = totalCards - completedCards;
+            
+            const cardsWithDue = cards.filter(c => c.due).length;
+            const overdueCards = cards.filter(c => {
+                if (!c.due || c.dueComplete) return false;
+                return new Date(c.due) < new Date();
+            }).length;
+
+            return (
+                <div className="space-y-6">
+                    {/* Key Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="bg-white rounded-xl p-6 card-shadow border-l-4 border-indie-red">
+                            <div className="text-sm font-semibold text-gray-500 mb-2">TASA DE COMPLETACIÓN</div>
+                            <div className="text-4xl font-anton text-indie-red mb-2">{completionRate}%</div>
+                            <div className="text-sm text-gray-600">{completedCards} de {totalCards} tarjetas</div>
+                        </div>
+                        
+                        <div className="bg-white rounded-xl p-6 card-shadow border-l-4 border-indie-yellow">
+                            <div className="text-sm font-semibold text-gray-500 mb-2">PENDIENTES</div>
+                            <div className="text-4xl font-anton text-indie-yellow mb-2">{pendingCards}</div>
+                            <div className="text-sm text-gray-600">Tarjetas por completar</div>
+                        </div>
+                        
+                        <div className="bg-white rounded-xl p-6 card-shadow border-l-4 border-indie-blue">
+                            <div className="text-sm font-semibold text-gray-500 mb-2">CON DEADLINE</div>
+                            <div className="text-4xl font-anton text-indie-blue mb-2">{cardsWithDue}</div>
+                            <div className="text-sm text-gray-600">Tarjetas con fecha</div>
+                        </div>
+                        
+                        <div className="bg-white rounded-xl p-6 card-shadow border-l-4 border-red-500">
+                            <div className="text-sm font-semibold text-gray-500 mb-2">VENCIDAS</div>
+                            <div className="text-4xl font-anton text-red-600 mb-2">{overdueCards}</div>
+                            <div className="text-sm text-gray-600">Requieren atención</div>
+                        </div>
+                    </div>
+
+                    {/* Progress by Board */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h3 className="text-2xl font-anton text-indie-red mb-6">PROGRESO POR PROYECTO</h3>
+                        <div className="space-y-4">
+                            {boards.map(board => {
+                                const boardCards = cards.filter(c => c.idBoard === board.id);
+                                const boardCompleted = boardCards.filter(card => {
+                                    const list = lists.find(l => l.id === card.idList);
+                                    return list && (list.name.toLowerCase().includes('done') || list.name.toLowerCase().includes('completado'));
+                                }).length;
+                                const boardProgress = boardCards.length > 0 ? Math.round((boardCompleted / boardCards.length) * 100) : 0;
+                                
+                                return (
+                                    <div key={board.id} className="border-2 border-gray-200 rounded-lg p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h4 className="font-bold text-gray-900">{board.name}</h4>
+                                            <span className="text-2xl font-anton text-indie-red">{boardProgress}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                            <div 
+                                                className="bg-gradient-to-r from-indie-red to-indie-red-dark h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${boardProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="flex justify-between text-sm text-gray-600">
+                                            <span>{boardCompleted} completadas</span>
+                                            <span>{boardCards.length - boardCompleted} pendientes</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Team Performance */}
+                    <div className="bg-white rounded-2xl shadow-xl p-6">
+                        <h3 className="text-2xl font-anton text-indie-red mb-6">RENDIMIENTO DEL EQUIPO</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="text-center p-6 bg-gradient-to-br from-indie-red to-indie-red-dark text-white rounded-xl">
+                                <div className="text-4xl font-anton mb-2">{members.length}</div>
+                                <div className="text-sm font-semibold">Miembros Activos</div>
+                            </div>
+                            <div className="text-center p-6 bg-gradient-to-br from-indie-blue to-teal-400 text-white rounded-xl">
+                                <div className="text-4xl font-anton mb-2">{Math.round(totalCards / members.length)}</div>
+                                <div className="text-sm font-semibold">Tarjetas por Persona</div>
+                            </div>
+                            <div className="text-center p-6 bg-gradient-to-br from-indie-yellow to-yellow-400 text-indie-black rounded-xl">
+                                <div className="text-4xl font-anton mb-2">{boards.length}</div>
+                                <div className="text-sm font-semibold">Proyectos Activos</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TaskCreatorView({ boards, lists, members, createCard, fetchBoardDetails }) {
+            const [inputMode, setInputMode] = useState('text');
+            const [rawText, setRawText] = useState('');
+            const [parsedTasks, setParsedTasks] = useState([]);
+            const [isListening, setIsListening] = useState(false);
+            const [expandedTask, setExpandedTask] = useState(null);
+            const [boardListsCache, setBoardListsCache] = useState({});
+            const [creatingTaskId, setCreatingTaskId] = useState(null);
+            const recognitionRef = React.useRef(null);
+
+            const fetchListsForBoard = async (boardId) => {
+                if (boardListsCache[boardId]) return boardListsCache[boardId];
+                try {
+                    const res = await fetch(`${TRELLO_API_BASE}/boards/${boardId}/lists?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}`);
+                    const data = await res.json();
+                    const filtered = data.filter(l => !l.closed);
+                    setBoardListsCache(prev => ({ ...prev, [boardId]: filtered }));
+                    return filtered;
+                } catch (err) { console.error(err); return []; }
+            };
+
+            // Voice — start/stop toggle with persistent ref
+            const toggleListening = () => {
+                if (isListening && recognitionRef.current) {
+                    recognitionRef.current.stop();
+                    setIsListening(false);
+                    return;
+                }
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                    alert('Tu navegador no soporta reconocimiento de voz. Usa Chrome.'); return;
+                }
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const rec = new SpeechRecognition();
+                rec.lang = 'es-MX';
+                rec.continuous = true;
+                rec.interimResults = false;
+                rec.maxAlternatives = 1;
+                recognitionRef.current = rec;
+
+                rec.onstart = () => setIsListening(true);
+                rec.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    if (transcript) {
+                        setRawText(prev => {
+                            const sep = prev && !prev.endsWith('\n') && !prev.endsWith('. ') ? '\n' : '';
+                            return prev + sep + transcript;
+                        });
+                    }
+                };
+                rec.onerror = (e) => { console.error('Speech error:', e.error); setIsListening(false); recognitionRef.current = null; };
+                rec.onend = () => { setIsListening(false); recognitionRef.current = null; };
+                rec.start();
+            };
+
+            const handleFileUpload = (e) => {
+                const file = e.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => setRawText(ev.target.result);
+                reader.readAsText(file);
+            };
+
+            // Board names for matching
+            const boardNames = boards.map(b => b.name.toLowerCase());
+
+            // ====== PARSER V3: Only real actionable tasks ======
+            const parseTasks = () => {
+                if (!rawText.trim()) { alert('Ingresa contenido primero'); return; }
+
+                const memberNames = members.map(m => ({
+                    id: m.id,
+                    name: m.fullName?.toLowerCase() || '',
+                    username: m.username?.toLowerCase() || '',
+                    firstName: (m.fullName?.split(' ')[0] || '').toLowerCase()
+                }));
+
+                // Future-tense / imperative action verbs (things TO DO)
+                const futureActionPatterns = [
+                    /\b(crear|hacer|diseñar|revisar|enviar|subir|publicar|preparar|configurar)\b/i,
+                    /\b(contactar|programar|escribir|grabar|editar|optimizar|actualizar)\b/i,
+                    /\b(desarrollar|implementar|definir|analizar|investigar|comprar|contratar)\b/i,
+                    /\b(organizar|coordinar|agendar|planear|producir|lanzar|montar|armar)\b/i,
+                    /\b(entregar|terminar|completar|finalizar|corregir|mejorar|cambiar)\b/i,
+                    /\b(establecer|generar|verificar|solicitar|negociar|cotizar|proponer)\b/i,
+                    /\b(evaluar|reportar|documentar|capacitar|migrar|agendar|gestionar)\b/i,
+                    /\b(create|make|design|review|send|upload|publish|build|fix|update|schedule)\b/i,
+                ];
+
+                // Patterns that indicate a task assignment
+                const taskIndicators = [
+                    /\b(necesita|debe|tiene que|hay que|falta|pendiente)\b/i,
+                    /\b(se requiere|se necesita|acción|action item|todo|tarea)\b/i,
+                    /\b(siguiente paso|next step|por hacer|to do)\b/i,
+                ];
+
+                // Past-tense / descriptive — NOT tasks, just meeting notes
+                const pastDescriptive = [
+                    /\b(se centró|se discutió|se revisó|se mencionó|se habló|se comentó)\b/i,
+                    /\b(se confirmó|se estableció|se acordó|se explicó|se presentó|se analizó)\b/i,
+                    /\b(revisión del?|discusión sobre|análisis de|resumen de|aclaración sobre)\b/i,
+                    /\b(se trató|se abordó|se evaluó|se comparó|se identificó|se observó)\b/i,
+                    /\b(fue|fueron|era|estaba|había|hubo|tuvo)\b/i,
+                    /\b(impulsó|impulso la|la baja conversión|se impulsó)\b/i,
+                ];
+
+                // Non-task content patterns
+                const nonTaskPatterns = [
+                    /\b(transcripción|transcript|registros de la reunión|notas de la reunión)\b/i,
+                    /\b(aclaración sobre|uso de vpn|acceso a recursos)\b/i,
+                    /^\d{1,2}\s*(mar|feb|ene|abr|may|jun|jul|ago|sep|oct|nov|dic)/i,
+                    /^\d{2}:\d{2}/,
+                    /\(\d{2}:\d{2}:\d{2}\)/,
+                    /^reunión del/i,
+                ];
+
+                const rawLines = rawText.split(/\n/).map(l => l.trim()).filter(l => l.length > 0);
+                const tasks = [];
+                let sectionContext = '';
+                let accumulatedContext = [];
+
+                const generateShortName = (fullText) => {
+                    let clean = fullText
+                        .replace(/^[-*•✓✔☐☑→>]\s*/, '')
+                        .replace(/^\d+[.)]\s*/, '')
+                        .replace(/\*\*/g, '')
+                        .replace(/\(\d{2}:\d{2}(:\d{2})?\)/g, '')
+                        .trim();
+                    // Remove member full names to keep name about the ACTION
+                    for (const m of memberNames) {
+                        if (m.name) clean = clean.replace(new RegExp(m.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '').trim();
+                        if (m.firstName.length > 2) clean = clean.replace(new RegExp('\\b' + m.firstName + '\\b', 'gi'), '').trim();
+                    }
+                    // Remove dates/priority words
+                    clean = clean
+                        .replace(/\b(para |antes de |hasta )?(hoy|mañana|esta semana|próxima semana|lunes|martes|miércoles|jueves|viernes)\b/gi, '')
+                        .replace(/\b(urgente|importante|asap|inmediato|prioridad)\b/gi, '')
+                        .replace(/^(se |se debe |se necesita |hay que |es necesario |que |también |además |necesita |debe )/i, '')
+                        .replace(/^[,:;.\-–—]\s*/, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                    if (clean.length > 55) {
+                        const cut = clean.substring(0, 55);
+                        const sp = cut.lastIndexOf(' ');
+                        clean = cut.substring(0, sp > 25 ? sp : 55);
+                    }
+                    if (clean.length < 3) return '';
+                    return clean.charAt(0).toUpperCase() + clean.slice(1);
+                };
+
+                for (let i = 0; i < rawLines.length; i++) {
+                    const line = rawLines[i];
+                    const lineLower = line.toLowerCase();
+
+                    // Skip separators, timestamps, meta
+                    if (/^[-=_*]{3,}$/.test(line)) continue;
+                    if (nonTaskPatterns.some(p => p.test(line))) { accumulatedContext.push(line); continue; }
+
+                    // Headers / bold titles → section context
+                    if (/^#{1,4}\s/.test(line) || /^\*\*[^*]+\*\*$/.test(line.trim())) {
+                        sectionContext = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim();
+                        accumulatedContext = [];
+                        continue;
+                    }
+
+                    // Too short
+                    if (line.replace(/[^a-záéíóúñ]/gi, '').length < 6) { continue; }
+
+                    // Is this line PAST TENSE / descriptive? → NOT a task
+                    const isPastDescription = pastDescriptive.some(p => p.test(lineLower));
+                    if (isPastDescription) {
+                        accumulatedContext.push(line);
+                        continue;
+                    }
+
+                    // Does this line have a FUTURE action verb?
+                    const hasFutureAction = futureActionPatterns.some(p => p.test(lineLower));
+                    const hasTaskIndicator = taskIndicators.some(p => p.test(lineLower));
+                    const isBullet = /^[-*•✓✔☐☑→>]\s/.test(line) || /^\d+[.)]\s/.test(line);
+
+                    // Only create a task if there's a clear future action or task indicator
+                    if (hasFutureAction || hasTaskIndicator) {
+                        // Detect members
+                        const assignedMembers = [];
+                        for (const member of memberNames) {
+                            if (member.firstName.length > 2 && lineLower.includes(member.firstName)) {
+                                assignedMembers.push(member.id);
+                            }
+                        }
+
+                        // Try to detect which board/client this relates to
+                        let detectedBoardId = '';
+                        for (const board of boards) {
+                            const bName = board.name.toLowerCase();
+                            if (bName.length > 3 && lineLower.includes(bName)) {
+                                detectedBoardId = board.id;
+                                break;
+                            }
+                            // Check section context too
+                            if (bName.length > 3 && sectionContext.toLowerCase().includes(bName)) {
+                                detectedBoardId = board.id;
+                            }
+                        }
+
+                        // Priority
+                        let priority = 'normal';
+                        if (/\b(urgente|asap|inmediato|crítico|critico)\b/i.test(lineLower)) priority = 'urgente';
+                        else if (/\b(importante|prioridad|clave|esencial)\b/i.test(lineLower)) priority = 'alta';
+
+                        // Due date
+                        let dueHint = '', dueDate = null;
+                        const today = new Date();
+                        if (/\bhoy\b/i.test(lineLower)) { dueHint = 'Hoy'; dueDate = today.toISOString().split('T')[0]; }
+                        else if (/\bmañana\b/i.test(lineLower)) { dueHint = 'Mañana'; const d = new Date(today); d.setDate(d.getDate()+1); dueDate = d.toISOString().split('T')[0]; }
+                        else if (/\besta semana\b/i.test(lineLower)) { dueHint = 'Esta semana'; const d = new Date(today); d.setDate(d.getDate()+(5-d.getDay())); dueDate = d.toISOString().split('T')[0]; }
+                        else if (/\b(próxima|proxima) semana\b/i.test(lineLower)) { dueHint = 'Próxima semana'; const d = new Date(today); d.setDate(d.getDate()+(8-d.getDay())); dueDate = d.toISOString().split('T')[0]; }
+
+                        // Description
+                        const descParts = [];
+                        if (sectionContext) descParts.push(sectionContext);
+                        if (accumulatedContext.length > 0) descParts.push(accumulatedContext.join('\n'));
+                        descParts.push(line);
+
+                        // Look ahead for continuation lines
+                        let j = i + 1;
+                        while (j < rawLines.length) {
+                            const nl = rawLines[j];
+                            const nlLower = nl.toLowerCase();
+                            if (futureActionPatterns.some(p => p.test(nlLower)) && !nl.startsWith('  ')) break;
+                            if (/^#{1,4}\s/.test(nl) || /^\*\*/.test(nl)) break;
+                            if (nl.startsWith('  ') || nl.startsWith('\t') || nl.length < 60) {
+                                descParts.push(nl);
+                                j++;
+                            } else break;
+                        }
+
+                        const shortName = generateShortName(line);
+                        if (shortName.length < 4) continue;
+
+                        tasks.push({
+                            id: Math.random().toString(36).substr(2, 9),
+                            name: shortName,
+                            description: descParts.join('\n'),
+                            assignedMembers,
+                            priority, dueHint, dueDate,
+                            boardId: detectedBoardId,
+                            listId: '',
+                            status: 'pending',
+                        });
+                        accumulatedContext = [];
+                    } else {
+                        accumulatedContext.push(line);
+                    }
+                }
+
+                setParsedTasks(tasks);
+                if (tasks.length > 0) setExpandedTask(tasks[0].id);
+                else alert('No se encontraron tareas accionables. Asegúrate de que el texto contiene acciones claras como: crear, diseñar, revisar, enviar, etc.');
+            };
+
+            const updateTask = (taskId, field, value) => {
+                setParsedTasks(prev => prev.map(t => t.id === taskId ? { ...t, [field]: value } : t));
+            };
+            const toggleTaskMember = (taskId, memberId) => {
+                setParsedTasks(prev => prev.map(t => {
+                    if (t.id !== taskId) return t;
+                    const nm = t.assignedMembers.includes(memberId)
+                        ? t.assignedMembers.filter(id => id !== memberId)
+                        : [...t.assignedMembers, memberId];
+                    return { ...t, assignedMembers: nm };
+                }));
+            };
+            const removeTask = (taskId) => {
+                setParsedTasks(prev => prev.filter(t => t.id !== taskId));
+                if (expandedTask === taskId) setExpandedTask(null);
+            };
+            const createSingleTask = async (task) => {
+                if (!task.boardId) { alert('Selecciona un board para esta tarea'); return; }
+                let listId = task.listId;
+                if (!listId) {
+                    const bLists = await fetchListsForBoard(task.boardId);
+                    if (bLists.length === 0) { alert('Este board no tiene listas'); return; }
+                    // Prefer "Tareas" list, fallback to first list
+                    const tareasList = bLists.find(l => l.name.toLowerCase().includes('tarea'));
+                    listId = tareasList ? tareasList.id : bLists[0].id;
+                }
+                setCreatingTaskId(task.id);
+                try {
+                    const params = new URLSearchParams({
+                        key: TRELLO_API_KEY, token: TRELLO_TOKEN,
+                        idList: listId, name: task.name, desc: task.description || '', pos: 'bottom'
+                    });
+                    if (task.dueDate) params.append('due', task.dueDate);
+                    const response = await fetch(`${TRELLO_API_BASE}/cards?${params.toString()}`, { method: 'POST' });
+                    if (!response.ok) {
+                        const errBody = await response.text();
+                        console.error('Trello API error:', response.status, errBody);
+                        throw new Error(`Error ${response.status}: ${errBody}`);
+                    }
+                    const newCard = await response.json();
+                    console.log('Card created:', newCard.id, newCard.shortUrl);
+                    for (const mid of task.assignedMembers) {
+                        await fetch(`${TRELLO_API_BASE}/cards/${newCard.id}/idMembers?key=${TRELLO_API_KEY}&token=${TRELLO_TOKEN}&value=${mid}`, { method: 'POST' });
+                    }
+                    const boardName = boards.find(b => b.id === task.boardId)?.name || '';
+                    const bLists = boardListsCache[task.boardId] || [];
+                    const listName = bLists.find(l => l.id === listId)?.name || '';
+                    updateTask(task.id, 'status', 'created');
+                    updateTask(task.id, 'trelloUrl', newCard.shortUrl);
+                    setCreatingTaskId(null);
+                    alert(`Tarjeta creada en Trello!\n\nBoard: ${boardName}\nLista: ${listName}\nURL: ${newCard.shortUrl}`);
+                    const remaining = parsedTasks.filter(t => t.status === 'pending' && t.id !== task.id);
+                    if (remaining.length > 0) setExpandedTask(remaining[0].id);
+                    else setExpandedTask(null);
+                } catch (err) { setCreatingTaskId(null); alert('Error creando tarjeta: ' + err.message); }
+            };
+
+            const pendingCount = parsedTasks.filter(t => t.status === 'pending').length;
+            const createdCount = parsedTasks.filter(t => t.status === 'created').length;
+
+            return (
+                <div className="space-y-5">
+                    {/* Header */}
+                    <div className="glass-strong rounded-3xl shadow-lg p-8">
+                        <h2 className="text-3xl font-anton text-gray-900 mb-1 tracking-tight">Task Creator</h2>
+                        <p className="text-gray-500 font-medium text-sm">Importa notas de reunión, configura cada tarea y envíala a Trello</p>
+                    </div>
+
+                    {/* Input Section */}
+                    <div className="glass-strong rounded-3xl shadow-lg p-6">
+                        <p className="text-[10px] font-bold text-gray-400 tracking-widest mb-4">PASO 1 — ORIGEN</p>
+                        <div className="flex gap-2 mb-5">
+                            {[['text','Texto'],['voice','Voz'],['file','Archivo']].map(([mode, label]) => (
+                                <button key={mode} onClick={() => setInputMode(mode)}
+                                    className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                                        inputMode === mode
+                                            ? 'glass-selected text-white shadow-lg'
+                                            : 'glass-pill text-gray-600 hover:bg-white/70'
+                                    }`}
+                                >{label}</button>
+                            ))}
+                        </div>
+
+                        {inputMode === 'text' && (
+                            <textarea value={rawText} onChange={(e) => setRawText(e.target.value)}
+                                placeholder="Pega aquí tus notas de Gemini, actas de reunión, o escribe las tareas directamente..."
+                                rows="10" 
+                                className="w-full px-4 py-3 bg-white/50 border border-white/40 rounded-2xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent font-montserrat text-sm resize-y backdrop-blur-sm" />
+                        )}
+
+                        {inputMode === 'voice' && (
+                            <div className="text-center py-10">
+                                <button onClick={toggleListening}
+                                    className={`w-28 h-28 rounded-full mx-auto flex items-center justify-center transition-all ${
+                                        isListening
+                                            ? 'bg-indie-red text-white scale-110 listening-ring shadow-2xl'
+                                            : 'glass-dark text-white hover:scale-105 shadow-lg'
+                                    }`}
+                                >
+                                    {isListening
+                                        ? <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                                        : <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4 0h8M12 3a3 3 0 00-3 3v4a3 3 0 006 0V6a3 3 0 00-3-3z" /></svg>
+                                    }
+                                </button>
+                                <p className="mt-5 font-semibold text-gray-700 text-sm">
+                                    {isListening ? 'Escuchando — toca para detener' : 'Toca para dictar'}
+                                </p>
+                                {isListening && (
+                                    <p className="text-xs text-indie-red mt-1 font-medium animate-pulse-slow">Grabando audio...</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-1">Habla claro, una tarea a la vez</p>
+                                {rawText && (
+                                    <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows="5"
+                                        className="mt-6 w-full px-4 py-3 bg-white/50 border border-white/40 rounded-2xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent text-sm backdrop-blur-sm" />
+                                )}
+                            </div>
+                        )}
+
+                        {inputMode === 'file' && (
+                            <div className="text-center py-10">
+                                <div className="glass rounded-3xl p-10 hover:bg-white/70 transition-colors cursor-pointer">
+                                    <input type="file" accept=".txt,.md,.csv" onChange={handleFileUpload} className="hidden" id="fileUpload" />
+                                    <label htmlFor="fileUpload" className="cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                        <p className="font-semibold text-gray-700 text-sm">Arrastra o selecciona un archivo</p>
+                                        <p className="text-xs text-gray-400 mt-1">.txt, .md, .csv</p>
+                                    </label>
+                                </div>
+                                {rawText && (
+                                    <textarea value={rawText} onChange={(e) => setRawText(e.target.value)} rows="5"
+                                        className="mt-6 w-full px-4 py-3 bg-white/50 border border-white/40 rounded-2xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent text-sm backdrop-blur-sm" />
+                                )}
+                            </div>
+                        )}
+
+                        {rawText && (
+                            <button onClick={parseTasks}
+                                className="mt-4 w-full py-3.5 glass-dark text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all shadow-lg">
+                                Analizar y extraer tareas
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Parsed Tasks */}
+                    {parsedTasks.length > 0 && (
+                        <div className="space-y-3">
+                            <div className="glass-strong rounded-3xl shadow-lg p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-gray-400 tracking-widest mb-1">PASO 2 — CONFIGURAR</p>
+                                        <p className="text-sm text-gray-500">Selecciona board, lista y miembros por tarea</p>
+                                    </div>
+                                    <div className="flex gap-3 text-xs font-bold">
+                                        <span className="text-gray-400">{parsedTasks.length} total</span>
+                                        {createdCount > 0 && <span className="text-green-600">{createdCount} creadas</span>}
+                                        {pendingCount > 0 && <span className="text-indie-red">{pendingCount} pendientes</span>}
+                                    </div>
+                                </div>
+                            </div>
+                            {parsedTasks.map((task) => (
+                                <TaskCard key={task.id} task={task} boards={boards} members={members}
+                                    isExpanded={expandedTask === task.id} isCreating={creatingTaskId === task.id}
+                                    onToggleExpand={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
+                                    onUpdate={(field, value) => updateTask(task.id, field, value)}
+                                    onToggleMember={(memberId) => toggleTaskMember(task.id, memberId)}
+                                    onRemove={() => removeTask(task.id)} onCreate={() => createSingleTask(task)}
+                                    fetchListsForBoard={fetchListsForBoard} boardListsCache={boardListsCache} />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Guide */}
+                    {parsedTasks.length === 0 && (
+                        <div className="glass-strong rounded-3xl shadow-lg p-6">
+                            <p className="text-[10px] font-bold text-gray-400 tracking-widest mb-4">GUÍA</p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div className="glass rounded-2xl p-4">
+                                    <h4 className="font-bold text-gray-900 text-sm mb-2">Formato ideal</h4>
+                                    <ul className="text-xs text-gray-500 space-y-1.5 leading-relaxed">
+                                        <li>Una tarea por línea</li>
+                                        <li>Usa verbos: crear, diseñar, revisar</li>
+                                        <li>Menciona nombres del equipo</li>
+                                        <li>Fechas: hoy, mañana, esta semana</li>
+                                    </ul>
+                                </div>
+                                <div className="glass rounded-2xl p-4">
+                                    <h4 className="font-bold text-gray-900 text-sm mb-2">Detección inteligente</h4>
+                                    <ul className="text-xs text-gray-500 space-y-1.5 leading-relaxed">
+                                        <li>Filtra resúmenes y notas pasadas</li>
+                                        <li>Solo extrae acciones futuras reales</li>
+                                        <li>Detecta board/cliente por nombre</li>
+                                        <li>Ignora discusiones y aclaraciones</li>
+                                    </ul>
+                                </div>
+                                <div className="glass rounded-2xl p-4">
+                                    <h4 className="font-bold text-gray-900 text-sm mb-2">Flujo de trabajo</h4>
+                                    <ul className="text-xs text-gray-500 space-y-1.5 leading-relaxed">
+                                        <li>1. Pega o dicta tus notas</li>
+                                        <li>2. Analiza para extraer tareas</li>
+                                        <li>3. Configura cada una por separado</li>
+                                        <li>4. Crea en Trello una por una</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function TaskCard({ task, boards, members, isExpanded, isCreating, onToggleExpand, onUpdate, onToggleMember, onRemove, onCreate, fetchListsForBoard, boardListsCache }) {
+            const [localLists, setLocalLists] = useState([]);
+            useEffect(() => {
+                if (task.boardId) {
+                    if (boardListsCache[task.boardId]) setLocalLists(boardListsCache[task.boardId]);
+                    else fetchListsForBoard(task.boardId).then(setLocalLists);
+                }
+            }, [task.boardId]);
+
+            if (task.status === 'created') {
+                return (
+                    <div className="glass rounded-3xl p-5 animate-fade-in" style={{borderColor: 'rgba(34,197,94,0.3)'}}>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-bold text-gray-900 text-sm">{task.name}</h4>
+                                <p className="text-xs text-green-600 font-medium">Creada en Trello</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className={`glass-strong rounded-3xl overflow-hidden transition-all ${
+                    isExpanded ? 'shadow-2xl ring-1 ring-gray-900/10' : 'shadow-lg hover:shadow-xl'
+                }`}>
+                    <div onClick={onToggleExpand} className="p-5 cursor-pointer flex items-center gap-4">
+                        <div className={`w-2 h-10 rounded-full flex-shrink-0 ${
+                            task.priority === 'urgente' ? 'bg-red-500' :
+                            task.priority === 'alta' ? 'bg-orange-400' : 'bg-gray-300'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 text-sm">{task.name}</h4>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {task.boardId && (
+                                    <span className="text-[10px] glass-pill text-gray-600 px-2 py-0.5 rounded-md font-semibold">
+                                        {boards.find(b => b.id === task.boardId)?.name}
+                                    </span>
+                                )}
+                                {task.assignedMembers.length > 0 && (
+                                    <span className="text-[10px] glass-pill text-gray-600 px-2 py-0.5 rounded-md font-semibold">
+                                        {task.assignedMembers.length} miembro{task.assignedMembers.length > 1 ? 's' : ''}
+                                    </span>
+                                )}
+                                {task.dueDate && (
+                                    <span className="text-[10px] glass-pill text-gray-600 px-2 py-0.5 rounded-md font-semibold">
+                                        {task.dueHint || task.dueDate}
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+
+                    {isExpanded && (
+                        <div className="px-5 pb-6 border-t border-white/30 pt-5 space-y-5 animate-fade-in">
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-1.5">NOMBRE</label>
+                                <input type="text" value={task.name} onChange={(e) => onUpdate('name', e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-white/50 border border-white/40 rounded-2xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent text-sm font-semibold backdrop-blur-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-1.5">DESCRIPCIÓN</label>
+                                <textarea value={task.description} onChange={(e) => onUpdate('description', e.target.value)}
+                                    placeholder="Detalles, instrucciones, contexto..." rows="4"
+                                    className="w-full px-4 py-2.5 bg-white/50 border border-white/40 rounded-2xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent text-sm backdrop-blur-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-2">BOARD</label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {boards.map(board => (
+                                        <div key={board.id}
+                                            onClick={() => { onUpdate('boardId', board.id); onUpdate('listId', ''); }}
+                                            className={`rounded-2xl p-3 cursor-pointer transition-all text-xs font-semibold text-center ${
+                                                task.boardId === board.id
+                                                    ? 'glass-selected text-white shadow-lg'
+                                                    : 'glass text-gray-700 hover:bg-white/80'
+                                            }`}>{board.name}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            {task.boardId && localLists.length > 0 && (
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-2">LISTA</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {localLists.map(list => (
+                                            <div key={list.id} onClick={() => onUpdate('listId', list.id)}
+                                                className={`rounded-xl px-4 py-2 cursor-pointer transition-all text-xs font-semibold ${
+                                                    task.listId === list.id
+                                                        ? 'bg-indie-blue text-white shadow-lg'
+                                                        : 'glass text-gray-700 hover:bg-white/80'
+                                                }`}>{list.name}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-2">MIEMBROS</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {members.map(member => (
+                                        <div key={member.id} onClick={() => onToggleMember(member.id)}
+                                            className={`px-3.5 py-2 rounded-full cursor-pointer transition-all text-xs font-semibold ${
+                                                task.assignedMembers.includes(member.id)
+                                                    ? 'glass-selected text-white shadow-lg'
+                                                    : 'glass text-gray-600 hover:bg-white/80'
+                                            }`}>{member.fullName || member.username}</div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-2">PRIORIDAD</label>
+                                    <div className="flex gap-2">
+                                        {[['normal','Normal'],['alta','Alta'],['urgente','Urgente']].map(([p, label]) => (
+                                            <div key={p} onClick={() => onUpdate('priority', p)}
+                                                className={`flex-1 text-center px-3 py-2 rounded-xl cursor-pointer transition-all text-xs font-bold ${
+                                                    task.priority === p
+                                                        ? p === 'urgente' ? 'bg-red-500 text-white shadow-lg' :
+                                                          p === 'alta' ? 'bg-orange-400 text-white shadow-lg' :
+                                                          'glass-selected text-white shadow-lg'
+                                                        : 'glass text-gray-600 hover:bg-white/80'
+                                                }`}>{label}</div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 tracking-widest mb-2">FECHA LÍMITE</label>
+                                    <input type="date" value={task.dueDate || ''} onChange={(e) => onUpdate('dueDate', e.target.value)}
+                                        className="w-full px-3 py-2 bg-white/50 border border-white/40 rounded-xl focus:ring-2 focus:ring-gray-900/30 focus:border-transparent text-xs backdrop-blur-sm" />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 pt-4 border-t border-white/30">
+                                <button onClick={onRemove}
+                                    className="px-5 py-2.5 text-gray-500 text-xs font-semibold hover:text-red-500 transition-colors">
+                                    Eliminar
+                                </button>
+                                <button onClick={onCreate} disabled={isCreating || !task.boardId}
+                                    className="flex-1 py-3 glass-dark text-white rounded-2xl font-bold text-sm hover:opacity-90 transition-all shadow-lg disabled:opacity-40">
+                                    {isCreating ? 'Creando...' : 'Crear en Trello'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<TrelloDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

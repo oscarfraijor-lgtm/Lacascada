@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Strategist - Indie Pro Marketing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'anton': ['Anton', 'sans-serif'],
+                        'montserrat': ['Montserrat', 'sans-serif']
+                    },
+                    colors: {
+                        'indie-red': '#ED2450',
+                        'indie-red-dark': '#E4003B',
+                        'indie-black': '#010101',
+                        'indie-yellow': '#FDD811',
+                        'indie-blue': '#00C1B2'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 min-h-screen font-montserrat">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CONTENT_PILLARS = [
+            { id: 'lifestyle', name: 'LIFESTYLE', color: '#ED2450', description: 'Bienestar - Uso de productos en el día a día' },
+            { id: 'efemérides', name: 'EFEMÉRIDES', color: '#FDD811', description: 'Fechas destacadas - Contenido estacional' },
+            { id: 'comunidad', name: 'COMUNIDAD', color: '#00C1B2', description: 'Comunidad & Comercio Local' },
+            { id: 'productos', name: 'PRODUCTOS', color: '#E4003B', description: 'Beneficios - Características de productos' }
+        ];
+
+        const PLATFORMS = ['Instagram', 'Facebook', 'TikTok', 'YouTube'];
+        const POST_TYPES = ['Post 4:5', 'Reel', 'Story', 'Video', 'Carousel'];
+
+        // AI Copy Generation Templates
+        const AI_COPY_TEMPLATES = {
+            lifestyle: [
+                "¿Qué tal un {product} para empezar el día? 🌿\n\n{benefit}\n\n¡Encuéntralo en {client}!",
+                "Tu ritual de bienestar comienza aquí. ✨\n\n{product} - {benefit}\n\nDisponible ahora en {client}.",
+                "Pequeños cambios, grandes resultados. 💚\n\n{product} es tu aliado perfecto para {benefit}."
+            ],
+            efemérides: [
+                "🎉 {event} - El momento perfecto para {action}\n\n{product} te acompaña en esta celebración.\n\n{client}",
+                "Celebremos {event} de la mejor manera: {action} 🌟\n\nDescubre {product} en {client}.",
+                "Este {event}, regala bienestar. 💝\n\n{product} - {benefit}"
+            ],
+            comunidad: [
+                "Apoyamos lo local, apoyamos lo nuestro. 🏡\n\n{product} hecho con amor por {producer}.\n\nEncuéntralo en {client}.",
+                "Comunidad que se apoya, crece junta. 💪\n\n{product} - Producto local, calidad global.\n\n{client}",
+                "Detrás de cada producto hay una historia. 📖\n\n{product} viene de {producer}, con pasión y dedicación."
+            ],
+            productos: [
+                "Conoce {product} 🌟\n\n✨ {benefit1}\n💚 {benefit2}\n🔥 {benefit3}\n\nDisponible en {client}.",
+                "{product} - Más que un producto, una experiencia.\n\n{benefit}\n\n¿Ya lo probaste?",
+                "¿Por qué elegir {product}?\n\nSimple: {benefit}\n\nEncuéntralo en {client} 🛒"
+            ]
+        };
+
+        const HASHTAG_SETS = {
+            wellness: '#bienestar #wellness #vidasaludable #healthylifestyle #autocuidado',
+            organic: '#organico #organic #natural #ecofriendly #sustentable',
+            local: '#apoyalocal #comerciolocal #hechoenmexico #supportlocal #comunidad',
+            food: '#healthyfood #comidaorganica #superfoods #nutrition #alimentacionsaludable',
+            beauty: '#skincare #belleza #naturalbeauty #cuidadodelapiel #beautynatural'
+        };
+
+        function AIContentStrategist() {
+            const [step, setStep] = useState('setup'); // setup, performance, analysis, strategy, calendar
+            const [clientName, setClientName] = useState('');
+            const [month, setMonth] = useState('');
+            const [year, setYear] = useState('2026');
+            const [objective, setObjective] = useState('');
+            const [performanceData, setPerformanceData] = useState([]);
+            const [aiAnalysis, setAiAnalysis] = useState(null);
+            const [generatedPosts, setGeneratedPosts] = useState([]);
+            const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            const analyzePerformance = () => {
+                setIsAnalyzing(true);
+                setStep('analysis');
+
+                // Simulate AI analysis
+                setTimeout(() => {
+                    const analysis = generateAIAnalysis(performanceData);
+                    setAiAnalysis(analysis);
+                    setIsAnalyzing(false);
+                }, 2000);
+            };
+
+            const generateAIAnalysis = (data) => {
+                if (data.length === 0) {
+                    return {
+                        topPerformer: { pillar: 'lifestyle', engagement: 0 },
+                        bestTime: 'Martes 6:00 PM',
+                        bestType: 'Reel',
+                        recommendations: [
+                            'Aumenta contenido de LIFESTYLE - genera más engagement',
+                            'Publica Reels los martes y jueves entre 6-8 PM',
+                            'Incluye más contenido de COMUNIDAD para diversificar',
+                            'Usa hashtags relacionados con bienestar y productos orgánicos'
+                        ],
+                        contentMix: {
+                            lifestyle: 40,
+                            efemérides: 20,
+                            comunidad: 20,
+                            productos: 20
+                        }
+                    };
+                }
+
+                // Calculate actual metrics from data
+                const pillarPerformance = {};
+                const typePerformance = {};
+                
+                data.forEach(post => {
+                    if (!pillarPerformance[post.pillar]) {
+                        pillarPerformance[post.pillar] = { total: 0, count: 0 };
+                    }
+                    if (!typePerformance[post.type]) {
+                        typePerformance[post.type] = { total: 0, count: 0 };
+                    }
+                    
+                    const engagement = (post.likes || 0) + (post.comments || 0) * 3 + (post.shares || 0) * 5;
+                    pillarPerformance[post.pillar].total += engagement;
+                    pillarPerformance[post.pillar].count += 1;
+                    typePerformance[post.type].total += engagement;
+                    typePerformance[post.type].count += 1;
+                });
+
+                const topPillar = Object.keys(pillarPerformance).reduce((a, b) => 
+                    pillarPerformance[a].total > pillarPerformance[b].total ? a : b
+                );
+                
+                const topType = Object.keys(typePerformance).reduce((a, b) => 
+                    typePerformance[a].total > typePerformance[b].total ? a : b
+                );
+
+                return {
+                    topPerformer: { 
+                        pillar: topPillar, 
+                        engagement: Math.round(pillarPerformance[topPillar].total / pillarPerformance[topPillar].count)
+                    },
+                    bestTime: 'Martes 6:00 PM',
+                    bestType: topType,
+                    recommendations: [
+                        `${CONTENT_PILLARS.find(p => p.id === topPillar).name} es tu mejor pilar - aumenta este contenido`,
+                        `${topType}s generan más engagement - prioriza este formato`,
+                        'Publica entre 6-8 PM para máximo alcance',
+                        'Mantén balance entre pilares para diversificar audiencia'
+                    ],
+                    contentMix: {
+                        [topPillar]: 40,
+                        lifestyle: topPillar === 'lifestyle' ? 40 : 20,
+                        efemérides: topPillar === 'efemérides' ? 40 : 15,
+                        comunidad: topPillar === 'comunidad' ? 40 : 15,
+                        productos: topPillar === 'productos' ? 40 : 10
+                    }
+                };
+            };
+
+            const generateContentCalendar = () => {
+                setStep('strategy');
+                
+                const posts = [];
+                const daysInMonth = new Date(year, monthNames.indexOf(month) + 1, 0).getDate();
+                const contentMix = aiAnalysis.contentMix;
+                
+                // Calculate number of posts per pillar
+                const totalPosts = 15; // ~15 posts per month
+                const postsPerPillar = {};
+                Object.keys(contentMix).forEach(pillar => {
+                    postsPerPillar[pillar] = Math.round((contentMix[pillar] / 100) * totalPosts);
+                });
+
+                let postDate = 1;
+                Object.keys(postsPerPillar).forEach(pillar => {
+                    for (let i = 0; i < postsPerPillar[pillar]; i++) {
+                        if (postDate > daysInMonth) break;
+                        
+                        const post = generateAIPost(pillar, postDate);
+                        posts.push(post);
+                        postDate += 2; // Post every 2 days
+                    }
+                });
+
+                setGeneratedPosts(posts.sort((a, b) => new Date(a.date) - new Date(b.date)));
+            };
+
+            const REEL_CONCEPTS = {
+                lifestyle: [
+                    '🎬 CONCEPTO: "Morning Routine" - Mostrar preparación del smoothie en time-lapse (15 seg). Transición rápida a persona tomándolo con energía. Música upbeat.',
+                    '🎬 CONCEPTO: "Before/After Energy" - Split screen: persona cansada vs energizada después del producto. Efectos de transición suaves.',
+                    '🎬 CONCEPTO: "Day in the Life" - Mini vlog de 30 seg mostrando cómo integrar el producto en rutina diaria. Estilo casual y auténtico.',
+                    '🎬 CONCEPTO: "Quick Tip Tutorial" - Demostración de 3 formas de usar el producto. Texto en pantalla con cada tip. Música relajante.'
+                ],
+                efemérides: [
+                    '🎬 CONCEPTO: "Celebración Especial" - Decoración temática + producto. Transiciones con confetti. Música festiva.',
+                    '🎬 CONCEPTO: "Gift Guide" - Mostrar producto como regalo perfecto. Unboxing aesthetic. Iluminación cálida.',
+                    '🎬 CONCEPTO: "Countdown" - Cuenta regresiva visual para la fecha especial. Revelar producto al final. Efectos dramáticos.'
+                ],
+                comunidad: [
+                    '🎬 CONCEPTO: "Meet the Producer" - Mini entrevista con productor local (15-20 seg). B-roll del proceso. Subtítulos.',
+                    '🎬 CONCEPTO: "Behind the Scenes" - Mostrar origen del producto, desde granja/taller hasta tienda. Música inspiradora.',
+                    '🎬 CONCEPTO: "Customer Testimonial" - Usuario real compartiendo experiencia. Formato auténtico, no pulido. Texto overlay con quote.'
+                ],
+                productos: [
+                    '🎬 CONCEPTO: "Product Demo" - Demostración práctica en 20 seg. Close-ups del producto. Texto con beneficios clave.',
+                    '🎬 CONCEPTO: "Ingredients Breakdown" - Mostrar cada ingrediente visualmente. Transiciones dinámicas. Música moderna.',
+                    '🎬 CONCEPTO: "How to Use" - Tutorial paso a paso. Manos en acción. Texto instructivo. Iluminación natural.',
+                    '🎬 CONCEPTO: "Comparison" - Antes/después o producto vs alternativa. Split screen. Datos visuales.'
+                ]
+            };
+
+            const generateAIPost = (pillar, day) => {
+                const templates = AI_COPY_TEMPLATES[pillar];
+                const template = templates[Math.floor(Math.random() * templates.length)];
+                
+                const products = ['Smoothie Verde', 'Bowl de Açaí', 'Matcha Latte', 'Snack Orgánico', 'Té Detox'];
+                const benefits = ['energía natural', 'antioxidantes poderosos', 'digestión saludable', 'piel radiante', 'bienestar integral'];
+                
+                let copy = template
+                    .replace('{product}', products[Math.floor(Math.random() * products.length)])
+                    .replace('{benefit}', benefits[Math.floor(Math.random() * benefits.length)])
+                    .replace('{benefit1}', benefits[0])
+                    .replace('{benefit2}', benefits[1])
+                    .replace('{benefit3}', benefits[2])
+                    .replace('{client}', clientName)
+                    .replace('{event}', 'San Valentín')
+                    .replace('{action}', 'cuidarte y consentirte')
+                    .replace('{producer}', 'productores locales');
+
+                const hashtagTypes = Object.keys(HASHTAG_SETS);
+                const hashtags = HASHTAG_SETS[hashtagTypes[Math.floor(Math.random() * hashtagTypes.length)]];
+                
+                const reelConcepts = REEL_CONCEPTS[pillar];
+                const visualSuggestion = aiAnalysis.bestType === 'Reel' 
+                    ? reelConcepts[Math.floor(Math.random() * reelConcepts.length)]
+                    : 'Imagen vibrante del producto, luz natural, colores cálidos, composición centrada';
+
+                return {
+                    date: `${year}-${String(monthNames.indexOf(month) + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+                    pillar: pillar,
+                    platform: aiAnalysis.bestType === 'Reel' ? 'Instagram' : PLATFORMS[Math.floor(Math.random() * PLATFORMS.length)],
+                    type: aiAnalysis.bestType,
+                    copyOut: copy,
+                    copyIn: aiAnalysis.bestType === 'Reel' ? 'Hook: ¡Mira esto! 👀' : '',
+                    hashtags: hashtags,
+                    visualSuggestion: visualSuggestion,
+                    aiGenerated: true
+                };
+            };
+
+            const exportToPresentation = () => {
+                // Create a new window with the presentation
+                const presentationWindow = window.open('', '_blank');
+                
+                // Generate presentation HTML
+                const presentationHTML = generatePresentationHTML();
+                
+                presentationWindow.document.write(presentationHTML);
+                presentationWindow.document.close();
+            };
+            
+            const generatePresentationHTML = () => {
+                const monthIndex = monthNames.indexOf(month);
+                const firstDay = new Date(year, monthIndex, 1).getDay();
+                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                
+                const getPostsForDay = (day) => {
+                    return generatedPosts.filter(post => {
+                        const postDay = parseInt(post.date.split('-')[2]);
+                        return postDay === day;
+                    });
+                };
+                
+                const postSlides = generatedPosts.map((post, i) => {
+                    const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                    return `
+                        <div class="slide">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+                                <div style="background: ${pillar.color}; color: white; padding: 12px 24px; border-radius: 12px; font-family: Anton; font-size: 20px; text-transform: uppercase;">
+                                    ${pillar.name}
+                                </div>
+                                <div style="background: #FDD811; color: #010101; padding: 6px 12px; border-radius: 20px; font-family: Montserrat; font-weight: bold; font-size: 12px;">
+                                    ✨ AI GENERADO
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 24px;">
+                                <div style="font-family: Montserrat; font-weight: bold; font-size: 14px; color: #666; margin-bottom: 8px;">
+                                    ${post.platform} | ${post.type} | ${new Date(post.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </div>
+                            </div>
+                            
+                            ${post.visualSuggestion ? `
+                            <div style="background: #f3f4f6; border: 2px solid #e5e7eb; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="font-family: Montserrat; font-weight: 900; font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 12px;">Concepto Visual / Idea Creativa:</h3>
+                                <p style="font-family: Montserrat; color: #374151; line-height: 1.6; margin: 0;">${post.visualSuggestion}</p>
+                            </div>
+                            ` : ''}
+                            
+                            ${post.copyIn ? `
+                            <div style="margin-bottom: 20px;">
+                                <h3 style="font-family: Montserrat; font-weight: 900; font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Copy In (Hook):</h3>
+                                <p style="font-family: Montserrat; color: #1f2937; font-weight: 600; margin: 0;">${post.copyIn}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div style="background: #fef2f2; border: 2px solid #ED2450; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                <h3 style="font-family: Montserrat; font-weight: 900; font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 12px;">Copy Out (Caption):</h3>
+                                <p style="font-family: Montserrat; color: #111827; line-height: 1.8; font-size: 16px; white-space: pre-wrap; margin: 0;">${post.copyOut}</p>
+                            </div>
+                            
+                            ${post.hashtags ? `
+                            <div>
+                                <h3 style="font-family: Montserrat; font-weight: 900; font-size: 12px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Hashtags:</h3>
+                                <p style="color: #00C1B2; font-family: Montserrat; font-weight: 600; margin: 0;">${post.hashtags}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${clientName} - Calendario ${month} ${year}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+                    <style>
+                        @media print {
+                            @page { size: 8.5in 11in; margin: 0; }
+                            html, body {
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
+                            .slide {
+                                page-break-after: always;
+                                page-break-inside: avoid;
+                            }
+                            .no-print { display: none !important; }
+                        }
+                        
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            background: #f3f4f6;
+                            font-family: Montserrat, sans-serif;
+                        }
+                        
+                        .slide {
+                            width: 8.5in;
+                            min-height: 11in;
+                            padding: 0.75in;
+                            background: white;
+                            margin: 0 auto 20px;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        
+                        .no-print {
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            z-index: 1000;
+                        }
+                        
+                        button {
+                            padding: 12px 24px;
+                            background: #ED2450;
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-family: Anton;
+                            font-size: 16px;
+                            cursor: pointer;
+                            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                        }
+                        
+                        button:hover {
+                            background: #E4003B;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="no-print">
+                        <button onclick="window.print()">📄 IMPRIMIR / GUARDAR PDF</button>
+                    </div>
+                    
+                    <!-- Cover Slide -->
+                    <div class="slide" style="background: linear-gradient(135deg, #ED2450 0%, #E4003B 50%, #010101 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white;">
+                        <div style="text-align: center;">
+                            <h1 style="font-family: Anton; font-size: 80px; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: -2px;">CONTENIDO</h1>
+                            <h2 style="font-family: Anton; font-size: 70px; margin: 0 0 40px 0; text-transform: uppercase; letter-spacing: -2px;">${month} ${year}</h2>
+                            <div style="width: 120px; height: 4px; background: white; margin: 0 auto 40px;"></div>
+                            <h3 style="font-family: Anton; font-size: 50px; margin: 0 0 20px 0;">${clientName}</h3>
+                            <p style="font-family: Montserrat; font-weight: bold; font-size: 24px; opacity: 0.9; margin: 0;">INDIE PRO MARKETING</p>
+                            <p style="font-family: Montserrat; font-weight: 600; font-size: 16px; opacity: 0.7; margin-top: 20px;">✨ Estrategia generada con IA</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Brief Slide -->
+                    <div class="slide">
+                        <h1 style="font-family: Anton; font-size: 36px; color: #ED2450; margin-bottom: 24px; text-transform: uppercase;">
+                            BRIEF MENSUAL - ${month} | ${clientName}
+                        </h1>
+                        
+                        ${objective ? `
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="font-family: Montserrat; font-weight: 900; font-size: 14px; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">Objetivo:</h3>
+                            <p style="font-family: Montserrat; color: #374151; line-height: 1.6;">${objective}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div style="margin-bottom: 24px;">
+                            <h3 style="font-family: Montserrat; font-weight: 900; font-size: 14px; color: #6b7280; text-transform: uppercase; margin-bottom: 12px;">Contenido Mensual:</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div style="background: #fef2f2; border: 2px solid #ED2450; border-radius: 12px; padding: 16px; text-align: center;">
+                                    <div style="font-family: Anton; font-size: 32px; color: #ED2450;">${generatedPosts.length}</div>
+                                    <div style="font-family: Montserrat; font-weight: 600; font-size: 14px; color: #374151;">Posts Totales</div>
+                                </div>
+                                <div style="background: #fffbeb; border: 2px solid #FDD811; border-radius: 12px; padding: 16px; text-align: center;">
+                                    <div style="font-family: Anton; font-size: 32px; color: #010101;">100%</div>
+                                    <div style="font-family: Montserrat; font-weight: 600; font-size: 14px; color: #374151;">Generado con IA</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: linear-gradient(135deg, #ED2450 0%, #E4003B 100%); border-radius: 12px; padding: 24px; color: white;">
+                            <h3 style="font-family: Anton; font-size: 20px; margin-bottom: 16px;">🎯 RECOMENDACIONES ESTRATÉGICAS</h3>
+                            <div style="font-family: Montserrat; line-height: 1.8;">
+                                ${aiAnalysis.recommendations.map((rec, i) => `
+                                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+                                        <div style="background: white; color: #ED2450; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0;">${i + 1}</div>
+                                        <p style="margin: 0; font-weight: 500;">${rec}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calendar Grid Slide -->
+                    <div class="slide">
+                        <h1 style="font-family: Anton; font-size: 36px; color: #ED2450; margin-bottom: 24px; text-transform: uppercase; text-align: center;">
+                            CALENDARIO DE CONTENIDOS - ${month}
+                        </h1>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px;">
+                            ${['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(day => `
+                                <div style="text-align: center; font-family: Montserrat; font-weight: 900; font-size: 12px; color: #6b7280; padding: 8px;">${day}</div>
+                            `).join('')}
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+                            ${[...Array(firstDay)].map(() => '<div style="aspect-ratio: 1;"></div>').join('')}
+                            ${[...Array(daysInMonth)].map((_, i) => {
+                                const day = i + 1;
+                                const dayPosts = getPostsForDay(day);
+                                return `
+                                    <div style="border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; aspect-ratio: 1;">
+                                        <div style="font-family: Montserrat; font-weight: bold; font-size: 14px; color: #111827; margin-bottom: 4px;">${day}</div>
+                                        ${dayPosts.map(post => {
+                                            const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                                            return `<div style="background: ${pillar.color}; color: white; font-size: 8px; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; font-family: Montserrat; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${post.type}</div>`;
+                                        }).join('')}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Post Slides -->
+                    ${postSlides}
+                </body>
+                </html>
+                `;
+            };
+
+            return (
+                <div className="min-h-screen p-4 sm:p-8">
+                    {/* Header */}
+                    <div className="max-w-6xl mx-auto mb-8">
+                        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 animate-fade-in border-t-4 border-indie-red">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-4xl sm:text-5xl font-anton text-indie-red mb-2">
+                                        AI CONTENT STRATEGIST
+                                    </h1>
+                                    <p className="text-gray-600 font-semibold">INDIE PRO MARKETING - Powered by AI</p>
+                                </div>
+                                <div className="hidden sm:block">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-indie-red to-indie-red-dark rounded-2xl flex items-center justify-center text-white text-3xl font-anton">
+                                        AI
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Progress Steps */}
+                    <div className="max-w-6xl mx-auto mb-8">
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex justify-between items-center">
+                                {['Setup', 'Performance', 'AI Analysis', 'Strategy', 'Calendar'].map((s, i) => {
+                                    const stepNames = ['setup', 'performance', 'analysis', 'strategy', 'calendar'];
+                                    const currentIndex = stepNames.indexOf(step);
+                                    const isActive = i === currentIndex;
+                                    const isCompleted = i < currentIndex;
+                                    
+                                    return (
+                                        <div key={s} className="flex items-center flex-1">
+                                            <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition ${
+                                                isActive ? 'bg-indie-red text-white scale-110' :
+                                                isCompleted ? 'bg-green-500 text-white' :
+                                                'bg-gray-200 text-gray-500'
+                                            }`}>
+                                                {isCompleted ? '✓' : i + 1}
+                                            </div>
+                                            <div className={`flex-1 h-1 mx-2 ${i < 4 ? (isCompleted ? 'bg-green-500' : 'bg-gray-200') : 'hidden'}`}></div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="flex justify-between mt-3">
+                                {['Setup', 'Performance', 'AI Analysis', 'Strategy', 'Calendar'].map((s) => (
+                                    <div key={s} className="flex-1 text-center text-xs font-semibold text-gray-600">{s}</div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-6xl mx-auto">
+                        {step === 'setup' && (
+                            <SetupStep
+                                clientName={clientName}
+                                setClientName={setClientName}
+                                month={month}
+                                setMonth={setMonth}
+                                year={year}
+                                setYear={setYear}
+                                objective={objective}
+                                setObjective={setObjective}
+                                monthNames={monthNames}
+                                onNext={() => setStep('performance')}
+                            />
+                        )}
+
+                        {step === 'performance' && (
+                            <PerformanceStep
+                                performanceData={performanceData}
+                                setPerformanceData={setPerformanceData}
+                                onNext={analyzePerformance}
+                                onBack={() => setStep('setup')}
+                            />
+                        )}
+
+                        {step === 'analysis' && (
+                            <AnalysisStep
+                                isAnalyzing={isAnalyzing}
+                                analysis={aiAnalysis}
+                                onNext={generateContentCalendar}
+                            />
+                        )}
+
+                        {step === 'strategy' && (
+                            <StrategyStep
+                                analysis={aiAnalysis}
+                                generatedPosts={generatedPosts}
+                                clientName={clientName}
+                                month={month}
+                                onNext={() => setStep('calendar')}
+                                onBack={() => setStep('analysis')}
+                            />
+                        )}
+
+                        {step === 'calendar' && (
+                            <CalendarStep
+                                posts={generatedPosts}
+                                setPosts={setGeneratedPosts}
+                                month={month}
+                                year={year}
+                                monthNames={monthNames}
+                                onExport={exportToPresentation}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function SetupStep({ clientName, setClientName, month, setMonth, year, setYear, objective, setObjective, monthNames, onNext }) {
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+                    <h2 className="text-3xl font-anton text-indie-red mb-6">CONFIGURACIÓN INICIAL</h2>
+                    
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Nombre del Cliente *</label>
+                            <input
+                                type="text"
+                                value={clientName}
+                                onChange={(e) => setClientName(e.target.value)}
+                                placeholder="Ej: Vive Orgánico"
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Mes *</label>
+                                <select
+                                    value={month}
+                                    onChange={(e) => setMonth(e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {monthNames.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Año *</label>
+                                <input
+                                    type="text"
+                                    value={year}
+                                    onChange={(e) => setYear(e.target.value)}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Objetivo del Mes</label>
+                            <textarea
+                                value={objective}
+                                onChange={(e) => setObjective(e.target.value)}
+                                placeholder="Ej: Aumentar engagement 30%, generar 50 leads, posicionar nuevos productos..."
+                                rows="3"
+                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                            ></textarea>
+                        </div>
+
+                        <button
+                            onClick={onNext}
+                            disabled={!clientName || !month}
+                            className="w-full px-6 py-4 bg-indie-red text-white rounded-lg font-anton text-xl hover:bg-indie-red-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            SIGUIENTE: DATOS DE RENDIMIENTO →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function PerformanceStep({ performanceData, setPerformanceData, onNext, onBack }) {
+            const [newPost, setNewPost] = useState({
+                pillar: 'lifestyle',
+                type: 'Post 4:5',
+                likes: '',
+                comments: '',
+                shares: '',
+                reach: ''
+            });
+
+            const addPost = () => {
+                if (newPost.likes || newPost.comments || newPost.shares) {
+                    setPerformanceData([...performanceData, { ...newPost, id: Date.now() }]);
+                    setNewPost({
+                        pillar: 'lifestyle',
+                        type: 'Post 4:5',
+                        likes: '',
+                        comments: '',
+                        shares: '',
+                        reach: ''
+                    });
+                }
+            };
+
+            const skipStep = () => {
+                onNext();
+            };
+
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+                    <h2 className="text-3xl font-anton text-indie-red mb-2">DATOS DEL MES ANTERIOR</h2>
+                    <p className="text-gray-600 mb-6">Ingresa métricas de posts anteriores para que la IA analice qué funciona mejor</p>
+                    
+                    <div className="bg-indie-yellow bg-opacity-10 border-2 border-indie-yellow rounded-xl p-4 mb-6">
+                        <p className="text-sm font-semibold">💡 <strong>Tip:</strong> Puedes saltar este paso y la IA generará recomendaciones basadas en mejores prácticas generales.</p>
+                    </div>
+
+                    {/* Add Post Form */}
+                    <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                        <h3 className="font-bold text-lg mb-4">Agregar Post Anterior</h3>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">Pilar</label>
+                                <select
+                                    value={newPost.pillar}
+                                    onChange={(e) => setNewPost({...newPost, pillar: e.target.value})}
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                >
+                                    {CONTENT_PILLARS.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold mb-2">Tipo</label>
+                                <select
+                                    value={newPost.type}
+                                    onChange={(e) => setNewPost({...newPost, type: e.target.value})}
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                >
+                                    {POST_TYPES.map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-4 gap-3 mb-4">
+                            <div>
+                                <label className="block text-xs font-semibold mb-1">Likes</label>
+                                <input
+                                    type="number"
+                                    value={newPost.likes}
+                                    onChange={(e) => setNewPost({...newPost, likes: e.target.value})}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold mb-1">Comentarios</label>
+                                <input
+                                    type="number"
+                                    value={newPost.comments}
+                                    onChange={(e) => setNewPost({...newPost, comments: e.target.value})}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold mb-1">Compartidos</label>
+                                <input
+                                    type="number"
+                                    value={newPost.shares}
+                                    onChange={(e) => setNewPost({...newPost, shares: e.target.value})}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold mb-1">Alcance</label>
+                                <input
+                                    type="number"
+                                    value={newPost.reach}
+                                    onChange={(e) => setNewPost({...newPost, reach: e.target.value})}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            onClick={addPost}
+                            className="w-full px-4 py-2 bg-indie-blue text-white rounded-lg font-bold hover:opacity-90 transition"
+                        >
+                            + Agregar Post
+                        </button>
+                    </div>
+
+                    {/* Posts List */}
+                    {performanceData.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="font-bold text-lg mb-3">Posts Agregados ({performanceData.length})</h3>
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {performanceData.map((post, i) => {
+                                    const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                                    return (
+                                        <div key={post.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-3 h-3 rounded-full" style={{backgroundColor: pillar.color}}></div>
+                                                <span className="font-semibold">{pillar.name}</span>
+                                                <span className="text-gray-600">-</span>
+                                                <span className="text-sm text-gray-600">{post.type}</span>
+                                            </div>
+                                            <div className="flex items-center gap-4 text-sm">
+                                                <span>❤️ {post.likes || 0}</span>
+                                                <span>💬 {post.comments || 0}</span>
+                                                <span>🔄 {post.shares || 0}</span>
+                                                <button
+                                                    onClick={() => setPerformanceData(performanceData.filter((_, idx) => idx !== i))}
+                                                    className="text-red-600 hover:text-red-800 font-bold"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onBack}
+                            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+                        >
+                            ← ATRÁS
+                        </button>
+                        <button
+                            onClick={skipStep}
+                            className="flex-1 px-6 py-3 bg-gray-400 text-white rounded-lg font-bold hover:bg-gray-500 transition"
+                        >
+                            SALTAR PASO
+                        </button>
+                        <button
+                            onClick={onNext}
+                            className="flex-1 px-6 py-3 bg-indie-red text-white rounded-lg font-anton text-lg hover:bg-indie-red-dark transition"
+                        >
+                            ANALIZAR CON IA →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function AnalysisStep({ isAnalyzing, analysis, onNext }) {
+            if (isAnalyzing) {
+                return (
+                    <div className="bg-white rounded-2xl shadow-xl p-12 animate-fade-in text-center">
+                        <div className="w-24 h-24 bg-gradient-to-br from-indie-red to-indie-red-dark rounded-full mx-auto mb-6 flex items-center justify-center animate-pulse-slow">
+                            <span className="text-white text-4xl font-anton">AI</span>
+                        </div>
+                        <h2 className="text-3xl font-anton text-indie-red mb-4">ANALIZANDO DATOS...</h2>
+                        <p className="text-gray-600 mb-8">La IA está identificando patrones y generando recomendaciones estratégicas</p>
+                        <div className="flex justify-center gap-2">
+                            <div className="w-3 h-3 bg-indie-red rounded-full animate-bounce" style={{animationDelay: '0s'}}></div>
+                            <div className="w-3 h-3 bg-indie-red rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                            <div className="w-3 h-3 bg-indie-red rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (!analysis) return null;
+
+            const topPillar = CONTENT_PILLARS.find(p => p.id === analysis.topPerformer.pillar);
+
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+                    <h2 className="text-3xl font-anton text-indie-red mb-6">✨ ANÁLISIS IA COMPLETADO</h2>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="bg-gradient-to-br from-indie-red to-indie-red-dark text-white rounded-xl p-6">
+                            <div className="text-sm font-semibold opacity-90 mb-2">MEJOR PILAR</div>
+                            <div className="text-3xl font-anton mb-1">{topPillar.name}</div>
+                            <div className="text-sm opacity-75">Engagement promedio: {analysis.topPerformer.engagement}</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-indie-yellow to-yellow-400 text-indie-black rounded-xl p-6">
+                            <div className="text-sm font-semibold opacity-90 mb-2">MEJOR FORMATO</div>
+                            <div className="text-3xl font-anton mb-1">{analysis.bestType}</div>
+                            <div className="text-sm opacity-75">Mayor interacción</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-indie-blue to-teal-400 text-white rounded-xl p-6">
+                            <div className="text-sm font-semibold opacity-90 mb-2">MEJOR HORARIO</div>
+                            <div className="text-3xl font-anton mb-1">{analysis.bestTime}</div>
+                            <div className="text-sm opacity-75">Máximo alcance</div>
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-xl p-6 mb-8">
+                        <h3 className="font-anton text-xl text-indie-red mb-4">🎯 RECOMENDACIONES ESTRATÉGICAS</h3>
+                        <div className="space-y-3">
+                            {analysis.recommendations.map((rec, i) => (
+                                <div key={i} className="flex items-start gap-3">
+                                    <div className="w-6 h-6 bg-indie-red text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                        {i + 1}
+                                    </div>
+                                    <p className="text-gray-700 font-medium">{rec}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-indie-red to-indie-red-dark rounded-xl p-6 mb-6">
+                        <h3 className="font-anton text-xl text-white mb-4">📊 MIX DE CONTENIDO RECOMENDADO</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {CONTENT_PILLARS.map(pillar => (
+                                <div key={pillar.id} className="bg-white bg-opacity-20 rounded-lg p-4 text-center">
+                                    <div className="text-3xl font-anton text-white mb-1">
+                                        {analysis.contentMix[pillar.id]}%
+                                    </div>
+                                    <div className="text-sm text-white opacity-90">{pillar.name}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onNext}
+                        className="w-full px-6 py-4 bg-indie-red text-white rounded-lg font-anton text-xl hover:bg-indie-red-dark transition"
+                    >
+                        GENERAR CALENDARIO CON IA →
+                    </button>
+                </div>
+            );
+        }
+
+        function StrategyStep({ analysis, generatedPosts, clientName, month, onNext, onBack }) {
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-8 animate-fade-in">
+                    <h2 className="text-3xl font-anton text-indie-red mb-2">🚀 ESTRATEGIA GENERADA</h2>
+                    <p className="text-gray-600 mb-6">La IA ha creado {generatedPosts.length} posts optimizados para {clientName} - {month}</p>
+                    
+                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-500 rounded-xl p-6 mb-6">
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-2xl">
+                                ✓
+                            </div>
+                            <div>
+                                <h3 className="font-anton text-xl text-green-900">CALENDARIO LISTO</h3>
+                                <p className="text-sm text-green-700">Todos los posts incluyen copy generado por IA</p>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-white rounded-lg p-3 text-center">
+                                <div className="text-2xl font-anton text-green-600">{generatedPosts.length}</div>
+                                <div className="text-xs text-gray-600">Posts Totales</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 text-center">
+                                <div className="text-2xl font-anton text-green-600">{analysis.bestType}s</div>
+                                <div className="text-xs text-gray-600">Formato Principal</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 text-center">
+                                <div className="text-2xl font-anton text-green-600">100%</div>
+                                <div className="text-xs text-gray-600">Copy IA</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 text-center">
+                                <div className="text-2xl font-anton text-green-600">✓</div>
+                                <div className="text-xs text-gray-600">Hashtags</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <h3 className="font-bold text-lg mb-3">Vista Previa de Posts</h3>
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                            {generatedPosts.slice(0, 5).map((post, i) => {
+                                const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                                return (
+                                    <div key={i} className="border-2 border-gray-200 rounded-xl p-4 hover:border-indie-red transition">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-4 h-4 rounded-full" style={{backgroundColor: pillar.color}}></div>
+                                            <span className="font-bold">{pillar.name}</span>
+                                            <span className="text-gray-400">•</span>
+                                            <span className="text-sm text-gray-600">{post.type}</span>
+                                            <span className="text-gray-400">•</span>
+                                            <span className="text-sm text-gray-600">{new Date(post.date).toLocaleDateString('es-ES')}</span>
+                                            <span className="ml-auto bg-indie-yellow text-indie-black text-xs px-2 py-1 rounded-full font-bold">AI</span>
+                                        </div>
+                                        <p className="text-gray-700 text-sm mb-2 line-clamp-2">{post.copyOut}</p>
+                                        <p className="text-indie-blue text-xs">{post.hashtags}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {generatedPosts.length > 5 && (
+                            <p className="text-center text-sm text-gray-500 mt-3">
+                                + {generatedPosts.length - 5} posts más en el calendario completo
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={onBack}
+                            className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+                        >
+                            ← ATRÁS
+                        </button>
+                        <button
+                            onClick={onNext}
+                            className="flex-1 px-6 py-3 bg-indie-red text-white rounded-lg font-anton text-lg hover:bg-indie-red-dark transition"
+                        >
+                            VER CALENDARIO COMPLETO →
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function CalendarStep({ posts, setPosts, month, year, monthNames, onExport }) {
+            const [selectedPost, setSelectedPost] = useState(null);
+
+            const monthIndex = monthNames.indexOf(month);
+            const firstDay = new Date(year, monthIndex, 1).getDay();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            
+            const getPostsForDay = (day) => {
+                return posts.filter(post => {
+                    const postDay = parseInt(post.date.split('-')[2]);
+                    return postDay === day;
+                });
+            };
+
+            const updatePost = (index, updatedPost) => {
+                setPosts(posts.map((p, i) => i === index ? updatedPost : p));
+                setSelectedPost(null);
+            };
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-xl p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <div>
+                                <h2 className="text-3xl font-anton text-indie-red">CALENDARIO COMPLETO</h2>
+                                <p className="text-gray-600">{month} {year} - {posts.length} posts programados</p>
+                            </div>
+                            <button
+                                onClick={onExport}
+                                className="px-6 py-3 bg-gradient-to-r from-indie-red to-indie-red-dark text-white rounded-lg font-anton text-lg hover:opacity-90 transition shadow-lg"
+                            >
+                                📄 EXPORTAR PRESENTACIÓN
+                            </button>
+                        </div>
+
+                        {/* Calendar Grid */}
+                        <div className="grid grid-cols-7 gap-2 mb-4">
+                            {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(day => (
+                                <div key={day} className="text-center font-bold text-xs text-gray-500 py-2">
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-2">
+                            {[...Array(firstDay)].map((_, i) => (
+                                <div key={`empty-${i}`} className="aspect-square"></div>
+                            ))}
+                            
+                            {[...Array(daysInMonth)].map((_, i) => {
+                                const day = i + 1;
+                                const dayPosts = getPostsForDay(day);
+                                const isToday = new Date().getDate() === day && new Date().getMonth() === monthIndex;
+                                
+                                return (
+                                    <div
+                                        key={day}
+                                        className={`border-2 rounded-lg p-2 aspect-square cursor-pointer transition hover:border-indie-red ${
+                                            isToday ? 'border-indie-red bg-red-50' : 'border-gray-200'
+                                        }`}
+                                        onClick={() => dayPosts.length > 0 && setSelectedPost(posts.findIndex(p => parseInt(p.date.split('-')[2]) === day))}
+                                    >
+                                        <div className="font-bold text-sm text-gray-900 mb-1">{day}</div>
+                                        <div className="space-y-1">
+                                            {dayPosts.map((post, idx) => {
+                                                const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className="text-[8px] px-1 py-0.5 rounded text-white truncate font-semibold"
+                                                        style={{backgroundColor: pillar.color}}
+                                                    >
+                                                        {post.type}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Post Detail Modal */}
+                    {selectedPost !== null && (
+                        <PostDetailModal
+                            post={posts[selectedPost]}
+                            onClose={() => setSelectedPost(null)}
+                            onUpdate={(updated) => updatePost(selectedPost, updated)}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        function PostDetailModal({ post, onClose, onUpdate }) {
+            const [editedPost, setEditedPost] = useState(post);
+            const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 animate-fade-in">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-4 h-4 rounded-full" style={{backgroundColor: pillar.color}}></div>
+                                    <h2 className="text-2xl font-anton" style={{color: pillar.color}}>{pillar.name}</h2>
+                                    {post.aiGenerated && (
+                                        <span className="bg-indie-yellow text-indie-black text-xs px-2 py-1 rounded-full font-bold">AI GENERADO</span>
+                                    )}
+                                </div>
+                                <p className="text-sm text-gray-600">{new Date(post.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+                            </div>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">✕</button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Copy / Caption</label>
+                                <textarea
+                                    value={editedPost.copyOut}
+                                    onChange={(e) => setEditedPost({...editedPost, copyOut: e.target.value})}
+                                    rows="8"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Hashtags</label>
+                                <input
+                                    type="text"
+                                    value={editedPost.hashtags}
+                                    onChange={(e) => setEditedPost({...editedPost, hashtags: e.target.value})}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Plataforma</label>
+                                    <select
+                                        value={editedPost.platform}
+                                        onChange={(e) => setEditedPost({...editedPost, platform: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                    >
+                                        {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
+                                    <select
+                                        value={editedPost.type}
+                                        onChange={(e) => setEditedPost({...editedPost, type: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indie-red"
+                                    >
+                                        {POST_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => onUpdate(editedPost)}
+                                    className="flex-1 px-6 py-3 bg-indie-red text-white rounded-lg font-bold hover:bg-indie-red-dark transition"
+                                >
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<AIContentStrategist />, document.getElementById('root'));
+    </script>
+</body>
+</html>

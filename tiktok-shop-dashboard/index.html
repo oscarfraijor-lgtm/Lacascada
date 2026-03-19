@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Shop Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+        .animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+        .animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+        .animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
+    </style>
+</head>
+<body class="bg-amber-50 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function Dashboard() {
+            const [timeRange, setTimeRange] = useState('7days');
+            const [darkMode, setDarkMode] = useState(false);
+            
+            // Sample data - in real app, this would come from TikTok API
+            const metrics = {
+                totalRevenue: 45280,
+                totalOrders: 342,
+                avgOrderValue: 132.40,
+                conversionRate: 3.8
+            };
+
+            const topProducts = [
+                { name: 'Wireless Earbuds Pro', sales: 89, revenue: 4450 },
+                { name: 'LED Ring Light', sales: 76, revenue: 3800 },
+                { name: 'Phone Grip Stand', sales: 64, revenue: 1920 },
+                { name: 'Portable Charger', sales: 52, revenue: 2600 },
+                { name: 'Screen Protector Kit', sales: 61, revenue: 1220 }
+            ];
+
+            const dailyData = [
+                { day: 'Monday', revenue: 5200, orders: 42 },
+                { day: 'Tuesday', revenue: 6100, orders: 48 },
+                { day: 'Wednesday', revenue: 5800, orders: 45 },
+                { day: 'Thursday', revenue: 7200, orders: 56 },
+                { day: 'Friday', revenue: 6900, orders: 52 },
+                { day: 'Saturday', revenue: 8100, orders: 61 },
+                { day: 'Sunday', revenue: 5900, orders: 38 }
+            ];
+
+            const exportToCSV = () => {
+                const csvContent = [
+                    ['Metric', 'Value'],
+                    ['Total Revenue', `$${metrics.totalRevenue}`],
+                    ['Total Orders', metrics.totalOrders],
+                    ['Avg Order Value', `$${metrics.avgOrderValue}`],
+                    ['Conversion Rate', `${metrics.conversionRate}%`],
+                    [''],
+                    ['Daily Data'],
+                    ['Day', 'Revenue', 'Orders'],
+                    ...dailyData.map(d => [d.day, `$${d.revenue}`, d.orders]),
+                    [''],
+                    ['Top Products'],
+                    ['Product', 'Sales', 'Revenue'],
+                    ...topProducts.map(p => [p.name, p.sales, `$${p.revenue}`])
+                ].map(row => row.join(',')).join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `tiktok-shop-report-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
+
+            useEffect(() => {
+                document.body.className = darkMode 
+                    ? 'bg-gray-900 transition-colors duration-300' 
+                    : 'bg-amber-50 transition-colors duration-300';
+            }, [darkMode]);
+
+            useEffect(() => {
+                // Revenue Chart
+                const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+                new Chart(revenueCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Revenue ($)',
+                            data: [5200, 6100, 5800, 7200, 6900, 8100, 5900],
+                            borderColor: 'rgb(217, 119, 6)',
+                            backgroundColor: 'rgba(217, 119, 6, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+
+                // Orders Chart
+                const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+                new Chart(ordersCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Orders',
+                            data: [42, 48, 45, 56, 52, 61, 38],
+                            backgroundColor: 'rgb(194, 120, 87)',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }, []);
+
+            return (
+                <div className={`min-h-screen p-4 sm:p-6 lg:p-8 ${darkMode ? 'bg-gray-900' : ''}`}>
+                    {/* Header */}
+                    <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in-up">
+                        <div>
+                            <h1 className={`text-2xl sm:text-3xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>TikTok Shop Dashboard</h1>
+                            <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>Track your shop performance in real-time</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={exportToCSV}
+                                className={`px-4 py-2 rounded-lg font-medium transition flex items-center gap-2 ${
+                                    darkMode 
+                                        ? 'bg-gray-800 text-white hover:bg-gray-700' 
+                                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                            >
+                                📥 Export CSV
+                            </button>
+                            <button
+                                onClick={() => setDarkMode(!darkMode)}
+                                className={`px-4 py-2 rounded-lg font-medium transition ${
+                                    darkMode 
+                                        ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                                        : 'bg-gray-800 text-white hover:bg-gray-700'
+                                }`}
+                            >
+                                {darkMode ? '☀️' : '🌙'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Time Range Selector */}
+                    <div className="mb-6 flex flex-wrap gap-2 animate-fade-in-up animate-delay-1">
+                        {['7days', '30days', '90days'].map(range => (
+                            <button
+                                key={range}
+                                onClick={() => setTimeRange(range)}
+                                className={`px-4 py-2 rounded-lg font-medium transition ${
+                                    timeRange === range 
+                                        ? 'bg-amber-600 text-white' 
+                                        : darkMode
+                                            ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                            : 'bg-white text-gray-700 hover:bg-amber-50'
+                                }`}
+                            >
+                                {range === '7days' ? 'Last 7 Days' : range === '30days' ? 'Last 30 Days' : 'Last 90 Days'}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Metrics Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 animate-fade-in-up animate-delay-2">
+                        <MetricCard 
+                            title="Total Revenue" 
+                            value={`$${metrics.totalRevenue.toLocaleString()}`}
+                            change="+12.5%"
+                            positive={true}
+                            darkMode={darkMode}
+                        />
+                        <MetricCard 
+                            title="Total Orders" 
+                            value={metrics.totalOrders}
+                            change="+8.2%"
+                            positive={true}
+                            darkMode={darkMode}
+                        />
+                        <MetricCard 
+                            title="Avg Order Value" 
+                            value={`$${metrics.avgOrderValue}`}
+                            change="+3.1%"
+                            positive={true}
+                            darkMode={darkMode}
+                        />
+                        <MetricCard 
+                            title="Conversion Rate" 
+                            value={`${metrics.conversionRate}%`}
+                            change="-0.4%"
+                            positive={false}
+                            darkMode={darkMode}
+                        />
+                    </div>
+
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-8 animate-fade-in-up animate-delay-3">
+                        <div className={`rounded-xl shadow-sm p-4 sm:p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Revenue Trend</h3>
+                            <div className="h-64">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                        <div className={`rounded-xl shadow-sm p-4 sm:p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                            <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Orders by Day</h3>
+                            <div className="h-64">
+                                <canvas id="ordersChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recommendations */}
+                    <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl shadow-sm p-4 sm:p-6 mb-8 text-white animate-fade-in-up animate-delay-4">
+                        <h3 className="text-lg font-semibold mb-3">📊 Recommended Next Steps</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                                <h4 className="font-semibold mb-2">🎯 Boost Top Performers</h4>
+                                <p className="text-sm text-amber-50">Increase ad spend on Wireless Earbuds Pro - it's your #1 seller with strong margins</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                                <h4 className="font-semibold mb-2">📈 Improve Conversion</h4>
+                                <p className="text-sm text-amber-50">Your conversion rate dipped 0.4%. Consider A/B testing product videos and descriptions</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur rounded-lg p-4">
+                                <h4 className="font-semibold mb-2">💰 Bundle Strategy</h4>
+                                <p className="text-sm text-amber-50">Create bundles with Ring Light + Phone Grip to increase average order value</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Top Products */}
+                    <div className={`rounded-xl shadow-sm p-4 sm:p-6 mb-8 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                        <h3 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Top Products</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                                        <th className={`text-left py-3 px-2 sm:px-4 text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Product</th>
+                                        <th className={`text-right py-3 px-2 sm:px-4 text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Sales</th>
+                                        <th className={`text-right py-3 px-2 sm:px-4 text-sm font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {topProducts.map((product, idx) => (
+                                        <tr key={idx} className={`border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-100 hover:bg-gray-50'}`}>
+                                            <td className={`py-3 px-2 sm:px-4 text-sm ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>{product.name}</td>
+                                            <td className={`py-3 px-2 sm:px-4 text-sm text-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{product.sales}</td>
+                                            <td className={`py-3 px-2 sm:px-4 text-sm text-right font-medium ${darkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                                                ${product.revenue.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <footer className={`mt-12 pt-8 border-t ${darkMode ? 'border-gray-700' : 'border-amber-200'}`}>
+                        <div className="text-center">
+                            <h3 className={`text-xl font-bold mb-2 ${darkMode ? 'text-amber-400' : 'text-amber-900'}`}>INDIE PRO MARKETING</h3>
+                            <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Empowering TikTok Shop Success</p>
+                            <div className={`flex flex-wrap justify-center gap-3 sm:gap-6 text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                                <span>© 2026 Indie Pro Marketing</span>
+                                <span>•</span>
+                                <span>Dashboard v1.0</span>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        function MetricCard({ title, value, change, positive, darkMode }) {
+            return (
+                <div className={`rounded-xl shadow-sm p-4 sm:p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+                    <p className={`text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{title}</p>
+                    <p className={`text-xl sm:text-2xl font-bold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+                    <p className={`text-sm font-medium ${positive ? 'text-amber-600' : 'text-orange-600'}`}>
+                        {change} vs last period
+                    </p>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

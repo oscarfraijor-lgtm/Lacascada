@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Content Calendar - Indie Pro Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const PLATFORMS = [
+            { id: 'tiktok', name: 'TikTok', color: 'bg-black', icon: '🎵' },
+            { id: 'instagram', name: 'Instagram', color: 'bg-gradient-to-r from-purple-500 to-pink-500', icon: '📷' },
+            { id: 'facebook', name: 'Facebook', color: 'bg-blue-600', icon: '👥' },
+            { id: 'youtube', name: 'YouTube', color: 'bg-red-600', icon: '▶️' }
+        ];
+
+        const POST_TYPES = ['Video', 'Image', 'Carousel', 'Story', 'Reel', 'Live'];
+        const STATUSES = ['Planned', 'In Progress', 'Ready', 'Posted', 'Cancelled'];
+
+        function ContentCalendar() {
+            const [currentDate, setCurrentDate] = useState(new Date());
+            const [posts, setPosts] = useState([]);
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [selectedDate, setSelectedDate] = useState(null);
+            const [view, setView] = useState('calendar'); // 'calendar' or 'list'
+
+            const getDaysInMonth = (date) => {
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startingDayOfWeek = firstDay.getDay();
+                
+                return { daysInMonth, startingDayOfWeek, year, month };
+            };
+
+            const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentDate);
+
+            const getPostsForDate = (day) => {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                return posts.filter(post => post.date === dateStr);
+            };
+
+            const addPost = (postData) => {
+                setPosts([...posts, { ...postData, id: Date.now() }]);
+                setShowAddModal(false);
+            };
+
+            const deletePost = (id) => {
+                setPosts(posts.filter(post => post.id !== id));
+            };
+
+            const updatePostStatus = (id, newStatus) => {
+                setPosts(posts.map(post => 
+                    post.id === id ? { ...post, status: newStatus } : post
+                ));
+            };
+
+            const exportToCSV = () => {
+                const headers = ['Date', 'Platform', 'Post Type', 'Caption', 'Status', 'Hashtags'];
+                const rows = posts.map(post => [
+                    post.date,
+                    post.platform,
+                    post.type,
+                    `"${post.caption.replace(/"/g, '""')}"`,
+                    post.status,
+                    post.hashtags
+                ]);
+                
+                const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `content-calendar-${year}-${month + 1}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            };
+
+            const previousMonth = () => {
+                setCurrentDate(new Date(year, month - 1, 1));
+            };
+
+            const nextMonth = () => {
+                setCurrentDate(new Date(year, month + 1, 1));
+            };
+
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+
+            return (
+                <div className="min-h-screen p-4 sm:p-8">
+                    {/* Header */}
+                    <div className="max-w-7xl mx-auto mb-8">
+                        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 animate-fade-in">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <div>
+                                    <h1 className="text-3xl sm:text-4xl font-bold text-amber-900 mb-2">
+                                        INDIE PRO MARKETING
+                                    </h1>
+                                    <p className="text-gray-600">Social Media Content Calendar</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setView(view === 'calendar' ? 'list' : 'calendar')}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition"
+                                    >
+                                        {view === 'calendar' ? '📋 List View' : '📅 Calendar View'}
+                                    </button>
+                                    <button
+                                        onClick={exportToCSV}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition"
+                                    >
+                                        📥 Export CSV
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Calendar Navigation */}
+                    <div className="max-w-7xl mx-auto mb-6">
+                        <div className="bg-white rounded-xl shadow-lg p-4 flex justify-between items-center">
+                            <button
+                                onClick={previousMonth}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+                            >
+                                ← Previous
+                            </button>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {monthNames[month]} {year}
+                            </h2>
+                            <button
+                                onClick={nextMonth}
+                                className="px-4 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto">
+                        {view === 'calendar' ? (
+                            <CalendarView
+                                daysInMonth={daysInMonth}
+                                startingDayOfWeek={startingDayOfWeek}
+                                getPostsForDate={getPostsForDate}
+                                onDateClick={(day) => {
+                                    setSelectedDate(`${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+                                    setShowAddModal(true);
+                                }}
+                                onPostClick={(post) => {
+                                    // Could open edit modal here
+                                }}
+                                deletePost={deletePost}
+                                updatePostStatus={updatePostStatus}
+                            />
+                        ) : (
+                            <ListView
+                                posts={posts}
+                                deletePost={deletePost}
+                                updatePostStatus={updatePostStatus}
+                            />
+                        )}
+                    </div>
+
+                    {/* Add Post FAB */}
+                    <button
+                        onClick={() => {
+                            setSelectedDate(null);
+                            setShowAddModal(true);
+                        }}
+                        className="no-print fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-full shadow-2xl hover:scale-110 transition-transform text-2xl font-bold"
+                    >
+                        +
+                    </button>
+
+                    {/* Add Post Modal */}
+                    {showAddModal && (
+                        <AddPostModal
+                            onClose={() => setShowAddModal(false)}
+                            onAdd={addPost}
+                            preselectedDate={selectedDate}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        function CalendarView({ daysInMonth, startingDayOfWeek, getPostsForDate, onDateClick, deletePost, updatePostStatus }) {
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6">
+                    {/* Day Headers */}
+                    <div className="grid grid-cols-7 gap-2 mb-4">
+                        {dayNames.map(day => (
+                            <div key={day} className="text-center font-bold text-gray-700 py-2">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-2">
+                        {/* Empty cells for days before month starts */}
+                        {[...Array(startingDayOfWeek)].map((_, i) => (
+                            <div key={`empty-${i}`} className="aspect-square"></div>
+                        ))}
+
+                        {/* Days of the month */}
+                        {[...Array(daysInMonth)].map((_, i) => {
+                            const day = i + 1;
+                            const dayPosts = getPostsForDate(day);
+                            const isToday = new Date().getDate() === day && 
+                                          new Date().getMonth() === new Date().getMonth();
+
+                            return (
+                                <div
+                                    key={day}
+                                    className={`aspect-square border-2 rounded-lg p-2 cursor-pointer transition hover:border-amber-500 ${
+                                        isToday ? 'border-amber-600 bg-amber-50' : 'border-gray-200'
+                                    }`}
+                                    onClick={() => onDateClick(day)}
+                                >
+                                    <div className="font-semibold text-gray-900 mb-1">{day}</div>
+                                    <div className="space-y-1 overflow-y-auto max-h-20">
+                                        {dayPosts.map(post => {
+                                            const platform = PLATFORMS.find(p => p.id === post.platform);
+                                            return (
+                                                <div
+                                                    key={post.id}
+                                                    className={`text-xs px-1 py-0.5 rounded text-white ${platform.color} truncate`}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {platform.icon} {post.type}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function ListView({ posts, deletePost, updatePostStatus }) {
+            const sortedPosts = [...posts].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            return (
+                <div className="bg-white rounded-2xl shadow-xl p-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-6">All Posts</h3>
+                    
+                    {sortedPosts.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <p className="text-xl mb-2">📅 No posts scheduled yet</p>
+                            <p>Click the + button to add your first post!</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {sortedPosts.map(post => {
+                                const platform = PLATFORMS.find(p => p.id === post.platform);
+                                return (
+                                    <div key={post.id} className="border-2 border-gray-200 rounded-xl p-4 hover:border-amber-500 transition">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <span className={`px-3 py-1 rounded-lg text-white ${platform.color} font-semibold`}>
+                                                    {platform.icon} {platform.name}
+                                                </span>
+                                                <span className="px-3 py-1 bg-gray-200 rounded-lg font-medium text-gray-700">
+                                                    {post.type}
+                                                </span>
+                                                <span className="text-gray-600 font-medium">
+                                                    📅 {new Date(post.date).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={() => deletePost(post.id)}
+                                                className="text-red-600 hover:text-red-800 font-bold"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                        
+                                        <p className="text-gray-800 mb-2">{post.caption}</p>
+                                        
+                                        {post.hashtags && (
+                                            <p className="text-blue-600 text-sm mb-3">{post.hashtags}</p>
+                                        )}
+                                        
+                                        <div className="flex gap-2">
+                                            {STATUSES.map(status => (
+                                                <button
+                                                    key={status}
+                                                    onClick={() => updatePostStatus(post.id, status)}
+                                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition ${
+                                                        post.status === status
+                                                            ? 'bg-amber-600 text-white'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    {status}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function AddPostModal({ onClose, onAdd, preselectedDate }) {
+            const [formData, setFormData] = useState({
+                platform: 'tiktok',
+                type: 'Video',
+                date: preselectedDate || new Date().toISOString().split('T')[0],
+                caption: '',
+                hashtags: '',
+                status: 'Planned'
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.caption.trim()) {
+                    onAdd(formData);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 no-print">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 animate-fade-in">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">Add New Post</h2>
+                            <button
+                                onClick={onClose}
+                                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Platform *</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {PLATFORMS.map(platform => (
+                                        <button
+                                            key={platform.id}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, platform: platform.id })}
+                                            className={`p-3 rounded-lg font-semibold transition ${
+                                                formData.platform === platform.id
+                                                    ? `${platform.color} text-white`
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {platform.icon} {platform.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Post Type *</label>
+                                <select
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                >
+                                    {POST_TYPES.map(type => (
+                                        <option key={type} value={type}>{type}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Date *</label>
+                                <input
+                                    type="date"
+                                    value={formData.date}
+                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Caption *</label>
+                                <textarea
+                                    value={formData.caption}
+                                    onChange={(e) => setFormData({ ...formData, caption: e.target.value })}
+                                    placeholder="Write your post caption here..."
+                                    rows="4"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Hashtags (Optional)</label>
+                                <input
+                                    type="text"
+                                    value={formData.hashtags}
+                                    onChange={(e) => setFormData({ ...formData, hashtags: e.target.value })}
+                                    placeholder="#marketing #tiktok #socialmedia"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                >
+                                    {STATUSES.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition"
+                                >
+                                    Add Post
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ContentCalendar />, document.getElementById('root'));
+    </script>
+</body>
+</html>

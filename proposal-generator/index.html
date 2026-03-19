@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposal Generator - Indie Pro Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .proposal-content { 
+                padding: 40px;
+                box-shadow: none;
+            }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-50 min-h-screen">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState } = React;
+
+        function ProposalGenerator() {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({
+                clientName: '',
+                clientCompany: '',
+                clientEmail: '',
+                projectType: 'TikTok Shop Management',
+                budget: '',
+                duration: '3 months',
+                services: [],
+                startDate: '',
+                additionalNotes: ''
+            });
+            const [showPreview, setShowPreview] = useState(false);
+
+            const serviceOptions = [
+                { id: 'shop-setup', name: 'TikTok Shop Setup & Optimization', price: 2500 },
+                { id: 'content-creation', name: 'Content Creation (10 videos/month)', price: 3000 },
+                { id: 'ad-management', name: 'TikTok Ads Management', price: 2000 },
+                { id: 'analytics', name: 'Analytics & Reporting', price: 1500 },
+                { id: 'influencer', name: 'Influencer Outreach', price: 2500 },
+                { id: 'seo', name: 'Product SEO Optimization', price: 1000 }
+            ];
+
+            const handleInputChange = (field, value) => {
+                setFormData({ ...formData, [field]: value });
+            };
+
+            const toggleService = (serviceId) => {
+                const services = formData.services.includes(serviceId)
+                    ? formData.services.filter(s => s !== serviceId)
+                    : [...formData.services, serviceId];
+                setFormData({ ...formData, services });
+            };
+
+            const calculateTotal = () => {
+                return formData.services.reduce((total, serviceId) => {
+                    const service = serviceOptions.find(s => s.id === serviceId);
+                    return total + (service?.price || 0);
+                }, 0);
+            };
+
+            const generateProposal = () => {
+                setShowPreview(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const printProposal = () => {
+                window.print();
+            };
+
+            const resetForm = () => {
+                setFormData({
+                    clientName: '',
+                    clientCompany: '',
+                    clientEmail: '',
+                    projectType: 'TikTok Shop Management',
+                    budget: '',
+                    duration: '3 months',
+                    services: [],
+                    startDate: '',
+                    additionalNotes: ''
+                });
+                setShowPreview(false);
+                setStep(1);
+            };
+
+            if (showPreview) {
+                return <ProposalPreview 
+                    formData={formData} 
+                    serviceOptions={serviceOptions}
+                    total={calculateTotal()}
+                    onEdit={() => setShowPreview(false)}
+                    onPrint={printProposal}
+                    onReset={resetForm}
+                />;
+            }
+
+            return (
+                <div className="container mx-auto px-4 py-8 max-w-4xl">
+                    {/* Header */}
+                    <div className="text-center mb-8 no-print">
+                        <h1 className="text-4xl font-bold text-amber-900 mb-2">INDIE PRO MARKETING</h1>
+                        <p className="text-xl text-gray-700">Client Proposal Generator</p>
+                        <p className="text-sm text-gray-600 mt-2">Create professional proposals in minutes</p>
+                    </div>
+
+                    {/* Progress Steps */}
+                    <div className="flex justify-center mb-8 no-print">
+                        <div className="flex items-center gap-4">
+                            <StepIndicator number={1} active={step === 1} completed={step > 1} label="Client Info" />
+                            <div className="w-12 h-1 bg-gray-300"></div>
+                            <StepIndicator number={2} active={step === 2} completed={step > 2} label="Services" />
+                            <div className="w-12 h-1 bg-gray-300"></div>
+                            <StepIndicator number={3} active={step === 3} completed={step > 3} label="Details" />
+                        </div>
+                    </div>
+
+                    {/* Form Card */}
+                    <div className="bg-white rounded-2xl shadow-xl p-8 animate-slide-in">
+                        {step === 1 && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Step 1: Client Information</h2>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Client Name *</label>
+                                        <input
+                                            type="text"
+                                            value={formData.clientName}
+                                            onChange={(e) => handleInputChange('clientName', e.target.value)}
+                                            placeholder="John Smith"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name *</label>
+                                        <input
+                                            type="text"
+                                            value={formData.clientCompany}
+                                            onChange={(e) => handleInputChange('clientCompany', e.target.value)}
+                                            placeholder="Acme Corporation"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                                        <input
+                                            type="email"
+                                            value={formData.clientEmail}
+                                            onChange={(e) => handleInputChange('clientEmail', e.target.value)}
+                                            placeholder="john@acme.com"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Project Type</label>
+                                        <select
+                                            value={formData.projectType}
+                                            onChange={(e) => handleInputChange('projectType', e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        >
+                                            <option>TikTok Shop Management</option>
+                                            <option>Social Media Marketing</option>
+                                            <option>Content Creation Package</option>
+                                            <option>Full Marketing Suite</option>
+                                            <option>Custom Project</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => setStep(2)}
+                                    disabled={!formData.clientName || !formData.clientCompany || !formData.clientEmail}
+                                    className="mt-6 w-full bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                >
+                                    Next: Select Services →
+                                </button>
+                            </div>
+                        )}
+
+                        {step === 2 && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Step 2: Select Services</h2>
+                                
+                                <div className="space-y-3 mb-6">
+                                    {serviceOptions.map(service => (
+                                        <div
+                                            key={service.id}
+                                            onClick={() => toggleService(service.id)}
+                                            className={`p-4 border-2 rounded-lg cursor-pointer transition ${
+                                                formData.services.includes(service.id)
+                                                    ? 'border-amber-600 bg-amber-50'
+                                                    : 'border-gray-200 hover:border-amber-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.services.includes(service.id)}
+                                                        onChange={() => {}}
+                                                        className="w-5 h-5 text-amber-600"
+                                                    />
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{service.name}</p>
+                                                    </div>
+                                                </div>
+                                                <p className="text-lg font-bold text-amber-700">${service.price.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4 mb-6">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-lg font-semibold text-gray-900">Total Investment:</span>
+                                        <span className="text-2xl font-bold text-amber-700">${calculateTotal().toLocaleString()}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setStep(1)}
+                                        className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                    >
+                                        ← Back
+                                    </button>
+                                    <button
+                                        onClick={() => setStep(3)}
+                                        disabled={formData.services.length === 0}
+                                        className="flex-1 bg-amber-600 text-white py-3 rounded-lg font-semibold hover:bg-amber-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                    >
+                                        Next: Project Details →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 3 && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-6">Step 3: Project Details</h2>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Project Duration</label>
+                                        <select
+                                            value={formData.duration}
+                                            onChange={(e) => handleInputChange('duration', e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        >
+                                            <option>1 month</option>
+                                            <option>3 months</option>
+                                            <option>6 months</option>
+                                            <option>12 months</option>
+                                            <option>Ongoing</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Proposed Start Date</label>
+                                        <input
+                                            type="date"
+                                            value={formData.startDate}
+                                            onChange={(e) => handleInputChange('startDate', e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-2">Additional Notes (Optional)</label>
+                                        <textarea
+                                            value={formData.additionalNotes}
+                                            onChange={(e) => handleInputChange('additionalNotes', e.target.value)}
+                                            placeholder="Any special requirements, goals, or notes for this client..."
+                                            rows="4"
+                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                        ></textarea>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 mt-6">
+                                    <button
+                                        onClick={() => setStep(2)}
+                                        className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                    >
+                                        ← Back
+                                    </button>
+                                    <button
+                                        onClick={generateProposal}
+                                        className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 rounded-lg font-semibold hover:from-amber-700 hover:to-orange-700 transition"
+                                    >
+                                        🎉 Generate Proposal
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function StepIndicator({ number, active, completed, label }) {
+            return (
+                <div className="flex flex-col items-center">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition ${
+                        completed ? 'bg-green-500 text-white' :
+                        active ? 'bg-amber-600 text-white' :
+                        'bg-gray-300 text-gray-600'
+                    }`}>
+                        {completed ? '✓' : number}
+                    </div>
+                    <span className="text-xs mt-1 text-gray-600">{label}</span>
+                </div>
+            );
+        }
+
+        function ProposalPreview({ formData, serviceOptions, total, onEdit, onPrint, onReset }) {
+            const selectedServices = serviceOptions.filter(s => formData.services.includes(s.id));
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            return (
+                <div className="min-h-screen bg-gray-100 py-8">
+                    {/* Action Buttons */}
+                    <div className="container mx-auto px-4 max-w-4xl mb-6 no-print">
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={onEdit}
+                                className="px-6 py-2 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition"
+                            >
+                                ✏️ Edit
+                            </button>
+                            <button
+                                onClick={onPrint}
+                                className="px-6 py-2 bg-amber-600 text-white rounded-lg font-semibold hover:bg-amber-700 transition"
+                            >
+                                🖨️ Print/Save PDF
+                            </button>
+                            <button
+                                onClick={onReset}
+                                className="px-6 py-2 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition"
+                            >
+                                🔄 New Proposal
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Proposal Document */}
+                    <div className="container mx-auto px-4 max-w-4xl">
+                        <div className="bg-white rounded-lg shadow-2xl p-12 proposal-content">
+                            {/* Header */}
+                            <div className="border-b-4 border-amber-600 pb-6 mb-8">
+                                <h1 className="text-4xl font-bold text-amber-900 mb-2">INDIE PRO MARKETING</h1>
+                                <p className="text-gray-600">Empowering TikTok Shop Success</p>
+                            </div>
+
+                            {/* Proposal Title */}
+                            <div className="mb-8">
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">Marketing Proposal</h2>
+                                <p className="text-gray-600">Prepared for {formData.clientCompany}</p>
+                                <p className="text-sm text-gray-500">Date: {today}</p>
+                            </div>
+
+                            {/* Client Information */}
+                            <div className="mb-8 bg-amber-50 p-6 rounded-lg">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Client Information</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-sm text-gray-600">Contact Person</p>
+                                        <p className="font-semibold text-gray-900">{formData.clientName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Company</p>
+                                        <p className="font-semibold text-gray-900">{formData.clientCompany}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Email</p>
+                                        <p className="font-semibold text-gray-900">{formData.clientEmail}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Project Type</p>
+                                        <p className="font-semibold text-gray-900">{formData.projectType}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Executive Summary */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Executive Summary</h3>
+                                <p className="text-gray-700 leading-relaxed">
+                                    Thank you for considering Indie Pro Marketing for your {formData.projectType.toLowerCase()} needs. 
+                                    We are excited to present this comprehensive proposal tailored specifically for {formData.clientCompany}. 
+                                    Our team specializes in TikTok Shop growth and social media marketing, and we're confident we can 
+                                    deliver exceptional results for your business.
+                                </p>
+                            </div>
+
+                            {/* Proposed Services */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Proposed Services</h3>
+                                <div className="space-y-3">
+                                    {selectedServices.map((service, idx) => (
+                                        <div key={service.id} className="flex justify-between items-start p-4 bg-gray-50 rounded-lg">
+                                            <div className="flex-1">
+                                                <p className="font-semibold text-gray-900">{idx + 1}. {service.name}</p>
+                                            </div>
+                                            <p className="font-bold text-amber-700 ml-4">${service.price.toLocaleString()}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Project Timeline */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Project Timeline</h3>
+                                <div className="bg-gray-50 p-6 rounded-lg">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-sm text-gray-600">Duration</p>
+                                            <p className="font-semibold text-gray-900">{formData.duration}</p>
+                                        </div>
+                                        {formData.startDate && (
+                                            <div>
+                                                <p className="text-sm text-gray-600">Proposed Start Date</p>
+                                                <p className="font-semibold text-gray-900">
+                                                    {new Date(formData.startDate).toLocaleDateString('en-US', { 
+                                                        year: 'numeric', 
+                                                        month: 'long', 
+                                                        day: 'numeric' 
+                                                    })}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Additional Notes */}
+                            {formData.additionalNotes && (
+                                <div className="mb-8">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Additional Notes</h3>
+                                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                                        <p className="text-gray-700 whitespace-pre-wrap">{formData.additionalNotes}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Investment Summary */}
+                            <div className="mb-8 bg-gradient-to-r from-amber-500 to-orange-500 p-8 rounded-lg text-white">
+                                <h3 className="text-2xl font-bold mb-4">Investment Summary</h3>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xl">Total Investment:</span>
+                                    <span className="text-4xl font-bold">${total.toLocaleString()}</span>
+                                </div>
+                                <p className="text-sm mt-4 text-amber-50">
+                                    Payment terms: 50% upfront, 50% upon project completion
+                                </p>
+                            </div>
+
+                            {/* Next Steps */}
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold text-gray-900 mb-4">Next Steps</h3>
+                                <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                                    <li>Review this proposal and reach out with any questions</li>
+                                    <li>Schedule a kickoff call to discuss project details</li>
+                                    <li>Sign the service agreement</li>
+                                    <li>Begin your journey to TikTok Shop success!</li>
+                                </ol>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="border-t-2 border-gray-200 pt-6 mt-8">
+                                <p className="text-center text-gray-600 mb-2">
+                                    We look forward to partnering with {formData.clientCompany}!
+                                </p>
+                                <p className="text-center text-sm text-gray-500">
+                                    INDIE PRO MARKETING | contact@indiepromarketing.com | (555) 123-4567
+                                </p>
+                                <p className="text-center text-xs text-gray-400 mt-2">
+                                    This proposal is valid for 30 days from the date of issue.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<ProposalGenerator />, document.getElementById('root'));
+    </script>
+</body>
+</html>

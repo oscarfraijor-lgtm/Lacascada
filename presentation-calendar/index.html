@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Calendar Presentation - Indie Pro Marketing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'anton': ['Anton', 'sans-serif'],
+                        'montserrat': ['Montserrat', 'sans-serif']
+                    },
+                    colors: {
+                        'indie-red': '#ED2450',
+                        'indie-red-dark': '#E4003B',
+                        'indie-black': '#010101',
+                        'indie-yellow': '#FDD811',
+                        'indie-blue': '#00C1B2'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @media print {
+            @page { size: 8.5in 11in; margin: 0; }
+            html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .slide {
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            .no-print { display: none !important; }
+        }
+        
+        .slide {
+            width: 8.5in;
+            height: 11in;
+            padding: 0.75in;
+            background: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .animate-slide-in { animation: slideIn 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        const CONTENT_PILLARS = [
+            { id: 'lifestyle', name: 'LIFESTYLE', color: 'bg-indie-red', description: 'Bienestar - Uso de productos en el día a día' },
+            { id: 'efemérides', name: 'EFEMÉRIDES', color: 'bg-indie-yellow', description: 'Fechas destacadas - Contenido estacional' },
+            { id: 'comunidad', name: 'COMUNIDAD', color: 'bg-indie-blue', description: 'Comunidad & Comercio Local' },
+            { id: 'productos', name: 'PRODUCTOS', color: 'bg-indie-red-dark', description: 'Beneficios - Características de productos' }
+        ];
+
+        const PLATFORMS = ['Instagram', 'Facebook', 'TikTok', 'YouTube'];
+        const POST_TYPES = ['Post 4:5', 'Reel', 'Story', 'Video', 'Carousel'];
+
+        function PresentationCalendar() {
+            const [currentSlide, setCurrentSlide] = useState(0);
+            const [clientName, setClientName] = useState('');
+            const [month, setMonth] = useState('');
+            const [year, setYear] = useState('2026');
+            const [objective, setObjective] = useState('');
+            const [target, setTarget] = useState('');
+            const [posts, setPosts] = useState([]);
+            const [showSetup, setShowSetup] = useState(true);
+            const [editingPost, setEditingPost] = useState(null);
+
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            const slides = [
+                { type: 'cover', title: 'Portada' },
+                { type: 'brief', title: 'Brief Mensual' },
+                { type: 'pillars', title: 'Pilares de Contenido' },
+                { type: 'calendar', title: 'Calendario' },
+                ...posts.map((post, i) => ({ type: 'post', title: `Post ${i + 1}`, post }))
+            ];
+
+            const addPost = (postData) => {
+                if (editingPost !== null) {
+                    setPosts(posts.map((p, i) => i === editingPost ? postData : p));
+                    setEditingPost(null);
+                } else {
+                    setPosts([...posts, postData]);
+                }
+            };
+
+            const deletePost = (index) => {
+                setPosts(posts.filter((_, i) => i !== index));
+            };
+
+            const exportToPDF = () => {
+                window.print();
+            };
+
+            if (showSetup) {
+                return <SetupScreen 
+                    clientName={clientName}
+                    setClientName={setClientName}
+                    month={month}
+                    setMonth={setMonth}
+                    year={year}
+                    setYear={setYear}
+                    objective={objective}
+                    setObjective={setObjective}
+                    target={target}
+                    setTarget={setTarget}
+                    onStart={() => setShowSetup(false)}
+                    monthNames={monthNames}
+                />;
+            }
+
+            return (
+                <div className="min-h-screen bg-gray-100">
+                    {/* Navigation Bar */}
+                    <div className="no-print fixed top-0 left-0 right-0 bg-white shadow-lg z-50 border-b-4 border-amber-600">
+                        <div className="max-w-7xl mx-auto px-6 py-4">
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900">INDIE PRO MARKETING</h1>
+                                    <p className="text-sm text-gray-600">{clientName} - {month} {year}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowSetup(true)}
+                                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                    >
+                                        ⚙️ Configuración
+                                    </button>
+                                    <button
+                                        onClick={exportToPDF}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition"
+                                    >
+                                        📄 Exportar PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Slide Navigation */}
+                    <div className="no-print fixed left-0 top-24 bottom-0 w-64 bg-white shadow-lg overflow-y-auto border-r-4 border-amber-600">
+                        <div className="p-4">
+                            <h3 className="text-sm font-bold text-gray-500 uppercase mb-3">Diapositivas</h3>
+                            {slides.map((slide, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setCurrentSlide(index)}
+                                    className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition ${
+                                        currentSlide === index
+                                            ? 'bg-amber-600 text-white font-bold'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    <div className="text-xs opacity-75">{index + 1} de {slides.length}</div>
+                                    <div className="font-semibold">{slide.title}</div>
+                                </button>
+                            ))}
+                            
+                            <button
+                                onClick={() => {
+                                    setEditingPost(null);
+                                    setCurrentSlide(-1);
+                                }}
+                                className="w-full mt-4 px-4 py-3 bg-indie-red text-white rounded-lg font-anton text-lg hover:bg-indie-red-dark transition"
+                            >
+                                + AGREGAR POST
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="ml-64 pt-24 p-8">
+                        <div className="max-w-[8.5in] mx-auto">
+                            {slides[currentSlide].type === 'cover' && (
+                                <CoverSlide clientName={clientName} month={month} year={year} />
+                            )}
+                            {slides[currentSlide].type === 'brief' && (
+                                <BriefSlide 
+                                    clientName={clientName} 
+                                    month={month} 
+                                    year={year}
+                                    objective={objective}
+                                    target={target}
+                                    posts={posts}
+                                />
+                            )}
+                            {slides[currentSlide].type === 'pillars' && (
+                                <PillarsSlide />
+                            )}
+                            {slides[currentSlide].type === 'calendar' && (
+                                <CalendarSlide month={month} year={year} posts={posts} monthNames={monthNames} />
+                            )}
+                            {slides[currentSlide].type === 'post' && (
+                                <PostSlide 
+                                    post={slides[currentSlide].post} 
+                                    index={currentSlide - 4}
+                                    onDelete={() => {
+                                        deletePost(currentSlide - 4);
+                                        setCurrentSlide(Math.max(0, currentSlide - 1));
+                                    }}
+                                    onEdit={() => setEditingPost(currentSlide - 4)}
+                                />
+                            )}
+                        </div>
+
+                        {/* Slide Controls */}
+                        <div className="no-print flex justify-center gap-4 mt-8">
+                            <button
+                                onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
+                                disabled={currentSlide === 0}
+                                className="px-6 py-3 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                ← Anterior
+                            </button>
+                            <div className="px-6 py-3 bg-gray-200 rounded-lg font-bold text-gray-700">
+                                {currentSlide + 1} / {slides.length}
+                            </div>
+                            <button
+                                onClick={() => setCurrentSlide(Math.min(slides.length - 1, currentSlide + 1))}
+                                disabled={currentSlide === slides.length - 1}
+                                className="px-6 py-3 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Siguiente →
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Add/Edit Post Modal */}
+                    {(editingPost !== null || currentSlide === -1) && (
+                        <AddPostModal
+                            onClose={() => {
+                                setEditingPost(null);
+                                if (currentSlide === -1) setCurrentSlide(0);
+                            }}
+                            onAdd={addPost}
+                            existingPost={editingPost !== null ? posts[editingPost] : null}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        function SetupScreen({ clientName, setClientName, month, setMonth, year, setYear, objective, setObjective, target, setTarget, onStart, monthNames }) {
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 flex items-center justify-center p-8">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 animate-slide-in">
+                        <div className="text-center mb-8">
+                            <h1 className="text-5xl font-anton text-indie-red mb-2">INDIE PRO MARKETING</h1>
+                            <p className="text-gray-600 font-montserrat font-semibold">Generador de Calendario de Contenido</p>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-montserrat font-bold text-gray-700 mb-2">Nombre del Cliente *</label>
+                                <input
+                                    type="text"
+                                    value={clientName}
+                                    onChange={(e) => setClientName(e.target.value)}
+                                    placeholder="Ej: Vive Orgánico"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-montserrat font-bold text-gray-700 mb-2">Mes *</label>
+                                    <select
+                                        value={month}
+                                        onChange={(e) => setMonth(e.target.value)}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-montserrat focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        {monthNames.map(m => (
+                                            <option key={m} value={m}>{m}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-montserrat font-bold text-gray-700 mb-2">Año *</label>
+                                    <input
+                                        type="text"
+                                        value={year}
+                                        onChange={(e) => setYear(e.target.value)}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-montserrat focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-montserrat font-bold text-gray-700 mb-2">Objetivo del Mes</label>
+                                <textarea
+                                    value={objective}
+                                    onChange={(e) => setObjective(e.target.value)}
+                                    placeholder="Ej: Conectar con la comunidad a través de un enfoque cálido..."
+                                    rows="3"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-montserrat focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-montserrat font-bold text-gray-700 mb-2">Target / Audiencia</label>
+                                <textarea
+                                    value={target}
+                                    onChange={(e) => setTarget(e.target.value)}
+                                    placeholder="Ej: Personas de 23 a 45 años interesadas en bienestar..."
+                                    rows="3"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-montserrat focus:ring-2 focus:ring-indie-red focus:border-transparent"
+                                ></textarea>
+                            </div>
+
+                            <button
+                                onClick={onStart}
+                                disabled={!clientName || !month}
+                                className="w-full px-6 py-4 bg-indie-red text-white rounded-lg font-anton text-2xl hover:bg-indie-red-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                Crear Presentación →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function CoverSlide({ clientName, month, year }) {
+            return (
+                <div className="slide bg-gradient-to-br from-indie-red via-indie-red-dark to-indie-black flex flex-col justify-center items-center text-white">
+                    <div className="text-center space-y-8">
+                        <div className="space-y-4">
+                            <h1 className="text-8xl font-anton uppercase tracking-tight">CONTENIDO</h1>
+                            <h2 className="text-7xl font-anton uppercase tracking-tight">{month} {year}</h2>
+                        </div>
+                        <div className="w-32 h-1 bg-white mx-auto"></div>
+                        <h3 className="text-5xl font-anton">{clientName}</h3>
+                        <p className="text-2xl font-montserrat font-bold opacity-90">INDIE PRO MARKETING</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function BriefSlide({ clientName, month, year, objective, target, posts }) {
+            const postsByType = posts.reduce((acc, post) => {
+                acc[post.type] = (acc[post.type] || 0) + 1;
+                return acc;
+            }, {});
+
+            return (
+                <div className="slide">
+                    <h1 className="text-4xl font-anton text-indie-red mb-6 uppercase">
+                        Brief Mensual - {month} | {clientName}
+                    </h1>
+                    
+                    <div className="space-y-6">
+                        {objective && (
+                            <div>
+                                <h3 className="text-sm font-montserrat font-black text-gray-500 uppercase mb-2">Objetivo:</h3>
+                                <p className="text-gray-700 font-montserrat leading-relaxed">{objective}</p>
+                            </div>
+                        )}
+
+                        {target && (
+                            <div>
+                                <h3 className="text-sm font-black text-gray-500 uppercase mb-2">Target:</h3>
+                                <p className="text-gray-700 leading-relaxed">{target}</p>
+                            </div>
+                        )}
+
+                        <div>
+                            <h3 className="text-sm font-black text-gray-500 uppercase mb-3">Contenido Mensual:</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                {Object.entries(postsByType).map(([type, count]) => (
+                                    <div key={type} className="bg-indie-red-50 border-2 border-indie-red rounded-lg p-3">
+                                        <div className="text-3xl font-anton text-indie-red">{count}</div>
+                                        <div className="text-sm font-montserrat font-semibold text-gray-700">{type}</div>
+                                    </div>
+                                ))}
+                                <div className="bg-gray-50 border-2 border-gray-200 rounded-lg p-3">
+                                    <div className="text-2xl font-black text-gray-900">{posts.length}</div>
+                                    <div className="text-sm font-semibold text-gray-700">Total Posts</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-sm font-black text-gray-500 uppercase mb-3">Pilares de Contenido:</h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {CONTENT_PILLARS.map(pillar => (
+                                    <div key={pillar.id} className={`${pillar.color} text-white rounded-lg p-3`}>
+                                        <div className="font-black text-sm">{pillar.name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function PillarsSlide() {
+            return (
+                <div className="slide">
+                    <h1 className="text-3xl font-black text-amber-900 mb-8 uppercase">Pilares de Contenido</h1>
+                    
+                    <div className="space-y-6">
+                        {CONTENT_PILLARS.map(pillar => (
+                            <div key={pillar.id} className="border-2 border-gray-200 rounded-xl p-6">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className={`${pillar.color} text-white px-4 py-2 rounded-lg font-black text-sm`}>
+                                        {pillar.name}
+                                    </div>
+                                </div>
+                                <p className="text-gray-700 leading-relaxed">{pillar.description}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function CalendarSlide({ month, year, posts, monthNames }) {
+            const monthIndex = monthNames.indexOf(month);
+            const firstDay = new Date(year, monthIndex, 1).getDay();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            
+            const getPostsForDay = (day) => {
+                return posts.filter(post => {
+                    const postDay = parseInt(post.date.split('-')[2]);
+                    return postDay === day;
+                });
+            };
+
+            return (
+                <div className="slide">
+                    <h1 className="text-3xl font-black text-amber-900 mb-6 uppercase text-center">
+                        Calendario de Contenidos - {month}
+                    </h1>
+                    
+                    <div className="grid grid-cols-7 gap-2">
+                        {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(day => (
+                            <div key={day} className="text-center font-black text-xs text-gray-500 py-2">
+                                {day}
+                            </div>
+                        ))}
+                        
+                        {[...Array(firstDay)].map((_, i) => (
+                            <div key={`empty-${i}`} className="aspect-square"></div>
+                        ))}
+                        
+                        {[...Array(daysInMonth)].map((_, i) => {
+                            const day = i + 1;
+                            const dayPosts = getPostsForDay(day);
+                            
+                            return (
+                                <div key={day} className="border-2 border-gray-200 rounded-lg p-1 aspect-square">
+                                    <div className="font-bold text-sm text-gray-900 mb-1">{day}</div>
+                                    <div className="space-y-0.5">
+                                        {dayPosts.slice(0, 2).map((post, idx) => {
+                                            const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+                                            return (
+                                                <div key={idx} className={`${pillar.color} text-white text-[6px] px-1 py-0.5 rounded font-bold truncate`}>
+                                                    {post.type}
+                                                </div>
+                                            );
+                                        })}
+                                        {dayPosts.length > 2 && (
+                                            <div className="text-[6px] text-gray-500 font-bold">+{dayPosts.length - 2}</div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        function PostSlide({ post, index, onDelete, onEdit }) {
+            const pillar = CONTENT_PILLARS.find(p => p.id === post.pillar);
+            
+            return (
+                <div className="slide">
+                    <div className="flex justify-between items-start mb-6">
+                        <div className={`${pillar.color} text-white px-6 py-3 rounded-xl font-black text-lg uppercase`}>
+                            {pillar.name}
+                        </div>
+                        <div className="no-print flex gap-2">
+                            <button
+                                onClick={onEdit}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                            >
+                                ✏️ Editar
+                            </button>
+                            <button
+                                onClick={onDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
+                            >
+                                🗑️ Eliminar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                            <div className="text-sm font-bold text-gray-600">
+                                {post.platform} | {post.type}
+                            </div>
+                            <div className="text-sm font-bold text-gray-600">
+                                📅 {new Date(post.date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            </div>
+                        </div>
+
+                        {post.visualSuggestion && (
+                            <div className="bg-gray-50 border-2 border-gray-200 rounded-xl p-6">
+                                <h3 className="text-sm font-black text-gray-500 uppercase mb-3">Elementos Visuales Sugeridos:</h3>
+                                <p className="text-gray-700 leading-relaxed">{post.visualSuggestion}</p>
+                            </div>
+                        )}
+
+                        {post.copyIn && (
+                            <div>
+                                <h3 className="text-sm font-black text-gray-500 uppercase mb-2">Copy In:</h3>
+                                <p className="text-gray-800 leading-relaxed font-medium">{post.copyIn}</p>
+                            </div>
+                        )}
+
+                        <div className="bg-red-50 border-2 border-indie-red rounded-lg p-3">
+                            <h3 className="text-sm font-black text-gray-500 uppercase mb-3">Copy Out:</h3>
+                            <p className="text-gray-900 leading-relaxed text-lg font-medium whitespace-pre-wrap">{post.copyOut}</p>
+                        </div>
+
+                        {post.hashtags && (
+                            <div>
+                                <h3 className="text-sm font-black text-gray-500 uppercase mb-2">Hashtags:</h3>
+                                <p className="text-blue-600 font-semibold">{post.hashtags}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function AddPostModal({ onClose, onAdd, existingPost }) {
+            const [formData, setFormData] = useState(existingPost || {
+                platform: 'Instagram',
+                type: 'Post 4:5',
+                date: new Date().toISOString().split('T')[0],
+                pillar: 'lifestyle',
+                visualSuggestion: '',
+                copyIn: '',
+                copyOut: '',
+                hashtags: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (formData.copyOut.trim()) {
+                    onAdd(formData);
+                    onClose();
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                {existingPost ? 'Editar Post' : 'Agregar Nuevo Post'}
+                            </h2>
+                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-2xl font-bold">✕</button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Plataforma *</label>
+                                    <select
+                                        value={formData.platform}
+                                        onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                    >
+                                        {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de Post *</label>
+                                    <select
+                                        value={formData.type}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                    >
+                                        {POST_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Fecha *</label>
+                                    <input
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Pilar de Contenido *</label>
+                                    <select
+                                        value={formData.pillar}
+                                        onChange={(e) => setFormData({ ...formData, pillar: e.target.value })}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                    >
+                                        {CONTENT_PILLARS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Elementos Visuales Sugeridos</label>
+                                <textarea
+                                    value={formData.visualSuggestion}
+                                    onChange={(e) => setFormData({ ...formData, visualSuggestion: e.target.value })}
+                                    placeholder="Ej: Íconos de smoothie, bowl, matcha..."
+                                    rows="2"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Copy In (Título/Hook)</label>
+                                <input
+                                    type="text"
+                                    value={formData.copyIn}
+                                    onChange={(e) => setFormData({ ...formData, copyIn: e.target.value })}
+                                    placeholder="Ej: Vive nuestro Febrero..."
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Copy Out (Caption) *</label>
+                                <textarea
+                                    value={formData.copyOut}
+                                    onChange={(e) => setFormData({ ...formData, copyOut: e.target.value })}
+                                    placeholder="Escribe el copy principal del post..."
+                                    rows="6"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                    required
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Hashtags</label>
+                                <input
+                                    type="text"
+                                    value={formData.hashtags}
+                                    onChange={(e) => setFormData({ ...formData, hashtags: e.target.value })}
+                                    placeholder="#viveorganico #productosorganicos #healthylife"
+                                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg font-bold hover:from-amber-700 hover:to-orange-700 transition"
+                                >
+                                    {existingPost ? 'Guardar Cambios' : 'Agregar Post'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<PresentationCalendar />, document.getElementById('root'));
+    </script>
+</body>
+</html>
