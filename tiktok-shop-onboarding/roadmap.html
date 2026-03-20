@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap de Implementación - TikTok Shop | Indie Pro Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .font-anton { font-family: 'Anton', sans-serif; }
+        
+        @media print {
+            @page { size: letter; margin: 0; }
+            html, body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .print-hidden { display: none !important; }
+            .report-page {
+                page-break-after: always;
+                page-break-inside: avoid;
+                width: 8.5in;
+                height: 11in;
+                padding: 0.45in;
+                margin: 0;
+                box-sizing: border-box;
+            }
+            .report-page:last-child { page-break-after: auto; }
+        }
+        
+        @media screen {
+            .report-container {
+                max-width: 8.5in;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            .report-page {
+                width: 8.5in;
+                min-height: 11in;
+                padding: 0.45in;
+                margin-bottom: 2rem;
+                box-shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.12);
+                border-radius: 0.75rem;
+            }
+        }
+
+        .phase-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 19px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Control Bar (Screen Only) -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 print-hidden shadow-sm">
+        <div style="max-width: 8.5in" class="mx-auto px-8 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-all hover:-translate-x-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <span class="text-sm font-semibold">Documentos</span>
+                </a>
+                <div class="h-4 w-px bg-gray-200"></div>
+                <span class="text-sm font-bold tracking-tight">Roadmap de Implementación</span>
+            </div>
+            <button onclick="window.print()" class="flex items-center gap-2 px-5 py-2 bg-[#ED2450] text-white text-sm font-bold rounded-xl hover:bg-[#E4003B] transition-all shadow-lg shadow-red-500/20 active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Descargar PDF
+            </button>
+        </div>
+    </header>
+
+    <!-- Document Content -->
+    <main class="report-container">
+
+        <!-- PAGE 1: Cover + Overview + Phase 1 -->
+        <div class="report-page bg-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mt-40" style="background: #ED2450"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl opacity-10 -ml-32 -mb-32" style="background: #00C1B2"></div>
+
+            <div class="flex flex-col h-full relative z-10">
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b-2 pb-4 mb-5" style="border-color: #ED2450">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: #ED2450">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <div>
+                            <div class="font-anton text-xl tracking-wide" style="color: #010101">INDIE PRO MARKETING</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest" style="color: #ED2450">TikTok Shop Experts</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Documento</div>
+                        <div class="text-sm font-extrabold" style="color: #ED2450">Roadmap v1.0</div>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <div class="mb-4">
+                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Implementación TikTok Shop</div>
+                    <h1 class="font-anton text-3xl tracking-wide mb-2" style="color: #010101">ROADMAP CON TIEMPOS POR FASES</h1>
+                    <div class="h-1 w-16 rounded-full mb-3" style="background: linear-gradient(135deg, #ED2450 0%, #00C1B2 100%)"></div>
+                    <p class="text-xs text-gray-500 font-medium leading-relaxed max-w-xl">
+                        Este roadmap detalla cada fase de implementación de tu tienda en TikTok Shop, 
+                        con tiempos estimados y entregables claros. <strong>Los tiempos comienzan a contar desde 
+                        que recibimos el 100% de la información del checklist.</strong>
+                    </p>
+                </div>
+
+                <!-- Timeline Overview Bar -->
+                <div class="rounded-2xl p-4 mb-5" style="background: #01010108; border: 1px solid #01010115">
+                    <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3">Vista General del Timeline</div>
+                    <div class="flex gap-1.5 mb-3">
+                        <div class="flex-[2] rounded-l-full rounded-r h-7 flex items-center justify-center" style="background: #ED2450">
+                            <span class="text-[8px] font-black text-white uppercase tracking-wider">Setup</span>
+                        </div>
+                        <div class="flex-[2] rounded h-7 flex items-center justify-center" style="background: #FDD811">
+                            <span class="text-[8px] font-black uppercase tracking-wider" style="color: #010101">Optimización</span>
+                        </div>
+                        <div class="flex-[2] rounded h-7 flex items-center justify-center" style="background: #00C1B2">
+                            <span class="text-[8px] font-black text-white uppercase tracking-wider">Afiliados</span>
+                        </div>
+                        <div class="flex-[2] rounded h-7 flex items-center justify-center" style="background: #010101">
+                            <span class="text-[8px] font-black text-white uppercase tracking-wider">Ads</span>
+                        </div>
+                        <div class="flex-[3] rounded-l rounded-r-full h-7 flex items-center justify-center" style="background: linear-gradient(135deg, #ED2450, #E4003B)">
+                            <span class="text-[8px] font-black text-white uppercase tracking-wider">Operación Continua</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5">
+                        <div class="flex-[2] text-center text-[8px] font-bold text-gray-500">Sem 1-2</div>
+                        <div class="flex-[2] text-center text-[8px] font-bold text-gray-500">Sem 3-4</div>
+                        <div class="flex-[2] text-center text-[8px] font-bold text-gray-500">Sem 5-6</div>
+                        <div class="flex-[2] text-center text-[8px] font-bold text-gray-500">Sem 7-8</div>
+                        <div class="flex-[3] text-center text-[8px] font-bold text-gray-500">Mes 3 en adelante</div>
+                    </div>
+                </div>
+
+                <!-- KPI Summary -->
+                <div class="grid grid-cols-4 gap-3 mb-5">
+                    <div class="rounded-xl p-3 text-center border" style="background: #ED245008; border-color: #ED245020">
+                        <div class="text-xl font-black" style="color: #ED2450">5</div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Fases totales</div>
+                    </div>
+                    <div class="rounded-xl p-3 text-center border" style="background: #FDD81108; border-color: #FDD81140">
+                        <div class="text-xl font-black" style="color: #010101">8</div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Semanas setup</div>
+                    </div>
+                    <div class="rounded-xl p-3 text-center border" style="background: #00C1B208; border-color: #00C1B220">
+                        <div class="text-xl font-black" style="color: #00C1B2">30+</div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Entregables</div>
+                    </div>
+                    <div class="rounded-xl p-3 text-center border" style="background: #01010108; border-color: #01010115">
+                        <div class="text-xl font-black" style="color: #010101">24/7</div>
+                        <div class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">Soporte</div>
+                    </div>
+                </div>
+
+                <!-- PHASE 1 -->
+                <div class="rounded-2xl border-2 p-5 flex-1" style="border-color: #ED245030; background: #ED245005">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg" style="background: #ED2450; box-shadow: 0 4px 15px #ED245040">1</div>
+                            <div>
+                                <div class="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Setup Inicial</div>
+                                <div class="text-[10px] font-bold" style="color: #ED2450">Semanas 1-2</div>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white" style="background: #ED2450">Fase Crítica</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-2">
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Sesión de onboarding y briefing</div>
+                                <div class="text-[9px] text-gray-500">Kick-off con el equipo completo</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Recolección de assets y documentos</div>
+                                <div class="text-[9px] text-gray-500">Según checklist completo</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Config. TikTok Shop Seller Center</div>
+                                <div class="text-[9px] text-gray-500">Cuenta verificada y activa</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Carga de catálogo de productos</div>
+                                <div class="text-[9px] text-gray-500">Todos los SKUs con fotos y descripciones</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Config. logística y fulfillment</div>
+                                <div class="text-[9px] text-gray-500">Warehouse, shipping, devoluciones</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Config. métodos de pago</div>
+                                <div class="text-[9px] text-gray-500">Cuenta bancaria vinculada</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t flex items-center gap-2" style="border-color: #ED245020">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #ED2450" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[9px] font-bold text-gray-600"><strong style="color: #ED2450">Entregable:</strong> Tienda activa en TikTok Shop con catálogo cargado y logística configurada</span>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-auto pt-4 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
+                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 1 de 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: Phases 2 & 3 -->
+        <div class="report-page bg-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 -mr-32 -mt-32" style="background: #FDD811"></div>
+
+            <div class="flex flex-col h-full relative z-10">
+                <!-- Mini Header -->
+                <div class="mb-5 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #ED2450">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <span>Indie Pro Marketing</span> | <span>Roadmap TikTok Shop</span>
+                    </div>
+                    <div>Confidencial</div>
+                </div>
+
+                <!-- PHASE 2 -->
+                <div class="rounded-2xl border-2 p-5 mb-5" style="border-color: #FDD81150; background: #FDD81108">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-lg" style="background: #FDD811; color: #010101; box-shadow: 0 4px 15px #FDD81160">2</div>
+                            <div>
+                                <div class="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Optimización de Tienda</div>
+                                <div class="text-[10px] font-bold" style="color: #010101">Semanas 3-4</div>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest" style="background: #FDD811; color: #010101">Conversión</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-2">
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Optimización de listings</div>
+                                <div class="text-[9px] text-gray-500">Títulos, descripciones, keywords SEO</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Mejora de fotos/videos de producto</div>
+                                <div class="text-[9px] text-gray-500">Edición profesional si se requiere</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Config. categorías y colecciones</div>
+                                <div class="text-[9px] text-gray-500">Organización óptima del catálogo</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Setup de promociones iniciales</div>
+                                <div class="text-[9px] text-gray-500">Flash deals, cupones, bundles</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Pruebas de compra y checkout</div>
+                                <div class="text-[9px] text-gray-500">QA completo del flujo de compra</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #FDD811"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Configuración de Shop Page</div>
+                                <div class="text-[9px] text-gray-500">Banner, categorías destacadas, vitrinas</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t flex items-center gap-2" style="border-color: #FDD81140">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #010101" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[9px] font-bold text-gray-600"><strong style="color: #010101">Entregable:</strong> Tienda optimizada para conversión, testeada y lista para tráfico</span>
+                    </div>
+                </div>
+
+                <!-- PHASE 3 -->
+                <div class="rounded-2xl border-2 p-5 flex-1" style="border-color: #00C1B230; background: #00C1B208">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg" style="background: #00C1B2; box-shadow: 0 4px 15px #00C1B240">3</div>
+                            <div>
+                                <div class="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Programa de Afiliados</div>
+                                <div class="text-[10px] font-bold" style="color: #00C1B2">Semanas 5-6</div>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white" style="background: #00C1B2">Creadores</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-2">
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Config. programa de afiliados</div>
+                                <div class="text-[9px] text-gray-500">Open + Target collaboration setup</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Definición de comisiones</div>
+                                <div class="text-[9px] text-gray-500">Por producto y por categoría</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Identificación de creadores</div>
+                                <div class="text-[9px] text-gray-500">Research y lista de targets por nicho</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Outreach a creadores</div>
+                                <div class="text-[9px] text-gray-500">Contacto directo + invitaciones</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Envío de muestras / seeding</div>
+                                <div class="text-[9px] text-gray-500">Kit de producto a creadores seleccionados</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Primeros contenidos de afiliados</div>
+                                <div class="text-[9px] text-gray-500">Videos publicados con product links</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Brief creativo para creadores</div>
+                                <div class="text-[9px] text-gray-500">Guidelines, talking points, do's & don'ts</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #00C1B2"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Monitoreo de performance</div>
+                                <div class="text-[9px] text-gray-500">Tracking de ventas por creador</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t flex items-center gap-2" style="border-color: #00C1B220">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #00C1B2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[9px] font-bold text-gray-600"><strong style="color: #00C1B2">Entregable:</strong> Programa de afiliados activo con primeros creadores publicando contenido</span>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-auto pt-4 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
+                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 2 de 3</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: Phases 4 & 5 + Summary -->
+        <div class="report-page bg-white relative overflow-hidden">
+            <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mb-40" style="background: #ED2450"></div>
+
+            <div class="flex flex-col h-full relative z-10">
+                <!-- Mini Header -->
+                <div class="mb-5 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #ED2450">
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <span>Indie Pro Marketing</span> | <span>Roadmap TikTok Shop</span>
+                    </div>
+                    <div>Confidencial</div>
+                </div>
+
+                <!-- PHASE 4 -->
+                <div class="rounded-2xl border-2 p-5 mb-4" style="border-color: #01010120; background: #01010105">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg" style="background: #010101; box-shadow: 0 4px 15px #01010140">4</div>
+                            <div>
+                                <div class="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Ads y Escalamiento</div>
+                                <div class="text-[10px] font-bold text-gray-500">Semanas 7-8</div>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white" style="background: #010101">Crecimiento</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-2">
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Setup de TikTok Ads Manager</div>
+                                <div class="text-[9px] text-gray-500">Pixel, eventos, audiencias</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Campañas de Shop Ads</div>
+                                <div class="text-[9px] text-gray-500">Product Shopping Ads + Video Shopping Ads</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Spark Ads con contenido orgánico</div>
+                                <div class="text-[9px] text-gray-500">Boost a mejores videos de afiliados</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Optimización de ROAS</div>
+                                <div class="text-[9px] text-gray-500">A/B testing, bid strategy, segmentación</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Análisis de datos y ajustes</div>
+                                <div class="text-[9px] text-gray-500">Dashboard de métricas en tiempo real</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #010101"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Reporte de primer mes completo</div>
+                                <div class="text-[9px] text-gray-500">Resultados, learnings, next steps</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t flex items-center gap-2" style="border-color: #01010115">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #010101" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[9px] font-bold text-gray-600"><strong>Entregable:</strong> Campañas de ads activas con ROAS positivo + reporte ejecutivo del mes 1</span>
+                    </div>
+                </div>
+
+                <!-- PHASE 5 -->
+                <div class="rounded-2xl border-2 p-5 mb-4" style="border-color: #ED245030; background: linear-gradient(135deg, #ED245005, #E4003B05)">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg" style="background: linear-gradient(135deg, #ED2450, #E4003B); box-shadow: 0 4px 15px #ED245040">5</div>
+                            <div>
+                                <div class="text-sm font-extrabold text-gray-900 uppercase tracking-wide">Operación Continua</div>
+                                <div class="text-[10px] font-bold" style="color: #ED2450">Mes 3 en adelante</div>
+                            </div>
+                        </div>
+                        <div class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white" style="background: linear-gradient(135deg, #ED2450, #E4003B)">Ongoing</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-5 gap-y-2">
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Gestión diaria de tienda</div>
+                                <div class="text-[9px] text-gray-500">Pedidos, inventario, customer service</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Gestión de afiliados activos</div>
+                                <div class="text-[9px] text-gray-500">Recruitment continuo + retention</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Optimización continua de ads</div>
+                                <div class="text-[9px] text-gray-500">Scaling winners, cutting losers</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Reportes semanales y mensuales</div>
+                                <div class="text-[9px] text-gray-500">Performance, insights, recomendaciones</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Live Shopping (si aplica)</div>
+                                <div class="text-[9px] text-gray-500">Estrategia y ejecución de lives</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="phase-dot mt-1" style="background: #ED2450"></div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-800">Escalamiento de catálogo</div>
+                                <div class="text-[9px] text-gray-500">Nuevos productos, seasonal drops</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t flex items-center gap-2" style="border-color: #ED245020">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #ED2450" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-[9px] font-bold text-gray-600"><strong style="color: #ED2450">Entregable:</strong> Operación 360 con crecimiento sostenido mes a mes</span>
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="rounded-xl p-3 mb-3 flex items-start gap-3" style="background: #00C1B210; border: 1px solid #00C1B230">
+                    <svg class="w-4 h-4 flex-shrink-0 mt-0.5" style="color: #00C1B2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="text-[9px] text-gray-600 font-medium leading-relaxed">
+                        <strong class="text-gray-800">Nota:</strong> Los tiempos son estimados y pueden variar dependiendo de la velocidad de respuesta 
+                        del cliente y la complejidad del catálogo. Cualquier retraso en la entrega de materiales por parte 
+                        de la marca impacta directamente en el timeline.
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="rounded-xl p-4 text-center" style="background: linear-gradient(135deg, #ED2450 0%, #E4003B 100%)">
+                    <div class="text-white text-[10px] font-bold mb-1">¿Listos para empezar?</div>
+                    <div class="text-white/80 text-[9px] font-medium">El primer paso es completar el <strong class="text-white">Checklist de Información</strong> y agendar la sesión de onboarding</div>
+                </div>
+
+                <!-- Footer -->
+                <div class="mt-auto pt-4 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
+                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 3 de 3</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</body>
+</html>

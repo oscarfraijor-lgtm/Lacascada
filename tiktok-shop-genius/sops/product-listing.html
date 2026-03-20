@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOP: Product Listing | TikTok Shop Genius</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50" style="font-family: 'Montserrat', sans-serif;">
+
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span class="text-sm font-semibold">TikTok Shop Genius</span></a>
+                <div class="h-4 w-px bg-gray-200"></div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">SOP #002</span>
+            </div>
+            <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl hover:bg-black transition-all active:scale-95">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Imprimir
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-6 py-8">
+
+        <!-- SOP Header -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl" style="background: #8B5CF615">📦</div>
+                <div>
+                    <div class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Productos &middot; SOP #002</div>
+                    <h1 class="text-2xl font-extrabold text-gray-900">Agregar y Optimizar Productos</h1>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 font-medium mb-3">
+                <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Básico → Avanzado</span>
+                <span>⏱ 12-20 min</span>
+                <span>📅 Actualizado: Marzo 2026</span>
+            </div>
+            <p class="text-sm text-gray-600 leading-relaxed">Guía completa para subir productos, optimizar listings para conversión, carga masiva, requisitos de imágenes y SEO dentro de TikTok Shop.</p>
+        </div>
+
+        <!-- ===================== SECTION 1 ===================== -->
+        <section id="agregar-producto" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">1</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Agregar un Producto Nuevo (Paso a Paso)</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.1 — Ir a la Sección de Productos</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Navega a: <code class="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">Seller Center → Products → Add Product</code></p>
+                        <p class="mt-1">También puedes usar el atajo <span class="inline-flex items-center px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">+ Add Product</span> en la barra superior.</p>
+                        <p class="mt-1">TikTok te ofrece dos opciones:</p>
+                        <div class="flex gap-2 my-2">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-2 flex-1">
+                                <div class="text-[10px] font-extrabold text-green-800">✅ Quick Listing</div>
+                                <div class="text-[10px] text-green-700">Pega un link de Amazon/Shopify y TikTok importa los datos. Luego editas.</div>
+                            </div>
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 flex-1">
+                                <div class="text-[10px] font-extrabold text-gray-700">📝 Manual Listing</div>
+                                <div class="text-[10px] text-gray-500">Llenas todo desde cero. Más control sobre cada campo.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.2 — Seleccionar Categoría del Producto</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Este es el <strong>paso más importante</strong>. La categoría determina:</p>
+                        <ul class="list-disc ml-4 mt-1 space-y-1">
+                            <li>Qué atributos debes llenar (ingredientes, materiales, etc.)</li>
+                            <li>La comisión que TikTok cobra por venta</li>
+                            <li>En qué búsquedas aparece tu producto</li>
+                            <li>Si necesitas certificaciones adicionales</li>
+                        </ul>
+                        <p class="mt-2">Usa la barra de búsqueda para encontrar la categoría más específica posible. Ejemplo: no uses "Beauty" genérico → usa "Skincare → Face Moisturizers".</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.3 — Escribir el Título del Producto</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>El título debe tener entre <strong>25 y 80 caracteres</strong>. Fórmula recomendada:</p>
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 font-mono text-[11px] border border-gray-200">
+                            <span class="text-purple-600 font-bold">[Marca]</span> + <span class="text-blue-600 font-bold">[Producto]</span> + <span class="text-green-600 font-bold">[Beneficio/Atributo Clave]</span> + <span class="text-orange-600 font-bold">[Variante]</span>
+                        </div>
+                        <div class="my-2 space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-green-600">✅</span>
+                                <span class="text-[10px] font-medium">"CeraVe Moisturizing Cream | Dry to Normal Skin | 16oz"</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-green-600">✅</span>
+                                <span class="text-[10px] font-medium">"LED Ring Light 10" with Tripod Stand | USB Powered | 3 Light Modes"</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-red-500">❌</span>
+                                <span class="text-[10px] font-medium">"Amazing cream best product ever BUY NOW!!!"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.4 — Escribir la Descripción</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>La descripción debe ser <strong>informativa y persuasiva</strong>. Estructura recomendada:</p>
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 space-y-2 text-[10px]">
+                            <div><span class="font-bold text-gray-800">Párrafo 1 (Hook):</span> ¿Qué problema resuelve? ¿Por qué lo necesitan?</div>
+                            <div><span class="font-bold text-gray-800">Párrafo 2 (Features):</span> Lista de características principales con bullets</div>
+                            <div><span class="font-bold text-gray-800">Párrafo 3 (Specs):</span> Especificaciones técnicas (tamaño, peso, materiales)</div>
+                            <div><span class="font-bold text-gray-800">Párrafo 4 (Incluye):</span> ¿Qué viene en la caja?</div>
+                        </div>
+                        <p><strong>Keywords:</strong> Incluye términos de búsqueda naturales. Si vendes un protector de pantalla, incluye "screen protector", "tempered glass", "phone protection".</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.5 — Configurar Precio e Inventario</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 space-y-1.5 font-mono text-[10px]">
+                            <div><span class="font-bold text-gray-800">Price</span> → Precio de venta al público (incluye tu margen + comisión TikTok)</div>
+                            <div><span class="font-bold text-gray-800">Compare at Price</span> → Precio anterior (para mostrar descuento tachado)</div>
+                            <div><span class="font-bold text-gray-800">SKU</span> → Código interno del producto</div>
+                            <div><span class="font-bold text-gray-800">Stock / Quantity</span> → Cantidad disponible (actualizar constantemente)</div>
+                        </div>
+                        <div class="rounded-xl p-3 border-l-4 border-yellow-400 bg-yellow-50 mt-2">
+                            <div class="text-[10px] font-extrabold text-yellow-800">💡 PRO TIP — PRICING</div>
+                            <p class="text-[10px] text-gray-700 mt-1">Recuerda que TikTok cobra ~6% comisión + 2.24% transaction fee. Tu precio debe absorber esto y mantener margen. Fórmula: <strong>Costo × 2.5 a 3x</strong> mínimo para productos con affiliate commissions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.6 — Configurar Peso y Dimensiones de Envío</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 space-y-1.5 font-mono text-[10px]">
+                            <div><span class="font-bold text-gray-800">Package Weight</span> → Peso del paquete listo para enviar (lbs o kg)</div>
+                            <div><span class="font-bold text-gray-800">Package Dimensions</span> → Largo × Ancho × Alto del paquete</div>
+                        </div>
+                        <p class="mt-1">Estos datos afectan directamente el costo de envío calculado. Sé preciso para evitar cargos adicionales.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">1.7 — Publicar y Esperar Revisión</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Clic en <span class="inline-flex items-center px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">Submit</span> para enviar el producto a revisión.</p>
+                        <ul class="list-disc ml-4 mt-1 space-y-1">
+                            <li>Revisión automática (AI) + manual: <strong>24-48 horas</strong></li>
+                            <li>Categorías restringidas pueden tomar más</li>
+                            <li>Si se rechaza, verás el motivo en <code class="bg-gray-100 px-1 rounded text-[10px]">Products → Quality Issues</code></li>
+                            <li>Corrige y reenvía. No crees un listing duplicado.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== SECTION 2 ===================== -->
+        <section id="imagenes" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">2</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Requisitos de Imágenes y Videos</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">2.1 — Especificaciones de Imágenes</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <div class="grid grid-cols-2 gap-2 my-2">
+                            <div class="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                <div class="text-[9px] font-black text-gray-400 uppercase">Mínimo</div>
+                                <div class="text-sm font-black text-gray-900">3 imágenes</div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-3 border border-green-200">
+                                <div class="text-[9px] font-black text-green-600 uppercase">Recomendado</div>
+                                <div class="text-sm font-black text-green-800">8+ imágenes</div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 space-y-1 text-[10px]">
+                            <div><strong>Resolución mínima:</strong> 600×600px | <strong>Ideal:</strong> 1200×1200px</div>
+                            <div><strong>Formato:</strong> JPG, PNG (max 5MB por imagen)</div>
+                            <div><strong>Ratio:</strong> 1:1 (cuadrado) obligatorio para la imagen principal</div>
+                            <div><strong>Fondo:</strong> Blanco o limpio para imagen principal</div>
+                        </div>
+                        <p class="font-bold text-gray-800 mt-2">Orden recomendado de imágenes:</p>
+                        <ol class="list-decimal ml-4 mt-1 space-y-1">
+                            <li>Hero shot — Producto sobre fondo blanco, vista frontal</li>
+                            <li>Ángulo alternativo — Vista lateral o trasera</li>
+                            <li>Detalle/close-up — Textura, etiqueta, componentes</li>
+                            <li>Lifestyle — Producto en uso / contexto real</li>
+                            <li>Escala/tamaño — Producto junto a referencia de tamaño</li>
+                            <li>Packaging — Cómo llega al cliente</li>
+                            <li>Infográfico — Beneficios o features en imagen</li>
+                            <li>Before/After o Variantes — Si aplica</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">2.2 — Video de Producto</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Los listings con video convierten <strong>significativamente mejor</strong>.</p>
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 space-y-1 text-[10px]">
+                            <div><strong>Duración:</strong> 15-60 segundos ideal</div>
+                            <div><strong>Formato:</strong> MP4 (max 20MB)</div>
+                            <div><strong>Resolución:</strong> 720p mínimo, 1080p ideal</div>
+                            <div><strong>Ratio:</strong> 9:16 (vertical) o 1:1 (cuadrado)</div>
+                        </div>
+                        <p class="mt-1">El video se puede subir en la misma sección de media del producto.</p>
+                    </div>
+                </div>
+
+                <div class="rounded-xl p-3 border-l-4 border-red-400 bg-red-50">
+                    <div class="text-[10px] font-extrabold text-red-800">⚠️ NO INCLUIR EN IMÁGENES</div>
+                    <ul class="text-[10px] text-gray-700 mt-1 list-disc ml-3 space-y-0.5">
+                        <li>Logos de otras plataformas (Amazon, Shopify, etc.)</li>
+                        <li>Texto promocional excesivo ("50% OFF!", "BEST SELLER!")</li>
+                        <li>Watermarks o marcas de agua</li>
+                        <li>Imágenes borrosas, pixeladas o con mal lighting</li>
+                        <li>Claims médicos no aprobados</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== SECTION 3 ===================== -->
+        <section id="variantes" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">3</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Configurar Variantes (Tallas, Colores)</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">3.1 — Activar Variantes</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>En la sección de producto, activa <span class="inline-flex items-center px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] font-bold rounded">Product Variations</span>.</p>
+                        <p class="mt-2">Puedes crear hasta <strong>2 niveles</strong> de variantes:</p>
+                        <div class="bg-gray-50 rounded-lg p-3 my-2 text-[10px]">
+                            <div><strong>Nivel 1:</strong> Color, Sabor, Material, Estilo</div>
+                            <div><strong>Nivel 2:</strong> Talla, Tamaño, Cantidad, Pack</div>
+                            <div class="mt-2 text-gray-500"><strong>Ejemplo:</strong> Color (Black, White, Blue) × Talla (S, M, L, XL) = 12 variantes</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">3.2 — Configurar cada Variante</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Para cada combinación de variantes, debes definir:</p>
+                        <ul class="list-disc ml-4 mt-1 space-y-1">
+                            <li><strong>SKU único</strong> por variante</li>
+                            <li><strong>Precio</strong> (puede variar por variante)</li>
+                            <li><strong>Stock/Inventario</strong> individual</li>
+                            <li><strong>Imagen específica</strong> de la variante (ej: foto del color real)</li>
+                        </ul>
+                        <div class="rounded-xl p-3 border-l-4 border-yellow-400 bg-yellow-50 mt-3">
+                            <div class="text-[10px] font-extrabold text-yellow-800">💡 PRO TIP</div>
+                            <p class="text-[10px] text-gray-700 mt-1">Siempre sube una imagen por cada variante de color. Los listings sin fotos de variantes tienen tasas de retorno mucho más altas porque el cliente "no sabía cómo se veía" realmente.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== SECTION 4 ===================== -->
+        <section id="bulk" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">4</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Carga Masiva de Productos (Bulk Upload)</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">4.1 — Descargar Template</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>Navega a: <code class="bg-gray-100 px-2 py-0.5 rounded text-[10px] font-bold">Seller Center → Products → Batch Tools → Import Products</code></p>
+                        <ol class="list-decimal ml-4 mt-2 space-y-1">
+                            <li>Selecciona la <strong>categoría</strong> de los productos que vas a subir</li>
+                            <li>Clic en <span class="inline-flex items-center px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">Download Template</span></li>
+                            <li>Abre el archivo Excel descargado</li>
+                            <li>Llena cada fila = 1 producto, siguiendo las columnas del template</li>
+                            <li>Las columnas en <span class="text-red-600 font-bold">rojo</span> son obligatorias</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">4.2 — Subir el Archivo</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <ol class="list-decimal ml-4 space-y-1">
+                            <li>Vuelve a <code class="bg-gray-100 px-1 rounded text-[10px]">Batch Tools → Import Products</code></li>
+                            <li>Clic en <span class="inline-flex items-center px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold rounded">Upload File</span></li>
+                            <li>Selecciona el Excel completado</li>
+                            <li>Espera el procesamiento — TikTok valida cada fila</li>
+                            <li>Si hay errores, descarga el reporte de errores y corrige</li>
+                            <li>Las imágenes se deben subir por separado o usar URLs públicas</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== SECTION 5 ===================== -->
+        <section id="optimizar" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">5</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Optimizar Listings para Conversión</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">Checklist de Optimización por Producto</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">1</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Título con Keywords</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">¿Incluye marca + producto + beneficio + variante? ¿Entre 25-80 chars?</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">2</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">8+ Imágenes de Alta Calidad</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">Hero, ángulos, detalle, lifestyle, escala, packaging, infográfico</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">3</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Video de Producto</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">15-60 segundos mostrando el producto en uso. Vertical (9:16).</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">4</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Descripción Completa y Persuasiva</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">Hook + Features + Specs + Incluye. Con keywords naturales.</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">5</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Precio Competitivo con "Compare At"</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">Mostrar precio original tachado aumenta urgencia. Margen mínimo 2.5x costo.</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">6</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Categoría Específica (no genérica)</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">Más específica = mejor match con compradores = más ventas orgánicas.</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <div class="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-black text-[10px] flex-shrink-0">7</div>
+                                <div>
+                                    <div class="font-bold text-gray-800 text-[11px]">Atributos Completos</div>
+                                    <div class="text-[10px] text-gray-500 mt-0.5">Llena TODOS los atributos opcionales (material, skin type, age group, etc.). Mejora el ranking.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================== SECTION 6 ===================== -->
+        <section id="seo" class="mb-10 scroll-mt-20">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white font-black text-sm" style="background: #8B5CF6">6</div>
+                <h2 class="text-lg font-extrabold text-gray-900">Categorías, Tags y SEO de Producto</h2>
+            </div>
+            <div class="space-y-3">
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">6.1 — Cómo Funciona el SEO en TikTok Shop</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>TikTok Shop tiene su propio motor de búsqueda. Los compradores buscan productos dentro de la app. Tu producto aparece según:</p>
+                        <ul class="list-disc ml-4 mt-1 space-y-1">
+                            <li><strong>Título del producto</strong> — Factor #1 de ranking</li>
+                            <li><strong>Categoría asignada</strong> — Match con la intención de búsqueda</li>
+                            <li><strong>Atributos del producto</strong> — Filtros que usan los compradores</li>
+                            <li><strong>Descripción</strong> — Keywords secundarias</li>
+                            <li><strong>Ventas y reviews</strong> — Social proof = mejor ranking</li>
+                            <li><strong>Shop Performance Score</strong> — Tiendas con mejor SPS rankean más alto</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-200 p-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-2">6.2 — Research de Keywords</h3>
+                    <div class="text-xs text-gray-600 leading-relaxed">
+                        <p>No hay una herramienta oficial de keywords en TikTok Shop, pero puedes:</p>
+                        <ol class="list-decimal ml-4 mt-1 space-y-1">
+                            <li>Buscar tu producto en TikTok Shop y ver qué <strong>autocompletar sugiere</strong></li>
+                            <li>Ver los títulos de los <strong>top sellers en tu categoría</strong></li>
+                            <li>Revisar <strong>hashtags populares</strong> en videos de tu nicho</li>
+                            <li>Usar <strong>TikTok Ads Manager → Keyword Insights</strong> (si tienes acceso)</li>
+                            <li>Revisar keywords de Amazon/Google para el mismo producto</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation -->
+        <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+            <a href="seller-center-setup.html" class="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Anterior: Seller Center Setup
+            </a>
+            <a href="order-management.html" class="flex items-center gap-2 text-sm font-bold transition" style="color: #8B5CF6">
+                Siguiente: Gestión de Pedidos
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </main>
+
+    <footer class="border-t border-gray-100 mt-8 py-6 text-center">
+        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">TikTok Shop Genius &middot; Indie Pro Marketing &middot; Internal Use Only &middot; 2026</div>
+    </footer>
+</body>
+</html>

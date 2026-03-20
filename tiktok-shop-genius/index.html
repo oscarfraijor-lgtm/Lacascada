@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikTok Shop Genius | Indie Pro Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Montserrat', sans-serif; }
+        .font-anton { font-family: 'Anton', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        const BRAND = {
+            primary: '#ED2450',
+            secondary: '#E4003B',
+            black: '#010101',
+            yellow: '#FDD811',
+            blue: '#00C1B2',
+            white: '#FFFFFF'
+        };
+
+        const categories = [
+            {
+                id: 'getting-started',
+                icon: '🚀',
+                title: 'Primeros Pasos',
+                subtitle: 'Setup & Configuración',
+                color: BRAND.primary,
+                description: 'Todo lo que necesitas para arrancar una tienda desde cero en TikTok Shop.',
+                sops: [
+                    { id: 'seller-center-setup', title: 'Crear y Configurar Seller Center', time: '15 min', difficulty: 'Básico', link: 'sops/seller-center-setup.html', status: 'live' },
+                    { id: 'business-verification', title: 'Verificación de Negocio y Documentos', time: '10 min', difficulty: 'Básico', link: 'sops/seller-center-setup.html#verificacion', status: 'live' },
+                    { id: 'bank-setup', title: 'Configurar Cuenta Bancaria y Pagos', time: '8 min', difficulty: 'Básico', link: 'sops/seller-center-setup.html#pagos', status: 'live' },
+                    { id: 'shipping-config', title: 'Configurar Métodos de Envío', time: '10 min', difficulty: 'Básico', link: 'sops/seller-center-setup.html#envios', status: 'live' },
+                    { id: 'shop-page', title: 'Personalizar Shop Page y Branding', time: '12 min', difficulty: 'Básico', link: 'sops/seller-center-setup.html#branding', status: 'live' },
+                ]
+            },
+            {
+                id: 'products',
+                icon: '📦',
+                title: 'Productos',
+                subtitle: 'Catálogo & Listings',
+                color: '#8B5CF6',
+                description: 'Cómo subir, optimizar y gestionar productos para máxima conversión.',
+                sops: [
+                    { id: 'add-product', title: 'Agregar un Producto Nuevo (Paso a Paso)', time: '12 min', difficulty: 'Básico', link: 'sops/product-listing.html', status: 'live' },
+                    { id: 'bulk-upload', title: 'Carga Masiva de Productos (Bulk Upload)', time: '15 min', difficulty: 'Intermedio', link: 'sops/product-listing.html#bulk', status: 'live' },
+                    { id: 'optimize-listing', title: 'Optimizar Listings para Conversión', time: '20 min', difficulty: 'Avanzado', link: 'sops/product-listing.html#optimizar', status: 'live' },
+                    { id: 'product-images', title: 'Requisitos de Imágenes y Videos', time: '10 min', difficulty: 'Básico', link: 'sops/product-listing.html#imagenes', status: 'live' },
+                    { id: 'categories-tags', title: 'Categorías, Tags y SEO de Producto', time: '10 min', difficulty: 'Intermedio', link: 'sops/product-listing.html#seo', status: 'live' },
+                    { id: 'variations', title: 'Configurar Variantes (Tallas, Colores)', time: '8 min', difficulty: 'Básico', link: 'sops/product-listing.html#variantes', status: 'live' },
+                ]
+            },
+            {
+                id: 'orders',
+                icon: '🛒',
+                title: 'Pedidos',
+                subtitle: 'Orders & Fulfillment',
+                color: '#F59E0B',
+                description: 'Gestión de pedidos desde que entran hasta que llegan al cliente.',
+                sops: [
+                    { id: 'process-order', title: 'Procesar un Pedido Nuevo', time: '8 min', difficulty: 'Básico', link: 'sops/order-management.html', status: 'live' },
+                    { id: 'print-labels', title: 'Imprimir Etiquetas de Envío', time: '5 min', difficulty: 'Básico', link: 'sops/order-management.html#etiquetas', status: 'live' },
+                    { id: 'returns-refunds', title: 'Gestionar Devoluciones y Reembolsos', time: '12 min', difficulty: 'Intermedio', link: 'sops/order-management.html#devoluciones', status: 'live' },
+                    { id: 'cancellations', title: 'Cancelaciones de Pedidos', time: '8 min', difficulty: 'Básico', link: 'sops/order-management.html#cancelaciones', status: 'live' },
+                    { id: 'fbt-setup', title: 'Fulfilled by TikTok (FBT) Setup', time: '15 min', difficulty: 'Avanzado', link: 'sops/order-management.html#fbt', status: 'live' },
+                    { id: 'shipping-deadlines', title: 'Tiempos de Envío y Penalizaciones', time: '10 min', difficulty: 'Intermedio', link: 'sops/order-management.html#tiempos', status: 'live' },
+                ]
+            },
+            {
+                id: 'affiliates',
+                icon: '🤝',
+                title: 'Afiliados',
+                subtitle: 'Creators & Collaborations',
+                color: '#EC4899',
+                description: 'Configurar y gestionar el programa de afiliados con creadores de contenido.',
+                sops: [
+                    { id: 'affiliate-setup', title: 'Activar el Programa de Afiliados', time: '10 min', difficulty: 'Básico', link: 'sops/affiliate-program.html', status: 'live' },
+                    { id: 'open-collab', title: 'Crear Open Collaboration', time: '8 min', difficulty: 'Básico', link: 'sops/affiliate-program.html#open', status: 'live' },
+                    { id: 'target-collab', title: 'Crear Target Collaboration', time: '12 min', difficulty: 'Intermedio', link: 'sops/affiliate-program.html#target', status: 'live' },
+                    { id: 'find-creators', title: 'Buscar y Contactar Creadores', time: '15 min', difficulty: 'Intermedio', link: 'sops/affiliate-program.html#buscar', status: 'live' },
+                    { id: 'commission-strategy', title: 'Estrategia de Comisiones', time: '10 min', difficulty: 'Avanzado', link: 'sops/affiliate-program.html#comisiones', status: 'live' },
+                    { id: 'send-samples', title: 'Enviar Muestras a Creadores', time: '8 min', difficulty: 'Básico', link: 'sops/affiliate-program.html#muestras', status: 'live' },
+                    { id: 'track-affiliates', title: 'Monitorear Performance de Afiliados', time: '10 min', difficulty: 'Intermedio', link: 'sops/affiliate-program.html#performance', status: 'live' },
+                ]
+            },
+            {
+                id: 'ads',
+                icon: '📢',
+                title: 'TikTok Ads',
+                subtitle: 'Paid Advertising',
+                color: '#3B82F6',
+                description: 'Campañas de Shop Ads, Spark Ads y estrategias de escalamiento.',
+                sops: [
+                    { id: 'ads-manager-setup', title: 'Configurar TikTok Ads Manager', time: '12 min', difficulty: 'Básico', link: 'sops/tiktok-ads.html', status: 'live' },
+                    { id: 'shop-ads', title: 'Crear Product Shopping Ads', time: '15 min', difficulty: 'Intermedio', link: 'sops/tiktok-ads.html#shopping-ads', status: 'live' },
+                    { id: 'video-shopping-ads', title: 'Crear Video Shopping Ads', time: '15 min', difficulty: 'Intermedio', link: 'sops/tiktok-ads.html#video-ads', status: 'live' },
+                    { id: 'spark-ads', title: 'Crear Spark Ads desde Contenido Orgánico', time: '10 min', difficulty: 'Intermedio', link: 'sops/tiktok-ads.html#spark-ads', status: 'live' },
+                    { id: 'pixel-setup', title: 'Instalar y Configurar TikTok Pixel', time: '12 min', difficulty: 'Avanzado', link: 'sops/tiktok-ads.html#pixel', status: 'live' },
+                    { id: 'optimize-roas', title: 'Optimizar ROAS y Bid Strategy', time: '20 min', difficulty: 'Avanzado', link: 'sops/tiktok-ads.html#roas', status: 'live' },
+                    { id: 'audiences', title: 'Crear Audiencias y Segmentación', time: '15 min', difficulty: 'Intermedio', link: 'sops/tiktok-ads.html#audiencias', status: 'live' },
+                ]
+            },
+            {
+                id: 'live',
+                icon: '🔴',
+                title: 'Live Shopping',
+                subtitle: 'LIVE Sales & Events',
+                color: '#EF4444',
+                description: 'Todo sobre ventas en vivo: setup técnico, guiones y mejores prácticas.',
+                sops: [
+                    { id: 'go-live', title: 'Cómo Hacer un LIVE Shopping', time: '15 min', difficulty: 'Básico', link: 'sops/live-shopping.html', status: 'live' },
+                    { id: 'live-products', title: 'Agregar Productos al LIVE', time: '8 min', difficulty: 'Básico', link: 'sops/live-shopping.html#productos', status: 'live' },
+                    { id: 'live-setup', title: 'Setup Técnico (Cámara, Luz, Audio)', time: '12 min', difficulty: 'Intermedio', link: 'sops/live-shopping.html#setup', status: 'live' },
+                    { id: 'live-script', title: 'Guión y Estructura de un LIVE', time: '15 min', difficulty: 'Avanzado', link: 'sops/live-shopping.html#guion', status: 'live' },
+                    { id: 'live-analytics', title: 'Analizar Resultados de un LIVE', time: '10 min', difficulty: 'Intermedio', link: 'sops/live-shopping.html#analytics', status: 'live' },
+                ]
+            },
+            {
+                id: 'promos',
+                icon: '🏷️',
+                title: 'Promociones',
+                subtitle: 'Deals & Discounts',
+                color: '#10B981',
+                description: 'Flash deals, cupones, bundles y todas las herramientas promocionales.',
+                sops: [
+                    { id: 'flash-deals', title: 'Crear Flash Deals', time: '10 min', difficulty: 'Básico', link: 'sops/promotions.html', status: 'live' },
+                    { id: 'coupons', title: 'Crear y Gestionar Cupones', time: '8 min', difficulty: 'Básico', link: 'sops/promotions.html#cupones', status: 'live' },
+                    { id: 'bundles', title: 'Configurar Bundles y Combos', time: '10 min', difficulty: 'Intermedio', link: 'sops/promotions.html#bundles', status: 'live' },
+                    { id: 'free-shipping', title: 'Configurar Free Shipping', time: '5 min', difficulty: 'Básico', link: 'sops/promotions.html#shipping', status: 'live' },
+                    { id: 'mega-sales', title: 'Preparar Mega Sales Events', time: '20 min', difficulty: 'Avanzado', link: 'sops/promotions.html#megasales', status: 'live' },
+                ]
+            },
+            {
+                id: 'analytics',
+                icon: '📊',
+                title: 'Analytics',
+                subtitle: 'Datos & Reportes',
+                color: '#6366F1',
+                description: 'Dashboard de métricas, KPIs, performance score y reportes ejecutivos.',
+                sops: [
+                    { id: 'dashboard-overview', title: 'Entender el Dashboard de Seller Center', time: '12 min', difficulty: 'Básico', link: 'sops/analytics.html', status: 'live' },
+                    { id: 'key-metrics', title: 'KPIs Clave: GMV, CVR, AOV, ROAS', time: '15 min', difficulty: 'Intermedio', link: 'sops/analytics.html#kpis', status: 'live' },
+                    { id: 'sps-score', title: 'Shop Performance Score (SPS)', time: '10 min', difficulty: 'Intermedio', link: 'sops/analytics.html#sps', status: 'live' },
+                    { id: 'export-reports', title: 'Exportar y Crear Reportes', time: '10 min', difficulty: 'Básico', link: 'sops/analytics.html#reportes', status: 'live' },
+                    { id: 'traffic-sources', title: 'Analizar Fuentes de Tráfico', time: '12 min', difficulty: 'Avanzado', link: 'sops/analytics.html#trafico', status: 'live' },
+                ]
+            },
+            {
+                id: 'content',
+                icon: '🎬',
+                title: 'Contenido',
+                subtitle: 'Videos & Estrategia',
+                color: '#F97316',
+                description: 'Crear contenido shoppable, hooks, formatos y mejores prácticas.',
+                sops: [
+                    { id: 'shoppable-video', title: 'Crear un Video Shoppable', time: '12 min', difficulty: 'Básico', link: 'sops/content-strategy.html', status: 'live' },
+                    { id: 'tag-products', title: 'Tagear Productos en Videos', time: '5 min', difficulty: 'Básico', link: 'sops/content-strategy.html#tagear', status: 'live' },
+                    { id: 'hooks-formats', title: 'Hooks y Formatos que Convierten', time: '15 min', difficulty: 'Avanzado', link: 'sops/content-strategy.html#hooks', status: 'live' },
+                    { id: 'creator-briefs', title: 'Crear Briefs para Creadores', time: '12 min', difficulty: 'Intermedio', link: 'sops/content-strategy.html#briefs', status: 'live' },
+                    { id: 'content-calendar', title: 'Planificar Calendario de Contenido', time: '15 min', difficulty: 'Intermedio', link: 'sops/content-strategy.html#calendario', status: 'live' },
+                ]
+            },
+            {
+                id: 'customer',
+                icon: '💬',
+                title: 'Customer Service',
+                subtitle: 'Atención al Cliente',
+                color: '#14B8A6',
+                description: 'Mensajes, disputas, reviews y gestión de la experiencia del cliente.',
+                sops: [
+                    { id: 'respond-messages', title: 'Responder Mensajes de Clientes', time: '8 min', difficulty: 'Básico', link: 'sops/customer-service.html', status: 'live' },
+                    { id: 'manage-reviews', title: 'Gestionar Reviews y Ratings', time: '10 min', difficulty: 'Intermedio', link: 'sops/customer-service.html#reviews', status: 'live' },
+                    { id: 'handle-disputes', title: 'Manejar Disputas y Escalaciones', time: '15 min', difficulty: 'Avanzado', link: 'sops/customer-service.html#disputes', status: 'live' },
+                    { id: 'auto-replies', title: 'Configurar Respuestas Automáticas', time: '8 min', difficulty: 'Básico', link: 'sops/customer-service.html#auto-reply', status: 'live' },
+                ]
+            },
+            {
+                id: 'policy',
+                icon: '📋',
+                title: 'Políticas',
+                subtitle: 'Compliance & Reglas',
+                color: '#64748B',
+                description: 'Productos prohibidos, violaciones, performance score y cómo evitar penalizaciones.',
+                sops: [
+                    { id: 'prohibited-products', title: 'Productos Prohibidos y Restringidos', time: '15 min', difficulty: 'Básico', link: 'sops/policy-compliance.html', status: 'live' },
+                    { id: 'violations', title: 'Tipos de Violaciones y Penalizaciones', time: '12 min', difficulty: 'Intermedio', link: 'sops/policy-compliance.html#penalizaciones', status: 'live' },
+                    { id: 'ip-claims', title: 'Claims de Propiedad Intelectual', time: '10 min', difficulty: 'Avanzado', link: 'sops/policy-compliance.html#listings', status: 'live' },
+                    { id: 'fee-structure', title: 'Estructura de Comisiones y Fees', time: '10 min', difficulty: 'Básico', link: 'sops/policy-compliance.html#apelacion', status: 'live' },
+                ]
+            },
+        ];
+
+        const difficultyColors = {
+            'Básico': { bg: 'bg-green-100', text: 'text-green-700' },
+            'Intermedio': { bg: 'bg-yellow-100', text: 'text-yellow-700' },
+            'Avanzado': { bg: 'bg-red-100', text: 'text-red-700' },
+        };
+
+        function App() {
+            const [search, setSearch] = useState('');
+            const [selectedCategory, setSelectedCategory] = useState(null);
+
+            const filteredCategories = useMemo(() => {
+                if (!search.trim()) return categories;
+                const q = search.toLowerCase();
+                return categories.map(cat => ({
+                    ...cat,
+                    sops: cat.sops.filter(sop => 
+                        sop.title.toLowerCase().includes(q) || 
+                        cat.title.toLowerCase().includes(q) ||
+                        cat.description.toLowerCase().includes(q)
+                    )
+                })).filter(cat => cat.sops.length > 0);
+            }, [search]);
+
+            const totalSOPs = categories.reduce((sum, cat) => sum + cat.sops.length, 0);
+            const totalTime = categories.reduce((sum, cat) => sum + cat.sops.reduce((s, sop) => s + parseInt(sop.time), 0), 0);
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    {/* Hero Header */}
+                    <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #010101 0%, #1a1a2e 50%, #16213e 100%)' }}>
+                        <div className="absolute inset-0">
+                            <div className="absolute top-10 right-20 w-72 h-72 rounded-full blur-3xl opacity-20" style={{ background: BRAND.primary }}></div>
+                            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full blur-3xl opacity-15" style={{ background: BRAND.blue }}></div>
+                            <div className="absolute top-1/2 left-1/2 w-96 h-96 rounded-full blur-3xl opacity-10" style={{ background: BRAND.yellow }}></div>
+                        </div>
+                        
+                        <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: BRAND.primary }}>
+                                    <span className="text-white font-black text-sm">IPM</span>
+                                </div>
+                                <div>
+                                    <div className="font-anton text-lg tracking-wide text-white">INDIE PRO MARKETING</div>
+                                    <div className="text-xs font-bold uppercase tracking-widest" style={{ color: BRAND.primary }}>Internal Knowledge Base</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-end justify-between gap-8">
+                                <div>
+                                    <div className="text-xs font-black text-gray-500 uppercase tracking-[0.3em] mb-3">Manual de Operaciones</div>
+                                    <h1 className="font-anton text-5xl md:text-6xl tracking-wide text-white mb-2">
+                                        TIKTOK SHOP
+                                    </h1>
+                                    <h2 className="font-anton text-5xl md:text-6xl tracking-wide mb-4" style={{ 
+                                        background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.yellow} 50%, ${BRAND.blue} 100%)`,
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent'
+                                    }}>
+                                        GENIUS
+                                    </h2>
+                                    <p className="text-gray-400 font-medium max-w-lg text-sm leading-relaxed">
+                                        La guía definitiva click-by-click para el equipo de TikTok Shop. 
+                                        Cada proceso documentado paso a paso para que cualquier miembro 
+                                        del equipo pueda ejecutar con confianza.
+                                    </p>
+                                </div>
+
+                                <div className="hidden md:flex gap-4">
+                                    <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5 text-center min-w-[120px]">
+                                        <div className="text-3xl font-black text-white">{totalSOPs}</div>
+                                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">SOPs</div>
+                                    </div>
+                                    <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5 text-center min-w-[120px]">
+                                        <div className="text-3xl font-black text-white">{categories.length}</div>
+                                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Categorías</div>
+                                    </div>
+                                    <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-5 text-center min-w-[120px]">
+                                        <div className="text-3xl font-black text-white">{Math.round(totalTime / 60)}h</div>
+                                        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Contenido</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Search Bar */}
+                            <div className="mt-8 relative max-w-xl">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </div>
+                                <input 
+                                    type="text"
+                                    placeholder="Buscar SOPs... (ej: 'agregar producto', 'afiliados', 'live')"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur border border-white/10 rounded-2xl text-white placeholder-gray-500 font-medium text-sm focus:outline-none focus:border-white/30 focus:bg-white/15 transition-all"
+                                />
+                                {search && (
+                                    <button onClick={() => setSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Quick Access Bar */}
+                    <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+                        <div className="max-w-6xl mx-auto px-6 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
+                            <button 
+                                onClick={() => setSelectedCategory(null)}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                                    !selectedCategory ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                            >
+                                Todos
+                            </button>
+                            {categories.map(cat => (
+                                <button
+                                    key={cat.id}
+                                    onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                                        selectedCategory === cat.id 
+                                            ? 'text-white shadow-lg' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                    style={selectedCategory === cat.id ? { background: cat.color, boxShadow: `0 4px 15px ${cat.color}40` } : {}}
+                                >
+                                    <span>{cat.icon}</span>
+                                    <span>{cat.title}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="max-w-6xl mx-auto px-6 py-8">
+                        
+                        {search && (
+                            <div className="mb-6 text-sm text-gray-500 font-medium">
+                                {filteredCategories.reduce((sum, cat) => sum + cat.sops.length, 0)} resultados para "<span className="font-bold text-gray-900">{search}</span>"
+                            </div>
+                        )}
+
+                        <div className="space-y-6">
+                            {(search ? filteredCategories : categories.filter(cat => !selectedCategory || cat.id === selectedCategory)).map((category, catIdx) => (
+                                <div key={category.id} className="animate-fade-in" style={{ animationDelay: `${catIdx * 0.05}s` }}>
+                                    {/* Category Header */}
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl" 
+                                             style={{ background: `${category.color}15` }}>
+                                            {category.icon}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3">
+                                                <h2 className="text-lg font-extrabold text-gray-900">{category.title}</h2>
+                                                <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" 
+                                                      style={{ background: `${category.color}15`, color: category.color }}>
+                                                    {category.subtitle}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 font-medium">{category.description}</p>
+                                        </div>
+                                        <div className="text-xs font-bold text-gray-400">{category.sops.length} SOPs</div>
+                                    </div>
+
+                                    {/* SOPs Grid */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-2">
+                                        {category.sops.map((sop, sopIdx) => (
+                                            <a 
+                                                key={sop.id}
+                                                href={sop.link}
+                                                className="group bg-white rounded-xl border border-gray-100 p-4 hover:border-gray-300 hover:shadow-md transition-all duration-200"
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-black flex-shrink-0 group-hover:scale-110 transition-transform"
+                                                         style={{ background: category.color }}>
+                                                        {sopIdx + 1}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${difficultyColors[sop.difficulty].bg} ${difficultyColors[sop.difficulty].text}`}>
+                                                            {sop.difficulty}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <h3 className="text-sm font-bold text-gray-900 mb-1 group-hover:text-gray-700 leading-snug">
+                                                    {sop.title}
+                                                </h3>
+                                                <div className="flex items-center gap-3 mt-2">
+                                                    <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                        {sop.time}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform" style={{ color: category.color }}>
+                                                        Ver SOP
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+                                                    </span>
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {filteredCategories.length === 0 && search && (
+                            <div className="text-center py-16">
+                                <div className="text-4xl mb-4">🔍</div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-2">No se encontraron resultados</h3>
+                                <p className="text-sm text-gray-500">Intenta con otro término de búsqueda</p>
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="border-t border-gray-200 bg-white mt-12">
+                        <div className="max-w-6xl mx-auto px-6 py-8">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: BRAND.primary }}>
+                                        <span className="text-white font-black text-[10px]">IPM</span>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-900">TikTok Shop Genius</div>
+                                        <div className="text-[10px] text-gray-500 font-medium">Indie Pro Marketing &middot; Internal Use Only</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full pulse-dot" style={{ background: BRAND.primary }}></div>
+                                    <div className="w-2 h-2 rounded-full pulse-dot" style={{ background: BRAND.yellow, animationDelay: '0.3s' }}></div>
+                                    <div className="w-2 h-2 rounded-full pulse-dot" style={{ background: BRAND.blue, animationDelay: '0.6s' }}></div>
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium">&copy; 2026 Indie Pro Marketing</div>
+                            </div>
+                            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-4 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                <a href="../tiktok-shop-onboarding/index.html" className="hover:text-gray-900 transition">Documentos de Onboarding</a>
+                                <span>&middot;</span>
+                                <a href="../tiktok-shop-dashboard/index.html" className="hover:text-gray-900 transition">Dashboard</a>
+                                <span>&middot;</span>
+                                <span>Recursos de TikTok:</span>
+                                <a href="https://seller-us.tiktok.com/university/home" target="_blank" className="hover:text-gray-900 transition">Seller University</a>
+                                <a href="https://www.tiktokacademy.com/student/catalog" target="_blank" className="hover:text-gray-900 transition">TikTok Academy</a>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
