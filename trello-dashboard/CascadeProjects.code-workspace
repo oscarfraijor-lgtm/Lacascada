@@ -1,11 +1,7 @@
 {
-	"folders": [
-		{
-			"path": ".."
-		},
-		{
-			"path": "../../Desktop/Windsurf"
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "path": "../../Desktop/Windsurf"
+        }
+    ]
 }

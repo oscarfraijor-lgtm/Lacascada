@@ -820,20 +820,20 @@
         }
 
         function resetDefaults() {
-            document.getElementById('clientName').value = 'Mamita Linda';
-            document.getElementById('productName').value = 'Kit Postparto';
+            document.getElementById('clientName').value = 'MEDICAL AL';
+            document.getElementById('productName').value = 'SUNSCREEN / Protector solar';
             document.getElementById('tiktokFee').value = 6;
             document.getElementById('indieProFee').value = 8;
             document.getElementById('affiliateFee').value = 10;
             document.getElementById('devolucionesPct').value = 1;
             document.getElementById('ordenesMes').value = 120;
-            document.getElementById('precioVenta').value = 1670;
-            document.getElementById('cogs').value = 250;
-            document.getElementById('empaque').value = 50;
-            document.getElementById('inserto').value = 15;
-            document.getElementById('pickpack').value = 50;
-            document.getElementById('adsBudget').value = 30000;
-            document.getElementById('costoMuestra').value = 250;
+            document.getElementById('precioVenta').value = 695;
+            document.getElementById('cogs').value = 105;
+            document.getElementById('empaque').value = 15;
+            document.getElementById('inserto').value = 5;
+            document.getElementById('pickpack').value = 15;
+            document.getElementById('adsBudget').value = 25000;
+            document.getElementById('costoMuestra').value = 105;
             document.getElementById('envioMuestra').value = 115;
             recalculate();
         }
@@ -1030,7 +1030,7 @@
         document.addEventListener('input', recalculate);
         
         // Initial calculation
-        recalculate();
+        resetDefaults();
     </script>
 
 </body>
