@@ -112,6 +112,12 @@ function CampaignFields({ c }: { c?: Campaign }) {
         <Field name="reward" label="Recompensa" defaultValue={c?.reward} placeholder="Colchón a prueba + 250 estrellas" />
         <Field name="brand" label="Marca" defaultValue={c?.brand ?? "Color Dreams"} />
       </div>
+      <Field
+        name="requirements"
+        label="Requisitos (Para calificar)"
+        defaultValue={c?.requirements}
+        placeholder="Perfil completo + link de afiliado. No necesitas seguidores."
+      />
       <label className="block">
         <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">Brief</span>
         <textarea

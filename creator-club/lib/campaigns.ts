@@ -12,6 +12,7 @@ export interface Campaign {
   stars: number;
   deadline: string; // texto legible
   tag: string;
+  requirements?: string; // "Para calificar": criterios visibles antes de participar
   open: boolean;
   recordId?: string; // id de registro en Airtable (solo presente al leer de Airtable)
 }
@@ -23,6 +24,7 @@ export const CAMPAIGN_SEED: Campaign[] = [
   {
     id: "prueba-30",
     title: "Prueba 30 Noches",
+    requirements: "Perfil completo + dirección de envío. No necesitas seguidores.",
     brand: "Color Dreams",
     brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.",
     reward: "Colchón a prueba + 250 estrellas",
@@ -34,6 +36,7 @@ export const CAMPAIGN_SEED: Campaign[] = [
   {
     id: "unboxing-express",
     title: "Unboxing Express",
+    requirements: "Perfil completo + link de afiliado de TikTok Shop.",
     brand: "Color Dreams",
     brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.",
     reward: "150 estrellas + boost de comisión",
@@ -45,6 +48,7 @@ export const CAMPAIGN_SEED: Campaign[] = [
   {
     id: "hot-sale-live",
     title: "Hot Sale Live",
+    requirements: "Haber publicado al menos 1 video con Color Dreams + link de afiliado.",
     brand: "Color Dreams",
     brief: "Co-host en un Live oficial durante Hot Sale. Las ventas en Live cuentan doble.",
     reward: "Fee de Live + 200 estrellas",
@@ -56,6 +60,7 @@ export const CAMPAIGN_SEED: Campaign[] = [
   {
     id: "recamara-makeover",
     title: "Recámara Makeover",
+    requirements: "Perfil completo + dirección de envío. No necesitas seguidores.",
     brand: "Color Dreams",
     brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.",
     reward: "200 estrellas",
@@ -67,6 +72,7 @@ export const CAMPAIGN_SEED: Campaign[] = [
   {
     id: "resena-real",
     title: "Reseña Real",
+    requirements: "Haber completado Prueba 30 Noches.",
     brand: "Color Dreams",
     brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.",
     reward: "150 estrellas",

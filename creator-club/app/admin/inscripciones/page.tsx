@@ -1,15 +1,17 @@
-import { Star, Check, X, RotateCcw, ExternalLink } from "lucide-react";
+import { Star, Check, X, RotateCcw, ExternalLink, UserCheck } from "lucide-react";
 import { listParticipations, listCreators, listCampaigns } from "@/lib/store";
 import { cambiarEstadoEntrega } from "../actions";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   inscrita: { label: "Pendiente", cls: "bg-cream-deep text-ink" },
+  aceptada: { label: "Aceptada", cls: "bg-brand/15 text-brand-deep" },
+  entregada: { label: "Video recibido", cls: "bg-brand/15 text-brand-deep" },
   aprobada: { label: "Aprobada", cls: "bg-lime text-ink" },
   rechazada: { label: "Rechazada", cls: "bg-ink/10 text-ink-soft" },
 };
 
-// Orden: pendientes primero (para revisar), luego aprobadas, luego rechazadas.
-const ORDER: Record<string, number> = { inscrita: 0, aprobada: 1, rechazada: 2 };
+// Orden: lo que necesita acción del equipo primero.
+const ORDER: Record<string, number> = { entregada: 0, inscrita: 1, aceptada: 2, aprobada: 3, rechazada: 4 };
 
 export default async function AdminInscripcionesPage() {
   const [parts, creators, campaigns] = await Promise.all([
@@ -20,10 +22,8 @@ export default async function AdminInscripcionesPage() {
   const creatorByEmail = new Map(creators.map((c) => [c.email.toLowerCase(), c]));
   const campaignById = new Map(campaigns.map((c) => [c.id, c]));
 
-  const rows = [...parts].sort(
-    (a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9)
-  );
-  const pendientes = parts.filter((p) => p.status === "inscrita").length;
+  const rows = [...parts].sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9));
+  const porRevisar = parts.filter((p) => p.status === "inscrita" || p.status === "entregada").length;
 
   return (
     <div className="space-y-4">
@@ -32,7 +32,7 @@ export default async function AdminInscripcionesPage() {
           Inscripciones ({parts.length})
         </h2>
         <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand-deep">
-          {pendientes} por revisar
+          {porRevisar} por revisar
         </span>
       </div>
 
@@ -69,6 +69,9 @@ export default async function AdminInscripcionesPage() {
                   <span className="mx-1.5 text-ink/30">·</span>
                   {creator?.handle || p.creatorEmail}
                 </p>
+                {p.status === "rechazada" && p.reason && (
+                  <p className="mt-0.5 text-xs font-semibold text-brand-deep">Motivo: {p.reason}</p>
+                )}
                 {p.link && (
                   <a
                     href={p.link}
@@ -81,16 +84,33 @@ export default async function AdminInscripcionesPage() {
                 )}
               </div>
 
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                {p.status === "inscrita" && (
+                  <StatusButton id={p.id!} status="aceptada" className="bg-brand/10 text-brand-deep hover:bg-brand/20">
+                    <UserCheck size={14} /> Aceptar
+                  </StatusButton>
+                )}
                 {p.status !== "aprobada" && (
                   <StatusButton id={p.id!} status="aprobada" className="bg-lime text-ink hover:brightness-95">
                     <Check size={14} /> Aprobar
                   </StatusButton>
                 )}
                 {p.status !== "rechazada" && (
-                  <StatusButton id={p.id!} status="rechazada" className="bg-ink/5 text-ink hover:bg-ink/10">
-                    <X size={14} /> Rechazar
-                  </StatusButton>
+                  <form action={cambiarEstadoEntrega} className="flex items-center gap-1">
+                    <input type="hidden" name="id" value={p.id} />
+                    <input type="hidden" name="status" value="rechazada" />
+                    <input
+                      name="reason"
+                      placeholder="Motivo…"
+                      className="w-24 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
+                    />
+                    <button
+                      type="submit"
+                      className="flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-ink/10"
+                    >
+                      <X size={14} /> Rechazar
+                    </button>
+                  </form>
                 )}
                 {p.status !== "inscrita" && (
                   <StatusButton id={p.id!} status="inscrita" className="bg-ink/5 text-ink-soft hover:bg-ink/10">

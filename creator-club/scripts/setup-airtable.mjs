@@ -79,6 +79,29 @@ for (const t of TABLES) {
   }
 }
 
+// 1.5) Asegurar campos nuevos en tablas existentes (idempotente)
+async function ensureFields() {
+  const res = await fetch(`https://api.airtable.com/v0/meta/bases/${BASE}/tables`, { headers });
+  const j = await res.json().catch(() => ({}));
+  const tables = j.tables || [];
+  const want = [
+    { table: "Entregas", field: text("Motivo") },
+    { table: "Campañas", field: text("Requisitos") },
+  ];
+  for (const w of want) {
+    const t = tables.find((x) => x.name === w.table);
+    if (!t) { console.log(`✗ tabla ${w.table} no existe (campo ${w.field.name})`); continue; }
+    if ((t.fields || []).some((f) => f.name === w.field.name)) { console.log(`• ${w.table}.${w.field.name}: ya existe`); continue; }
+    const r = await fetch(`https://api.airtable.com/v0/meta/bases/${BASE}/tables/${t.id}/fields`, {
+      method: "POST", headers, body: JSON.stringify(w.field),
+    });
+    const rj = await r.json().catch(() => ({}));
+    if (r.ok) console.log(`✓ campo creado: ${w.table}.${w.field.name}`);
+    else console.log(`✗ ${w.table}.${w.field.name}: ${r.status} ${JSON.stringify(rj).slice(0, 150)}`);
+  }
+}
+await ensureFields();
+
 // 2) Sembrar campañas (solo las que falten, por Id)
 async function fetchExistingCampaignIds() {
   const ids = new Set();

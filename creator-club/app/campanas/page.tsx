@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Star, Clock, Check } from "lucide-react";
+import { Star, Clock, Check, Send, AlertCircle, ListChecks } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
-import { participationsFor, listOpenCampaigns } from "@/lib/store";
-import { participar } from "./actions";
+import { participationsFor, listOpenCampaigns, type Participation } from "@/lib/store";
+import { participar, entregarVideo } from "./actions";
 
 export default async function CampanasPage({
   searchParams,
@@ -15,7 +15,7 @@ export default async function CampanasPage({
     listOpenCampaigns(),
     me ? participationsFor(me.email) : Promise.resolve([]),
   ]);
-  const joinedIds = new Set(mine.map((p) => p.campaignId));
+  const byCampaign = new Map(mine.map((p) => [p.campaignId, p]));
 
   return (
     <div className="space-y-6">
@@ -50,7 +50,7 @@ export default async function CampanasPage({
 
       <div className="grid gap-4 sm:grid-cols-2">
         {campaigns.map((c) => {
-          const joined = joinedIds.has(c.id);
+          const part = byCampaign.get(c.id);
           return (
             <div key={c.id} className="flex flex-col rounded-3xl border border-ink/10 bg-white p-5">
               <div className="mb-2 flex items-center justify-between">
@@ -70,12 +70,16 @@ export default async function CampanasPage({
                 <p className="flex items-center gap-1">
                   <Clock size={12} /> {c.deadline}
                 </p>
+                {c.requirements && (
+                  <p className="flex items-start gap-1">
+                    <ListChecks size={12} className="mt-0.5 shrink-0" />
+                    <span>Para calificar: {c.requirements}</span>
+                  </p>
+                )}
               </div>
               <div className="mt-4">
-                {joined ? (
-                  <span className="flex items-center justify-center gap-1.5 rounded-full bg-lime/30 py-2.5 text-sm font-bold text-ink">
-                    <Check size={16} /> Ya estás inscrita
-                  </span>
+                {part ? (
+                  <JoinedBlock part={part} campaignId={c.id} stars={c.stars} />
                 ) : me ? (
                   <form action={participar}>
                     <input type="hidden" name="campaignId" value={c.id} />
@@ -99,6 +103,74 @@ export default async function CampanasPage({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Bloque según el estado de la inscripción de la creadora.
+function JoinedBlock({
+  part,
+  campaignId,
+  stars,
+}: {
+  part: Participation;
+  campaignId: string;
+  stars: number;
+}) {
+  if (part.status === "aprobada") {
+    return (
+      <span className="flex items-center justify-center gap-1.5 rounded-full bg-lime py-2.5 text-sm font-bold text-ink">
+        <Check size={16} /> Aprobada · +{stars} estrellas
+      </span>
+    );
+  }
+
+  if (part.status === "inscrita") {
+    return (
+      <div className="rounded-2xl bg-cream-deep/60 px-3 py-2.5 text-center text-sm font-semibold text-ink">
+        <Clock size={14} className="mr-1 inline" /> En revisión
+        <p className="mt-0.5 text-xs font-normal text-ink-soft">Te avisamos cuando te aceptemos.</p>
+      </div>
+    );
+  }
+
+  // aceptada | entregada | rechazada -> puede subir / actualizar su link
+  return (
+    <div className="space-y-2">
+      {part.status === "aceptada" && (
+        <p className="text-sm font-semibold text-brand-deep">
+          🎉 ¡Te aceptamos! Sube el link de tu video.
+        </p>
+      )}
+      {part.status === "entregada" && (
+        <p className="flex items-center gap-1 text-sm font-semibold text-ink">
+          <Check size={14} className="text-brand-deep" /> Video recibido, en revisión.
+        </p>
+      )}
+      {part.status === "rechazada" && (
+        <p className="flex items-start gap-1 text-sm font-semibold text-brand-deep">
+          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+          <span>Rechazada{part.reason ? `: ${part.reason}` : ""}. Corrige y reenvía.</span>
+        </p>
+      )}
+      <form action={entregarVideo} className="flex gap-2">
+        <input type="hidden" name="campaignId" value={campaignId} />
+        <input
+          name="link"
+          type="url"
+          required
+          defaultValue={part.link}
+          placeholder="https://tiktok.com/@tu/video..."
+          className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+        />
+        <button
+          type="submit"
+          title="Enviar mi video"
+          className="font-display flex shrink-0 items-center gap-1 rounded-xl bg-brand px-3 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
+        >
+          <Send size={14} /> {part.status === "entregada" ? "Actualizar" : "Enviar"}
+        </button>
+      </form>
     </div>
   );
 }

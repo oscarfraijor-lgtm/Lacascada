@@ -36,6 +36,7 @@ function parseCampaignForm(formData: FormData): CampaignInput {
     stars: Math.max(0, Math.round(Number(formData.get("stars") || 0)) || 0),
     reward: String(formData.get("reward") || "").trim(),
     deadline: String(formData.get("deadline") || "").trim() || "Cupo abierto",
+    requirements: String(formData.get("requirements") || "").trim(),
     brief: String(formData.get("brief") || "").trim(),
     open: openRaw === "on" || openRaw === "true",
   };
@@ -78,10 +79,12 @@ export async function cambiarEstadoEntrega(formData: FormData) {
   await assertAdmin();
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "") as ParticipationStatus;
+  const reason = String(formData.get("reason") || "").trim();
   if (!id || !PARTICIPATION_STATUS.includes(status)) return;
-  await setParticipationStatus(id, status);
+  await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined);
   // Aprobar otorga estrellas automáticamente (se derivan de entregas aprobadas).
   revalidatePath("/admin/inscripciones");
   revalidatePath("/admin/creadoras");
+  revalidatePath("/campanas");
   revalidatePath("/");
 }
