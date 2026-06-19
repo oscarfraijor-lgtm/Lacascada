@@ -1,24 +1,9 @@
-import type { Creator, LeaderboardRow, Reward } from "@/lib/types";
+import type { Reward } from "@/lib/types";
 
-// Datos demo para ver el portal sin Airtable. Se reemplazan al cablear datos reales.
-export const mockCreator: Creator = {
-  id: "rec_demo",
-  name: "Mariela Gaxiola",
-  handle: "@maye.creates",
-  stars: 820,
-  gmvMXN: 18400,
-  level: "sonadora",
-  completedMissionIds: ["perfil", "conectar-tt", "induccion", "primer-video", "prueba-30", "primera-venta"],
-};
-
-export const mockLeaderboard: LeaderboardRow[] = [
-  { rank: 1, name: "Sofía Rentería", handle: "@sofi.sleeps", stars: 2640 },
-  { rank: 2, name: "Daniela Cruz", handle: "@danidreams", stars: 1980 },
-  { rank: 3, name: "Mariela Gaxiola", handle: "@maye.creates", stars: 820, isMe: true },
-  { rank: 4, name: "Andrea López", handle: "@andy.home", stars: 760 },
-  { rank: 5, name: "Karla Mendoza", handle: "@karlamzz", stars: 540 },
-];
-
+// Catálogo de recompensas del programa (estático, diseño del Color Club).
+// NO son datos de una persona; el flujo de canje real con candado por GMV es
+// una fase posterior. (Antes este archivo tenía un creador/leaderboard mock que
+// se mostraban a todas las usuarias; ya se eliminaron.)
 export const mockRewards: Reward[] = [
   { id: "r-status", title: "Subir de nivel + insignia", detail: "Estatus, badge y acceso a misiones premium.", cost: "Acumula estrellas", kind: "estatus", payer: "club" },
   { id: "r-muestra", title: "Muestra de colchón", detail: "Pruébalo 30 noches (atado a tu primera venta).", cost: "Nivel Soñadora", kind: "producto", payer: "marca" },

@@ -9,6 +9,11 @@ export default async function LeaderboardPage() {
         <h1 className="font-display text-2xl font-extrabold text-ink">Ranking del club</h1>
         <p className="text-sm text-ink-soft">Las creadoras que más brillan este mes.</p>
       </header>
+      {rows.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">
+          El ranking se arma con estrellas aprobadas. Aún no hay nadie en el tablero.
+        </p>
+      ) : (
       <ol className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-white">
         {rows.map((r) => (
           <li
@@ -37,6 +42,7 @@ export default async function LeaderboardPage() {
           </li>
         ))}
       </ol>
+      )}
     </div>
   );
 }

@@ -11,6 +11,8 @@ const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.rou
 
 const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
   aprobada: { label: "Aprobada", cls: "border-lime/60 bg-lime/15" },
+  entregada: { label: "En revisión", cls: "border-brand/40 bg-brand/5" },
+  aceptada: { label: "Aceptada · sube tu video", cls: "border-brand/40 bg-brand/5" },
   rechazada: { label: "Rechazada", cls: "border-ink/10 bg-ink/5 opacity-70" },
   inscrita: { label: "Pendiente", cls: "border-brand/30 bg-white" },
 };
@@ -33,7 +35,7 @@ export default async function Home() {
     stars,
     gmvMXN: 0,
     level: levelForStars(stars, 0).key,
-    completedMissionIds: parts.filter((p) => p.status === "aprobada").map((p) => p.campaignId),
+    completedMissionIds: [], // tracking real de misiones: fase posterior
   };
 
   const level = levelForStars(stars, 0);
@@ -135,20 +137,26 @@ export default async function Home() {
               Completo <ChevronRight size={16} />
             </Link>
           </div>
-          <ol className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-white">
-            {leaderboard.map((r) => (
-              <li key={r.rank} className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className="font-display w-6 text-center font-extrabold text-brand-deep">{r.rank}</span>
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{r.name}</p>
-                    <p className="text-xs text-ink-soft">{r.handle}</p>
+          {leaderboard.length ? (
+            <ol className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-white">
+              {leaderboard.map((r) => (
+                <li key={r.rank} className={`flex items-center justify-between px-4 py-3 ${r.isMe ? "bg-lime/20" : ""}`}>
+                  <div className="flex items-center gap-3">
+                    <span className="font-display w-6 text-center font-extrabold text-brand-deep">{r.rank}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{r.name}{r.isMe && " (tú)"}</p>
+                      <p className="text-xs text-ink-soft">{r.handle}</p>
+                    </div>
                   </div>
-                </div>
-                <StarChip n={r.stars} />
-              </li>
-            ))}
-          </ol>
+                  <StarChip n={r.stars} />
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-4 text-center text-sm text-ink-soft">
+              El ranking se arma con estrellas aprobadas. ¡Aún no hay nadie, sé la primera!
+            </p>
+          )}
         </section>
 
         <section>
