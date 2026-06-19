@@ -6,6 +6,7 @@ import { getMissions, getLeaderboard, getRewards } from "@/lib/data";
 import { levelForStars, nextLevel } from "@/lib/schema";
 import type { Creator } from "@/lib/types";
 import type { Campaign } from "@/lib/campaigns";
+import TrustBar from "@/components/TrustBar";
 
 const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.round((v / max) * 100)));
 
@@ -28,17 +29,18 @@ export default async function Home() {
     .map((p) => ({ part: p, c: byId.get(p.campaignId) }))
     .filter((x): x is { part: Participation; c: Campaign } => !!x.c);
 
+  const gmv = session.gmvMXN ?? 0;
   const creator: Creator = {
     id: session.id ?? "",
     name: session.name,
     handle: session.handle || "",
     stars,
-    gmvMXN: 0,
-    level: levelForStars(stars, 0).key,
+    gmvMXN: gmv,
+    level: levelForStars(stars, gmv).key,
     completedMissionIds: [], // tracking real de misiones: fase posterior
   };
 
-  const level = levelForStars(stars, 0);
+  const level = levelForStars(stars, gmv);
   const next = nextLevel(level.key);
   const missions = (await getMissions(creator)).filter((m) => !m.done).slice(0, 4);
   const leaderboard = await getLeaderboard();
@@ -66,13 +68,24 @@ export default async function Home() {
             <p className="text-xs uppercase tracking-widest text-white/60">estrellas</p>
           </div>
         </div>
-        {next && (
+        {next ? (
           <div className="space-y-3 bg-white/5 px-6 py-5 sm:px-8">
             <p className="text-sm text-white/80">
-              Para llegar a <b className="text-lime">{next.badge} {next.name}</b> te faltan{" "}
-              {Math.max(0, next.minStars - stars).toLocaleString("es-MX")} estrellas.
+              Para llegar a <b className="text-lime">{next.badge} {next.name}</b>:
             </p>
             <Bar label="Estrellas" value={stars} max={next.minStars} />
+            {next.minGmvMXN > 0 && <Bar label="Ventas atribuidas (MXN)" value={gmv} max={next.minGmvMXN} />}
+            <p className="text-xs text-white/50">
+              {gmv > 0
+                ? `Ventas atribuidas: $${gmv.toLocaleString("es-MX")} MXN${session.gmvDate ? ` · actualizado al ${session.gmvDate}` : ""}`
+                : "Tus ventas atribuidas aparecen aquí en cuanto el equipo las registre."}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white/5 px-6 py-5 sm:px-8">
+            <p className="text-sm text-white/80">
+              ¡Eres <b className="text-lime">{level.badge} {level.name}</b>, el nivel máximo!
+            </p>
           </div>
         )}
       </section>
@@ -227,6 +240,8 @@ async function Welcome() {
           </div>
         ))}
       </section>
+
+      <TrustBar />
 
       <section>
         <div className="mb-3 flex items-center justify-between">

@@ -24,6 +24,9 @@ export interface CreatorRecord {
   email: string;
   followers?: string;
   city?: string;
+  portfolio?: string;
+  gmvMXN?: number; // GMV atribuible capturado a mano por el equipo
+  gmvDate?: string; // "actualizado al" (nunca tiempo real)
   createdAt?: string;
 }
 
@@ -75,6 +78,7 @@ export async function createCreator(c: CreatorRecord): Promise<CreatorRecord> {
       Email: c.email,
       Seguidores: c.followers ?? "",
       Ciudad: c.city ?? "",
+      Portafolio: c.portfolio ?? "",
     });
     return { ...c, id: r.id };
   }
@@ -87,14 +91,38 @@ export async function createCreator(c: CreatorRecord): Promise<CreatorRecord> {
   return rec;
 }
 
+interface CreadoraFields {
+  Nombre: string;
+  Handle: string;
+  Email: string;
+  Seguidores?: string;
+  Ciudad?: string;
+  Portafolio?: string;
+  GMV_MXN?: number;
+  GMV_Fecha?: string;
+}
+
+function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?: string }): CreatorRecord {
+  return {
+    id: r.id,
+    name: r.fields.Nombre,
+    handle: r.fields.Handle,
+    email: r.fields.Email,
+    followers: r.fields.Seguidores,
+    city: r.fields.Ciudad,
+    portfolio: r.fields.Portafolio,
+    gmvMXN: r.fields.GMV_MXN,
+    gmvDate: r.fields.GMV_Fecha,
+    createdAt: r.createdTime,
+  };
+}
+
 export async function getCreatorByEmail(email: string): Promise<CreatorRecord | null> {
   if (airtableConfigured()) {
-    const recs = await fetchAll<{ Nombre: string; Handle: string; Email: string }>(
-      TABLES.Creadoras,
-      { filterByFormula: `LOWER({Email})='${email.toLowerCase()}'` }
-    );
-    const r = recs[0];
-    return r ? { id: r.id, name: r.fields.Nombre, handle: r.fields.Handle, email: r.fields.Email } : null;
+    const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras, {
+      filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
+    });
+    return recs[0] ? creadoraToRecord(recs[0]) : null;
   }
   const db = await readDB();
   return db.creators.find((x) => x.email === email) ?? null;
@@ -102,18 +130,26 @@ export async function getCreatorByEmail(email: string): Promise<CreatorRecord | 
 
 export async function listCreators(): Promise<CreatorRecord[]> {
   if (airtableConfigured()) {
-    const recs = await fetchAll<{ Nombre: string; Handle: string; Email: string; Seguidores?: string; Ciudad?: string }>(TABLES.Creadoras);
-    return recs.map((r) => ({
-      id: r.id,
-      name: r.fields.Nombre,
-      handle: r.fields.Handle,
-      email: r.fields.Email,
-      followers: r.fields.Seguidores,
-      city: r.fields.Ciudad,
-      createdAt: r.createdTime,
-    }));
+    const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras);
+    return recs.map(creadoraToRecord);
   }
   return (await readDB()).creators;
+}
+
+// El equipo captura a mano el GMV atribuible de la creadora (export de TT Shop
+// Analytics). NO es tiempo real: se guarda con la fecha "actualizado al".
+export async function setCreatorGmv(id: string, gmvMXN: number, gmvDate: string): Promise<void> {
+  if (airtableConfigured()) {
+    await airtableUpdate(TABLES.Creadoras, id, { GMV_MXN: gmvMXN, GMV_Fecha: gmvDate });
+    return;
+  }
+  const db = await readDB();
+  const c = db.creators.find((x) => x.id === id);
+  if (c) {
+    c.gmvMXN = gmvMXN;
+    c.gmvDate = gmvDate;
+    await writeDB(db);
+  }
 }
 
 // ── Inscripciones / Entregas ────────────────────────────────────────────

@@ -1,6 +1,7 @@
-import { Star } from "lucide-react";
+import { Star, Save } from "lucide-react";
 import { listCreators, listParticipations, listCampaigns, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
+import { capturarGmv } from "../actions";
 
 export default async function AdminCreadorasPage() {
   const [creators, parts, campaigns] = await Promise.all([
@@ -8,6 +9,7 @@ export default async function AdminCreadorasPage() {
     listParticipations(),
     listCampaigns(),
   ]);
+  const today = new Date().toISOString().slice(0, 10);
 
   const partsByEmail = new Map<string, typeof parts>();
   for (const p of parts) {
@@ -21,10 +23,12 @@ export default async function AdminCreadorasPage() {
     .map((c) => {
       const mine = partsByEmail.get(c.email.toLowerCase()) ?? [];
       const stars = starsFromApproved(mine, campaigns);
+      const gmv = c.gmvMXN ?? 0;
       return {
         creator: c,
         stars,
-        level: levelForStars(stars, 0),
+        gmv,
+        level: levelForStars(stars, gmv),
         aprobadas: mine.filter((p) => p.status === "aprobada").length,
         total: mine.length,
       };
@@ -43,43 +47,70 @@ export default async function AdminCreadorasPage() {
         </p>
       )}
 
-      {rows.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-ink/10 bg-white">
-          <ul className="divide-y divide-ink/5">
-            {rows.map(({ creator, stars, level, aprobadas, total }) => (
-              <li key={creator.id ?? creator.email} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-ink">
-                    {creator.name}{" "}
-                    <span className="ml-1 text-xs font-semibold text-ink-soft">
-                      {level.badge} {level.name}
-                    </span>
-                  </p>
-                  <p className="truncate text-xs text-ink-soft">
-                    {creator.handle || "—"}
-                    <span className="mx-1.5 text-ink/30">·</span>
-                    {creator.email}
-                    {creator.city ? (
-                      <>
-                        <span className="mx-1.5 text-ink/30">·</span>
-                        {creator.city}
-                      </>
-                    ) : null}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  <span className="text-xs text-ink-soft">
-                    {aprobadas}/{total} campañas
+      <div className="space-y-2">
+        {rows.map(({ creator, stars, gmv, level, aprobadas, total }) => (
+          <div key={creator.id ?? creator.email} className="rounded-2xl border border-ink/10 bg-white p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-ink">
+                  {creator.name}{" "}
+                  <span className="ml-1 text-xs font-semibold text-ink-soft">
+                    {level.badge} {level.name}
                   </span>
-                  <span className="flex items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-sm font-bold text-ink">
-                    <Star size={13} className="fill-ink" /> {stars.toLocaleString("es-MX")}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+                </p>
+                <p className="truncate text-xs text-ink-soft">
+                  {creator.handle || "—"}
+                  <span className="mx-1.5 text-ink/30">·</span>
+                  {creator.email}
+                  {creator.city ? <><span className="mx-1.5 text-ink/30">·</span>{creator.city}</> : null}
+                </p>
+                {creator.portfolio && (
+                  <p className="mt-0.5 truncate text-xs text-ink-soft">📎 {creator.portfolio}</p>
+                )}
+              </div>
+              <div className="flex shrink-0 items-center gap-4">
+                <span className="text-xs text-ink-soft">{aprobadas}/{total} campañas</span>
+                <span className="flex items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-sm font-bold text-ink">
+                  <Star size={13} className="fill-ink" /> {stars.toLocaleString("es-MX")}
+                </span>
+              </div>
+            </div>
+
+            <form action={capturarGmv} className="mt-3 flex flex-wrap items-end gap-2 border-t border-ink/5 pt-3">
+              <input type="hidden" name="id" value={creator.id} />
+              <label className="block">
+                <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-ink-soft">GMV atribuido (MXN)</span>
+                <input
+                  name="gmv"
+                  type="number"
+                  min={0}
+                  defaultValue={creator.gmvMXN ?? ""}
+                  placeholder="0"
+                  className="w-32 rounded-lg border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand focus:bg-white"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-ink-soft">Actualizado al</span>
+                <input
+                  name="date"
+                  type="date"
+                  defaultValue={creator.gmvDate || today}
+                  className="rounded-lg border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand focus:bg-white"
+                />
+              </label>
+              <button
+                type="submit"
+                className="font-display flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-brand-deep"
+              >
+                <Save size={13} /> Guardar GMV
+              </button>
+              <span className="ml-auto self-center text-xs text-ink-soft">
+                {gmv > 0 ? `$${gmv.toLocaleString("es-MX")} MXN${creator.gmvDate ? ` · al ${creator.gmvDate}` : ""}` : "Sin GMV registrado"}
+              </span>
+            </form>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

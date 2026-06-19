@@ -3,6 +3,7 @@ import { Star, Clock, Check, Send, AlertCircle, ListChecks } from "lucide-react"
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listOpenCampaigns, type Participation } from "@/lib/store";
 import { participar, entregarVideo } from "./actions";
+import TrustBar from "@/components/TrustBar";
 
 export default async function CampanasPage({
   searchParams,
@@ -41,6 +42,8 @@ export default async function CampanasPage({
           </Link>
         )}
       </header>
+
+      <TrustBar />
 
       {campaigns.length === 0 && (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">

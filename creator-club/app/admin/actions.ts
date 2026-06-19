@@ -9,6 +9,7 @@ import {
   setCampaignOpen,
   deleteCampaign,
   setParticipationStatus,
+  setCreatorGmv,
   PARTICIPATION_STATUS,
   type ParticipationStatus,
 } from "@/lib/store";
@@ -86,5 +87,18 @@ export async function cambiarEstadoEntrega(formData: FormData) {
   revalidatePath("/admin/inscripciones");
   revalidatePath("/admin/creadoras");
   revalidatePath("/campanas");
+  revalidatePath("/");
+}
+
+// El equipo captura a mano el GMV atribuible de la creadora (export TT Shop
+// Analytics). Enciende los niveles que dependen de GMV. NO es tiempo real.
+export async function capturarGmv(formData: FormData) {
+  await assertAdmin();
+  const id = String(formData.get("id") || "");
+  const gmv = Math.max(0, Math.round(Number(formData.get("gmv") || 0)) || 0);
+  const date = String(formData.get("date") || "").trim();
+  if (!id) return;
+  await setCreatorGmv(id, gmv, date);
+  revalidatePath("/admin/creadoras");
   revalidatePath("/");
 }

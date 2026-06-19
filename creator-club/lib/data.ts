@@ -27,13 +27,14 @@ export async function getCreator(): Promise<Creator | null> {
     listCampaigns(),
   ]);
   const stars = starsFromApproved(parts, campaigns);
+  const gmvMXN = session.gmvMXN ?? 0;
   return {
     id: session.id ?? "",
     name: session.name,
     handle: session.handle || "",
     stars,
-    gmvMXN: 0, // se enciende con la captura de GMV manual (fase siguiente)
-    level: levelForStars(stars, 0).key,
+    gmvMXN,
+    level: levelForStars(stars, gmvMXN).key,
     completedMissionIds: [], // el tracking real de misiones llega en una fase posterior
   };
 }
