@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* ── Tokens de marca Color Dreams (espejo de la landing) ───────────── */
+@theme {
+  --color-cream: #efeddf;
+  --color-cream-deep: #e4e1cf;
+  --color-brand: #7979ec;
+  --color-brand-deep: #5b5dd0;
+  --color-ink: #2a2553;
+  --color-ink-soft: #4a4570;
+  --color-lime: #c7ec4d;
+
+  --font-sans: var(--font-rht);
+  --font-display: var(--font-rhd);
+}
+
+html,
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-rht), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-rhd), system-ui, sans-serif;
+}
