@@ -100,6 +100,12 @@ export default async function AccesoPage({
               </Link>
             </p>
           </form>
+          <p className="mt-4 text-center text-[11px] text-ink-soft/70">
+            ¿Del equipo Indie Pro?{" "}
+            <Link href="/operador" className="font-semibold underline">
+              Entra a la consola
+            </Link>
+          </p>
         </>
       )}
     </div>

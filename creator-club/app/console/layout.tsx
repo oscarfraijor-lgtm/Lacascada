@@ -10,7 +10,7 @@ import { OPERATOR_THEME } from "@/lib/theme";
 // clubs. Desde aquí Mabel/Oscar/Paulina eligen un club y entran a su admin.
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const email = await currentEmail();
-  if (!email) redirect("/acceso");
+  if (!email) redirect("/operador"); // entrada neutral del equipo (no la del club)
   if (!isAdmin(email)) {
     return (
       <div style={OPERATOR_THEME} className="min-h-screen bg-cream text-ink">
