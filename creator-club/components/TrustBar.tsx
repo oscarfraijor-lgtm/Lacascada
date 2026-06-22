@@ -6,7 +6,7 @@ import { BRAND } from "@/lib/schema";
 // del modelo gifting, no marketing.
 const PROMESAS = [
   { icon: ShieldCheck, text: "Nunca te pedimos pagar envío ni datos de tu tarjeta." },
-  { icon: BadgeCheck, text: `Marca real: ${BRAND.name}, operada por Indie Pro Marketing.` },
+  { icon: BadgeCheck, text: `Marca real: ${BRAND.name}, ${BRAND.category}.` },
   { icon: Lock, text: "No necesitas RFC para participar; solo si hay pago en efectivo." },
 ];
 

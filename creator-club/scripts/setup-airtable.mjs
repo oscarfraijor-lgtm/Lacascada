@@ -13,6 +13,7 @@ try {
 
 const TOKEN = process.env.AIRTABLE_TOKEN || env.AIRTABLE_TOKEN;
 const BASE = process.env.AIRTABLE_BASE_ID || env.AIRTABLE_BASE_ID;
+const BRAND_SLUG = process.env.NEXT_PUBLIC_BRAND || env.NEXT_PUBLIC_BRAND || "color-dreams";
 
 if (!TOKEN || !BASE) {
   console.error("✗ Falta AIRTABLE_TOKEN o AIRTABLE_BASE_ID en .env.local");
@@ -54,14 +55,19 @@ const TABLES = [
   },
 ];
 
-// Mismo seed que lib/campaigns.ts (mantener sincronizado).
-const CAMPAIGN_SEED = [
-  { Id: "prueba-30", "Título": "Prueba 30 Noches", Marca: "Color Dreams", Brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.", Recompensa: "Colchón a prueba + 250 estrellas", Estrellas: 250, Deadline: "Cupo abierto", Tag: "Producto", Activa: true },
-  { Id: "unboxing-express", "Título": "Unboxing Express", Marca: "Color Dreams", Brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.", Recompensa: "150 estrellas + boost de comisión", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Contenido", Activa: true },
-  { Id: "hot-sale-live", "Título": "Hot Sale Live", Marca: "Color Dreams", Brief: "Co-host en un Live oficial durante Hot Sale. Las ventas en Live cuentan doble.", Recompensa: "Fee de Live + 200 estrellas", Estrellas: 200, Deadline: "Próximamente", Tag: "Live", Activa: true },
-  { Id: "recamara-makeover", "Título": "Recámara Makeover", Marca: "Color Dreams", Brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.", Recompensa: "200 estrellas", Estrellas: 200, Deadline: "Cupo abierto", Tag: "Contenido", Activa: true },
-  { Id: "resena-real", "Título": "Reseña Real", Marca: "Color Dreams", Brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.", Recompensa: "150 estrellas", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Reseña", Activa: true },
-];
+// Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
+// puede arrancar sin seed (crea sus campañas en /admin) o agregar su set aquí.
+const SEED_BY_BRAND = {
+  "color-dreams": [
+    { Id: "prueba-30", "Título": "Prueba 30 Noches", Marca: "Color Dreams", Brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.", Recompensa: "Colchón a prueba + 250 estrellas", Estrellas: 250, Deadline: "Cupo abierto", Tag: "Producto", Requisitos: "Perfil completo + dirección de envío. No necesitas seguidores.", Activa: true },
+    { Id: "unboxing-express", "Título": "Unboxing Express", Marca: "Color Dreams", Brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.", Recompensa: "150 estrellas + boost de comisión", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Contenido", Requisitos: "Perfil completo + link de afiliado de TikTok Shop.", Activa: true },
+    { Id: "hot-sale-live", "Título": "Hot Sale Live", Marca: "Color Dreams", Brief: "Co-host en un Live oficial durante Hot Sale. Las ventas en Live cuentan doble.", Recompensa: "Fee de Live + 200 estrellas", Estrellas: 200, Deadline: "Próximamente", Tag: "Live", Requisitos: "Haber publicado al menos 1 video con Color Dreams + link de afiliado.", Activa: true },
+    { Id: "recamara-makeover", "Título": "Recámara Makeover", Marca: "Color Dreams", Brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.", Recompensa: "200 estrellas", Estrellas: 200, Deadline: "Cupo abierto", Tag: "Contenido", Requisitos: "Perfil completo + dirección de envío. No necesitas seguidores.", Activa: true },
+    { Id: "resena-real", "Título": "Reseña Real", Marca: "Color Dreams", Brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.", Recompensa: "150 estrellas", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Reseña", Requisitos: "Haber completado Prueba 30 Noches.", Activa: true },
+  ],
+};
+const CAMPAIGN_SEED = SEED_BY_BRAND[BRAND_SLUG] || [];
+console.log(`Marca activa: ${BRAND_SLUG} (${CAMPAIGN_SEED.length} campañas en el seed)`);
 
 // 1) Crear tablas (idempotente)
 for (const t of TABLES) {

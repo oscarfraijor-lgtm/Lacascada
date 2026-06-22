@@ -16,6 +16,7 @@ import {
   CAMPAIGN_SEED,
   slugify,
 } from "@/lib/campaigns";
+import { BRAND } from "@/lib/schema";
 
 export interface CreatorRecord {
   id?: string;
@@ -302,7 +303,7 @@ export async function listCampaigns(): Promise<Campaign[]> {
       recordId: r.id,
       id: r.fields.Id || slugify(r.fields["Título"] ?? r.id),
       title: r.fields["Título"] ?? "(sin título)",
-      brand: r.fields.Marca ?? "Color Dreams",
+      brand: r.fields.Marca ?? BRAND.name,
       brief: r.fields.Brief ?? "",
       reward: r.fields.Recompensa ?? "",
       stars: Number(r.fields.Estrellas ?? 0),

@@ -3,7 +3,7 @@ import { Star, ChevronRight, Lock, ArrowRight } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewards } from "@/lib/data";
-import { levelForStars, nextLevel } from "@/lib/schema";
+import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
 import type { Creator } from "@/lib/types";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
@@ -200,6 +200,10 @@ export default async function Home() {
 
 async function Welcome() {
   const campaigns = (await listOpenCampaigns()).slice(0, 3);
+  // Tagline de la marca con la última palabra resaltada.
+  const taglineWords = BRAND.tagline.replace(/\.$/, "").split(" ");
+  const taglineLast = taglineWords.pop() ?? "";
+  const taglineHead = taglineWords.join(" ");
   const steps = [
     { n: 1, t: "Regístrate", d: "Cuéntanos de ti en 1 minuto." },
     { n: 2, t: "Participa en campañas", d: "Elige las que van contigo." },
@@ -208,12 +212,12 @@ async function Welcome() {
   return (
     <div className="space-y-8">
       <section className="overflow-hidden rounded-3xl bg-ink p-8 text-center text-white sm:p-12">
-        <p className="font-display text-xs font-bold uppercase tracking-[0.25em] text-lime">Color Club · Color Dreams</p>
+        <p className="font-display text-xs font-bold uppercase tracking-[0.25em] text-lime">{BRAND.club} · {BRAND.name}</p>
         <h1 className="font-display mx-auto mt-3 max-w-xl text-3xl font-black sm:text-5xl">
-          Crea, descansa y <span className="text-lime">brilla</span>.
+          {taglineHead} <span className="text-lime">{taglineLast}</span>.
         </h1>
         <p className="mx-auto mt-3 max-w-md text-white/80">
-          La comunidad de creadoras de Color Dreams. Inscríbete, participa en campañas y gana recompensas.
+          La comunidad de creadoras de {BRAND.name}. Inscríbete, participa en campañas y gana recompensas.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/registro" className="font-display rounded-full bg-lime px-6 py-3 font-extrabold text-ink">

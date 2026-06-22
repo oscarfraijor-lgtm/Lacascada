@@ -1,4 +1,5 @@
 import { getRewards } from "@/lib/data";
+import { BRAND } from "@/lib/schema";
 
 const KIND_LABEL: Record<string, string> = {
   estatus: "Estatus",
@@ -26,7 +27,7 @@ export default async function RecompensasPage() {
                 {KIND_LABEL[r.kind] ?? r.kind}
               </span>
               <span className="rounded-full bg-cream-deep px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
-                Paga: {r.payer === "marca" ? "Color Dreams" : "Club"}
+                Paga: {r.payer === "marca" ? BRAND.name : "Club"}
               </span>
             </div>
             <h3 className="font-display text-lg font-extrabold text-ink">{r.title}</h3>

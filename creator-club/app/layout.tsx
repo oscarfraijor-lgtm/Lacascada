@@ -20,11 +20,23 @@ export const metadata: Metadata = {
   description: `Comunidad de creadoras de ${BRAND.name}. Misiones, estrellas y recompensas.`,
 };
 
+// Paleta de la marca activa: sobreescribe las CSS variables del tema (globals.css
+// trae Color Dreams como default). Así cada deploy se pinta con su marca.
+const brandTheme = {
+  "--color-cream": BRAND.cream,
+  "--color-cream-deep": BRAND.creamDeep,
+  "--color-brand": BRAND.violet,
+  "--color-brand-deep": BRAND.violetDeep,
+  "--color-ink": BRAND.ink,
+  "--color-ink-soft": BRAND.inkSoft,
+  "--color-lime": BRAND.lime,
+} as React.CSSProperties;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${rhd.variable} ${rht.variable} h-full antialiased`}>
+    <html lang="es" style={brandTheme} className={`${rhd.variable} ${rht.variable} h-full antialiased`}>
       <body className="min-h-full bg-cream text-ink">
         <Nav />
         <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">{children}</main>

@@ -21,7 +21,7 @@ export default function LegalPage() {
       </header>
 
       <Section title="Quién maneja tus datos">
-        El responsable es <b>INDIEPRO MUSIC &amp; MARKETING S.C.</b> (&quot;Indie Pro Marketing&quot;),
+        El responsable es <b>{BRAND.operator}</b> (&quot;{BRAND.operatorShort}&quot;),
         que opera el {BRAND.club} para la marca {BRAND.name}.
       </Section>
 
@@ -46,7 +46,7 @@ export default function LegalPage() {
       </Section>
 
       <Section title="Uso de tu contenido">
-        Cuando entregas contenido en una campaña, autorizas a {BRAND.name} e Indie Pro Marketing a
+        Cuando entregas contenido en una campaña, autorizas a {BRAND.name} y a {BRAND.operatorShort} a
         usarlo y republicarlo en sus redes y anuncios, dándote crédito cuando sea posible. Tú sigues
         siendo la autora de tu contenido.
       </Section>
@@ -54,8 +54,8 @@ export default function LegalPage() {
       <Section title="Tus derechos">
         Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos (derechos ARCO)
         escribiendo a{" "}
-        <a href="mailto:afiliadostiktok@indiepro.com.mx" className="font-semibold text-brand-deep underline">
-          afiliadostiktok@indiepro.com.mx
+        <a href={`mailto:${BRAND.contactEmail}`} className="font-semibold text-brand-deep underline">
+          {BRAND.contactEmail}
         </a>
         .
       </Section>

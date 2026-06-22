@@ -4,6 +4,7 @@ import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listOpenCampaigns, type Participation } from "@/lib/store";
 import { participar, entregarVideo } from "./actions";
 import TrustBar from "@/components/TrustBar";
+import { BRAND } from "@/lib/schema";
 
 export default async function CampanasPage({
   searchParams,
@@ -30,7 +31,7 @@ export default async function CampanasPage({
         <div>
           <h1 className="font-display text-2xl font-extrabold text-ink">Campañas</h1>
           <p className="text-sm text-ink-soft">
-            Inscríbete a las campañas activas de Color Dreams y gana recompensas.
+            Inscríbete a las campañas activas de {BRAND.name} y gana recompensas.
           </p>
         </div>
         {!me && (

@@ -1,6 +1,7 @@
 import { Star, Plus, Power, Trash2, Save } from "lucide-react";
 import { listCampaigns } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
+import { BRAND } from "@/lib/schema";
 import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from "./actions";
 
 export default async function AdminCampanasPage() {
@@ -105,12 +106,12 @@ function CampaignFields({ c }: { c?: Campaign }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field name="title" label="Título" defaultValue={c?.title} placeholder="Prueba 30 Noches" required />
+        <Field name="title" label="Título" defaultValue={c?.title} placeholder="Nombre de la campaña" required />
         <Field name="tag" label="Tag" defaultValue={c?.tag} placeholder="Producto / Contenido / Live" />
         <Field name="stars" label="Estrellas" type="number" defaultValue={c?.stars?.toString() ?? "0"} />
         <Field name="deadline" label="Deadline" defaultValue={c?.deadline} placeholder="Cupo abierto" />
-        <Field name="reward" label="Recompensa" defaultValue={c?.reward} placeholder="Colchón a prueba + 250 estrellas" />
-        <Field name="brand" label="Marca" defaultValue={c?.brand ?? "Color Dreams"} />
+        <Field name="reward" label="Recompensa" defaultValue={c?.reward} placeholder="Qué recibe la creadora" />
+        <Field name="brand" label="Marca" defaultValue={c?.brand ?? BRAND.name} />
       </div>
       <Field
         name="requirements"

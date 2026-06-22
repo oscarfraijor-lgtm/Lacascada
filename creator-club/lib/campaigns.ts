@@ -1,7 +1,7 @@
 // Campañas que la marca publica y a las que las creadoras se inscriben.
 // El acceso a datos (Airtable si está configurado, si no archivo local) vive en
-// lib/store.ts. Aquí queda solo el tipo + el seed inicial (con el que se siembra
-// tanto la tabla Airtable "Campañas" como el archivo local en dev).
+// lib/store.ts. El seed inicial es por marca (lib/brands.ts -> campaignSeed).
+import { getBrand } from "@/lib/brands";
 
 export interface Campaign {
   id: string; // slug estable; es la llave con la que Entregas referencia la campaña
@@ -20,68 +20,8 @@ export interface Campaign {
 // Datos editables por el admin = todo menos el id (slug) y el recordId.
 export type CampaignInput = Omit<Campaign, "id" | "recordId">;
 
-export const CAMPAIGN_SEED: Campaign[] = [
-  {
-    id: "prueba-30",
-    title: "Prueba 30 Noches",
-    requirements: "Perfil completo + dirección de envío. No necesitas seguidores.",
-    brand: "Color Dreams",
-    brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.",
-    reward: "Colchón a prueba + 250 estrellas",
-    stars: 250,
-    deadline: "Cupo abierto",
-    tag: "Producto",
-    open: true,
-  },
-  {
-    id: "unboxing-express",
-    title: "Unboxing Express",
-    requirements: "Perfil completo + link de afiliado de TikTok Shop.",
-    brand: "Color Dreams",
-    brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.",
-    reward: "150 estrellas + boost de comisión",
-    stars: 150,
-    deadline: "Cupo abierto",
-    tag: "Contenido",
-    open: true,
-  },
-  {
-    id: "hot-sale-live",
-    title: "Hot Sale Live",
-    requirements: "Haber publicado al menos 1 video con Color Dreams + link de afiliado.",
-    brand: "Color Dreams",
-    brief: "Co-host en un Live oficial durante Hot Sale. Las ventas en Live cuentan doble.",
-    reward: "Fee de Live + 200 estrellas",
-    stars: 200,
-    deadline: "Próximamente",
-    tag: "Live",
-    open: true,
-  },
-  {
-    id: "recamara-makeover",
-    title: "Recámara Makeover",
-    requirements: "Perfil completo + dirección de envío. No necesitas seguidores.",
-    brand: "Color Dreams",
-    brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.",
-    reward: "200 estrellas",
-    stars: 200,
-    deadline: "Cupo abierto",
-    tag: "Contenido",
-    open: true,
-  },
-  {
-    id: "resena-real",
-    title: "Reseña Real",
-    requirements: "Haber completado Prueba 30 Noches.",
-    brand: "Color Dreams",
-    brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.",
-    reward: "150 estrellas",
-    stars: 150,
-    deadline: "Cupo abierto",
-    tag: "Reseña",
-    open: true,
-  },
-];
+// Seed de la marca activa (siembra la tabla Airtable "Campañas" y el archivo local en dev).
+export const CAMPAIGN_SEED: Campaign[] = getBrand().campaignSeed;
 
 // slug a partir del título: minúsculas, sin acentos, guiones.
 export function slugify(s: string): string {

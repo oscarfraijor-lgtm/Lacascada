@@ -14,6 +14,7 @@ import {
   type ParticipationStatus,
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
+import { BRAND } from "@/lib/schema";
 
 // Toda acción de admin verifica autorización en el servidor (no solo en la UI),
 // porque las server actions son alcanzables por POST directo.
@@ -32,7 +33,7 @@ function parseCampaignForm(formData: FormData): CampaignInput {
   const openRaw = String(formData.get("open") || "");
   return {
     title: String(formData.get("title") || "").trim(),
-    brand: String(formData.get("brand") || "").trim() || "Color Dreams",
+    brand: String(formData.get("brand") || "").trim() || BRAND.name,
     tag: String(formData.get("tag") || "").trim(),
     stars: Math.max(0, Math.round(Number(formData.get("stars") || 0)) || 0),
     reward: String(formData.get("reward") || "").trim(),

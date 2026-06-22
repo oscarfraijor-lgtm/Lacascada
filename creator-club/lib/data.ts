@@ -1,7 +1,7 @@
 // Capa de datos del dashboard. Deriva TODO de la sesión real + las tablas
 // (Creadoras/Entregas/Campañas). El catálogo de recompensas es estático (diseño
 // del programa), no datos de una persona.
-import { mockRewards } from "@/lib/mock";
+import { getBrand } from "@/lib/brands";
 import type { Creator, LeaderboardRow, Reward } from "@/lib/types";
 import { MISSIONS, type Mission, levelForStars } from "@/lib/schema";
 import { getCurrentCreator, currentEmail } from "@/lib/session";
@@ -71,8 +71,8 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
     .slice(0, 20);
 }
 
-// Catálogo de recompensas del programa (estático por ahora; el flujo de canje
-// con candado por GMV es una fase posterior).
+// Catálogo de recompensas de la marca activa (estático por ahora; el flujo de
+// canje con candado por GMV es una fase posterior).
 export async function getRewards(): Promise<Reward[]> {
-  return mockRewards;
+  return getBrand().rewards;
 }

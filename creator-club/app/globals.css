@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-/* ── Tokens de marca Color Dreams (espejo de la landing) ───────────── */
+/* ── Tokens de marca (DEFAULT = Color Dreams) ───────────────────────
+   La marca activa sobreescribe estas CSS variables en runtime desde
+   app/layout.tsx (paleta de lib/brands.ts según NEXT_PUBLIC_BRAND). */
 @theme {
   --color-cream: #efeddf;
   --color-cream-deep: #e4e1cf;
