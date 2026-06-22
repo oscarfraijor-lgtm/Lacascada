@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LogOut, ShieldCheck, Users } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { cerrarSesion } from "@/lib/auth-actions";
@@ -46,6 +46,12 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
             </span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link
+              href="/console/equipo"
+              className="hidden items-center gap-1 text-xs font-semibold text-ink-soft transition hover:text-ink sm:flex"
+            >
+              <Users size={14} /> Equipo
+            </Link>
             <span className="hidden text-xs text-ink-soft sm:inline">{email}</span>
             <form action={cerrarSesion}>
               <button
