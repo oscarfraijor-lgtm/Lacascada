@@ -28,14 +28,15 @@ export function brandThemeVars(p: Palette): CSSProperties {
   } as CSSProperties;
 }
 
-// Tema NEUTRO de la consola de operador: es Indie Pro (agencia), no una marca
-// cliente. Claro (regla de diseño: nunca fondos oscuros), acento rojo Indie Pro.
+// Tema NEUTRO de la consola de operador (agencia: Indie Pro + ESH). Muy neutro:
+// grises/carbón, sin color de marca, look limpio tipo herramienta interna. Los
+// botones primarios son carbón oscuro (no rojo); el acento es solo gris.
 export const OPERATOR_THEME: CSSProperties = brandThemeVars({
-  cream: "#F6F6F7",
-  creamDeep: "#EAEAEE",
-  violet: "#ED2450", // rojo Indie Pro (acento principal)
-  violetDeep: "#C71D40",
-  ink: "#1B1B20",
-  inkSoft: "#56565F",
-  lime: "#F0B429", // CTA cálido legible con texto ink
+  cream: "#F7F7F8", // fondo casi blanco neutro
+  creamDeep: "#ECECEF",
+  violet: "#3F3F46", // acento neutro (slate) — bordes, detalles
+  violetDeep: "#27272A", // carbón — botones primarios
+  ink: "#18181B",
+  inkSoft: "#52525B",
+  lime: "#E4E4E7", // badge muy neutro (texto ink encima)
 });

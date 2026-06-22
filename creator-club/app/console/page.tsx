@@ -20,12 +20,10 @@ export default async function ConsolePage() {
   return (
     <div className="space-y-5">
       <header>
-        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-brand">Operador · Indie Pro</p>
+        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ink-soft">Operador</p>
         <h1 className="font-display mt-0.5 text-2xl font-extrabold text-ink">Clubs que gestionas</h1>
         <p className="mt-1 max-w-2xl text-sm text-ink-soft">
           Entra a un club para administrarlo: campañas, inscripciones, canjes y creadoras.
-          Cada club vive en su propia base y se abre con su propio branding. Los datos de cada
-          marca nunca se cruzan.
         </p>
       </header>
 
@@ -55,9 +53,9 @@ export default async function ConsolePage() {
             </div>
 
             <p className="mt-1 grow text-xs text-ink-soft">
-              {b.state === "gestionable" && "Base conectada. Entra para administrar este club."}
-              {b.state === "externa" && "Se gestiona en su propio deploy."}
-              {b.state === "pendiente" && "Falta conectar su base de Airtable a la consola."}
+              {b.state === "gestionable" && "Entra para administrar este club."}
+              {b.state === "externa" && "Se abre por separado."}
+              {b.state === "pendiente" && "Aún no está disponible."}
             </p>
 
             {/* Aviso: club conectado pero usando la mecánica heredada de Color Dreams */}
@@ -90,21 +88,13 @@ export default async function ConsolePage() {
                 </a>
               ) : (
                 <span className="flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-semibold text-ink-soft">
-                  <Lock size={14} /> Pendiente de configurar
+                  <Lock size={14} /> Próximamente
                 </span>
               )}
             </div>
           </div>
         ))}
       </div>
-
-      <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-xs text-ink-soft">
-        Para agregar un club: define su identidad y mecánica (niveles/recompensas/campañas) en{" "}
-        <code className="rounded bg-cream-deep px-1 py-0.5">lib/brands.ts</code> (copia la plantilla) y conecta su base
-        con <code className="rounded bg-cream-deep px-1 py-0.5">AIRTABLE_BASE_&lt;SLUG&gt;</code> en el entorno de la
-        consola. Si su base vive en otra cuenta de Airtable, agrega también{" "}
-        <code className="rounded bg-cream-deep px-1 py-0.5">AIRTABLE_TOKEN_&lt;SLUG&gt;</code>.
-      </p>
     </div>
   );
 }

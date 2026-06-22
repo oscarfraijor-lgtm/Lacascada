@@ -37,10 +37,12 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     <div style={OPERATOR_THEME} className="min-h-screen bg-cream text-ink">
       <header className="sticky top-0 z-50 border-b border-ink/10 bg-white/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-          <Link href="/console" className="flex items-baseline gap-2">
-            <span className="font-display text-lg font-black tracking-tight text-brand">Indie Pro</span>
-            <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft sm:inline">
-              Consola
+          {/* Identidad de la AGENCIA (neutral): Indie Pro (MX) + ESH (USA). */}
+          <Link href="/console" className="flex items-center gap-2.5">
+            <span className="font-display text-lg font-black tracking-tight text-ink">Indie Pro</span>
+            <span className="hidden h-4 w-px bg-ink/15 sm:block" />
+            <span className="hidden font-display text-sm font-bold tracking-tight text-ink-soft sm:inline">
+              ESH Creative Lab
             </span>
           </Link>
           <div className="flex items-center gap-3">

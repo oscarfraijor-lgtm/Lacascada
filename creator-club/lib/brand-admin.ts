@@ -86,6 +86,7 @@ export interface AdminContext {
   conn: Conn | null; // base de esa marca (null => archivo local en dev)
   configured: boolean; // se puede gestionar data de esta marca aquí
   fileStore: boolean; // modo archivo local (dev, sin Airtable)
+  isEnvBrand: boolean; // su club público es el "/" de ESTE deploy
 }
 
 // Contexto activo del admin: marca seleccionada + su conexión a Airtable.
@@ -94,7 +95,14 @@ export async function getAdminContext(): Promise<AdminContext> {
   const brand = getBrandConfig(slug) ?? getBrand();
   const conn = resolveConn(slug);
   const fileStore = !airtableMode();
-  return { slug, brand, conn, configured: fileStore || conn !== null, fileStore };
+  return {
+    slug,
+    brand,
+    conn,
+    configured: fileStore || conn !== null,
+    fileStore,
+    isEnvBrand: slug === envBrandSlug(),
+  };
 }
 
 export async function setSelectedBrandCookie(slug: string): Promise<void> {

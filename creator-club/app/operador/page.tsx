@@ -19,10 +19,12 @@ export default async function OperadorPage({
     <div style={OPERATOR_THEME} className="min-h-screen bg-cream text-ink">
       <div className="mx-auto max-w-md px-4 py-16 sm:py-24">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-brand/10 text-brand">
+          <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-ink/5 text-ink-soft">
             <ShieldCheck size={22} />
           </span>
-          <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-brand">Indie Pro · Operador</p>
+          <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-ink-soft">
+            Indie Pro · ESH Creative Lab
+          </p>
           <h1 className="font-display mt-1 text-3xl font-extrabold text-ink">Consola del equipo</h1>
           <p className="mt-1 text-sm text-ink-soft">
             Entra con tu correo. Te mandamos un enlace de acceso, sin contraseñas.

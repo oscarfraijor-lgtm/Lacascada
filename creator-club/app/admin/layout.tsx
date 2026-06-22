@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Megaphone, Inbox, Gift, Users, ShieldCheck, ChevronLeft } from "lucide-react";
+import { Megaphone, Inbox, Gift, Users, ShieldCheck, ChevronLeft, ExternalLink } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { getAdminContext } from "@/lib/brand-admin";
@@ -35,7 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Admin de la marca SELECCIONADA: se pinta con SU branding.
   const ctx = await getAdminContext();
-  const dataLabel = ctx.fileStore ? "archivo local" : ctx.configured ? "Airtable" : "pendiente";
+  // El club público de esta marca: el "/" de este deploy (marca del env) o su
+  // propio deploy si lo tiene. Para que el equipo lo vea como las creadoras.
+  const clubUrl = ctx.isEnvBrand ? "/" : ctx.brand.deployUrl;
 
   return (
     <div style={brandThemeVars(ctx.brand)} className="min-h-screen bg-cream text-ink">
@@ -51,9 +53,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <ChevronLeft size={14} /> Consola
             </Link>
             <span className="font-display text-base font-black tracking-tight text-brand">{ctx.brand.club}</span>
+            {clubUrl && (
+              <a
+                href={clubUrl}
+                target="_blank"
+                rel="noreferrer"
+                title="Ver el club como lo ven las creadoras"
+                className="flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink-soft transition hover:text-brand"
+              >
+                Ver el club <ExternalLink size={12} />
+              </a>
+            )}
           </div>
           <span className="hidden rounded-full bg-cream-deep px-3 py-1 text-xs font-semibold text-ink-soft sm:inline">
-            Datos: {dataLabel} · {email}
+            {ctx.fileStore ? "archivo local · " : ""}
+            {email}
           </span>
         </div>
       </div>
