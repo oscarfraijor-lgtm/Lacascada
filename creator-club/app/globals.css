@@ -16,13 +16,15 @@
   --font-display: var(--font-rhd);
 }
 
-html,
-body {
-  background: var(--color-cream);
-  color: var(--color-ink);
+/* Root NEUTRO: el fondo/tinta base no son de ninguna marca. Cada capa (club
+   público / consola / admin por marca) pinta su propio bg-cream/text-ink en su
+   wrapper min-h-screen; esto solo evita que asome un color de marca en overscroll. */
+html {
+  background: #f6f6f7;
 }
 
 body {
+  color: #1b1b20;
   font-family: var(--font-rht), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

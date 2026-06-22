@@ -14,8 +14,9 @@ export async function GET(req: Request) {
 
   await setCreatorCookie(result.email);
 
+  // Operadores entran por la consola (nivel superior), no a un club concreto.
   if (isAdmin(result.email)) {
-    return NextResponse.redirect(new URL("/admin", req.url));
+    return NextResponse.redirect(new URL("/console", req.url));
   }
   const creator = await getCreatorByEmail(result.email);
   if (creator) {

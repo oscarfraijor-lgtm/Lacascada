@@ -34,12 +34,12 @@ export default async function Nav() {
           ))}
           {admin && (
             <Link
-              href="/admin"
+              href="/console"
               className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-brand-deep transition hover:bg-brand/10"
-              title="Panel de admin"
+              title="Consola de operador"
             >
               <ShieldCheck size={16} />
-              <span className="hidden md:inline">Admin</span>
+              <span className="hidden md:inline">Consola</span>
             </Link>
           )}
           {me || admin ? (

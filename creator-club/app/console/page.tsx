@@ -1,43 +1,49 @@
-import Link from "next/link";
-import { Building2, ArrowRight, Check, ExternalLink, Lock, AlertTriangle } from "lucide-react";
+import { Building2, ArrowRight, ExternalLink, Lock, AlertTriangle, Dot } from "lucide-react";
 import { managedBrands, getSelectedBrandSlug } from "@/lib/brand-admin";
-import { entrarMarca } from "../actions";
+import { entrarMarca } from "./actions";
 
-const RANK: Record<string, number> = { activa: 0, configurada: 1, externa: 2, pendiente: 3 };
+const RANK: Record<string, number> = { gestionable: 0, externa: 1, pendiente: 2 };
 
-export default async function AdminMarcasPage() {
+export default async function ConsolePage() {
   const brands = managedBrands();
   const selected = await getSelectedBrandSlug();
 
   const rows = brands
     .map((b) => {
-      const state = b.slug === selected ? "activa" : b.configured ? "configurada" : b.deployUrl ? "externa" : "pendiente";
-      return { ...b, state };
+      const state = b.configured ? "gestionable" : b.deployUrl ? "externa" : "pendiente";
+      return { ...b, state, isCurrent: b.slug === selected };
     })
     .sort((a, b) => (RANK[a.state] ?? 9) - (RANK[b.state] ?? 9) || a.name.localeCompare(b.name));
+
+  const gestionables = rows.filter((b) => b.state === "gestionable").length;
 
   return (
     <div className="space-y-5">
       <header>
-        <h2 className="font-display text-lg font-extrabold text-ink">Marcas que gestionas</h2>
-        <p className="text-sm text-ink-soft">
-          Elige la marca con la que quieres trabajar. Entrar cambia todo el panel (campañas,
-          inscripciones, canjes y creadoras) a la base de esa marca. Los datos de cada marca
-          viven en su propia base y nunca se cruzan.
+        <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-brand">Operador · Indie Pro</p>
+        <h1 className="font-display mt-0.5 text-2xl font-extrabold text-ink">Clubs que gestionas</h1>
+        <p className="mt-1 max-w-2xl text-sm text-ink-soft">
+          Entra a un club para administrarlo: campañas, inscripciones, canjes y creadoras.
+          Cada club vive en su propia base y se abre con su propio branding. Los datos de cada
+          marca nunca se cruzan.
         </p>
       </header>
+
+      <p className="text-xs font-semibold text-ink-soft">
+        {gestionables} de {rows.length} clubs listos para gestionar
+      </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {rows.map((b) => (
           <div
             key={b.slug}
-            className={`flex flex-col rounded-2xl border p-5 ${
-              b.state === "activa" ? "border-brand bg-brand/[0.04]" : "border-ink/10 bg-white"
+            className={`flex flex-col rounded-2xl border bg-white p-5 ${
+              b.isCurrent ? "border-brand" : "border-ink/10"
             }`}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="flex items-center gap-2">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-cream-deep text-brand-deep">
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-cream-deep text-brand">
                   <Building2 size={18} />
                 </span>
                 <span>
@@ -45,40 +51,32 @@ export default async function AdminMarcasPage() {
                   <p className="text-xs text-ink-soft">{b.club}</p>
                 </span>
               </span>
-              <StateBadge state={b.state} />
+              <StateBadge state={b.state} isCurrent={b.isCurrent} />
             </div>
 
             <p className="mt-1 grow text-xs text-ink-soft">
-              {b.state === "activa" && "Esta es la marca activa en tu panel ahora mismo."}
-              {b.state === "configurada" && "Base conectada. Lista para gestionar aquí."}
+              {b.state === "gestionable" && "Base conectada. Entra para administrar este club."}
               {b.state === "externa" && "Se gestiona en su propio deploy."}
-              {b.state === "pendiente" && "Falta conectar su base de Airtable en este panel."}
+              {b.state === "pendiente" && "Falta conectar su base de Airtable a la consola."}
             </p>
 
-            {/* Aviso: marca conectada pero usando la mecánica heredada de Color Dreams */}
+            {/* Aviso: club conectado pero usando la mecánica heredada de Color Dreams */}
             {b.configured && !b.ownMechanics && (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-cream-deep/60 px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft">
-                <AlertTriangle size={12} className="mt-0.5 shrink-0 text-brand-deep" />
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-cream-deep/70 px-2.5 py-1.5 text-[11px] font-semibold text-ink-soft">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0 text-brand" />
                 Usa la mecánica de Color Dreams. Define niveles y recompensas propios antes de aprobar canjes con GMV.
               </p>
             )}
 
             <div className="mt-4">
-              {b.state === "activa" ? (
-                <Link
-                  href="/admin"
-                  className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-lime py-2.5 text-sm font-extrabold text-ink"
-                >
-                  <Check size={15} /> Estás aquí · ir a campañas
-                </Link>
-              ) : b.configured ? (
+              {b.state === "gestionable" ? (
                 <form action={entrarMarca}>
                   <input type="hidden" name="slug" value={b.slug} />
                   <button
                     type="submit"
-                    className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep"
+                    className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-deep py-2.5 text-sm font-extrabold text-white transition hover:brightness-110"
                   >
-                    Entrar <ArrowRight size={15} />
+                    {b.isCurrent ? "Continuar administrando" : "Administrar"} <ArrowRight size={15} />
                   </button>
                 </form>
               ) : b.deployUrl ? (
@@ -101,20 +99,26 @@ export default async function AdminMarcasPage() {
       </div>
 
       <p className="rounded-2xl border border-ink/10 bg-white px-4 py-3 text-xs text-ink-soft">
-        Para agregar una marca: define su identidad y mecánica (niveles/recompensas/campañas) en{" "}
+        Para agregar un club: define su identidad y mecánica (niveles/recompensas/campañas) en{" "}
         <code className="rounded bg-cream-deep px-1 py-0.5">lib/brands.ts</code> (copia la plantilla) y conecta su base
-        con <code className="rounded bg-cream-deep px-1 py-0.5">AIRTABLE_BASE_&lt;SLUG&gt;</code> en el entorno de este
-        deploy. Si su base vive en otra cuenta de Airtable, agrega también{" "}
+        con <code className="rounded bg-cream-deep px-1 py-0.5">AIRTABLE_BASE_&lt;SLUG&gt;</code> en el entorno de la
+        consola. Si su base vive en otra cuenta de Airtable, agrega también{" "}
         <code className="rounded bg-cream-deep px-1 py-0.5">AIRTABLE_TOKEN_&lt;SLUG&gt;</code>.
       </p>
     </div>
   );
 }
 
-function StateBadge({ state }: { state: string }) {
+function StateBadge({ state, isCurrent }: { state: string; isCurrent: boolean }) {
+  if (isCurrent && state === "gestionable") {
+    return (
+      <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-lime px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink">
+        <Dot size={14} className="-mx-1" /> Actual
+      </span>
+    );
+  }
   const map: Record<string, { label: string; cls: string }> = {
-    activa: { label: "Activa", cls: "bg-lime text-ink" },
-    configurada: { label: "Configurada", cls: "bg-brand/15 text-brand-deep" },
+    gestionable: { label: "Conectado", cls: "bg-brand/15 text-brand" },
     externa: { label: "Deploy externo", cls: "bg-cream-deep text-ink-soft" },
     pendiente: { label: "Pendiente", cls: "bg-ink/5 text-ink-soft" },
   };

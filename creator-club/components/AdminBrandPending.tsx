@@ -23,10 +23,10 @@ export default function AdminBrandPending({ brand, slug }: { brand: string; slug
         con un PAT que tenga acceso a esa base. Si comparte cuenta con la marca principal, basta la base.
       </p>
       <Link
-        href="/admin/marcas"
+        href="/console"
         className="font-display mt-5 inline-flex items-center gap-1.5 rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink"
       >
-        <ArrowLeft size={15} /> Elegir otra marca
+        <ArrowLeft size={15} /> Volver a la consola
       </Link>
     </div>
   );

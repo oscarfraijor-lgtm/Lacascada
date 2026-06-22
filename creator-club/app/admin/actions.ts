@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import {
@@ -21,12 +20,7 @@ import {
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
 import { canApproveCanje } from "@/lib/rewards";
-import {
-  getAdminContext,
-  setSelectedBrandCookie,
-  managedBrands,
-  type AdminContext,
-} from "@/lib/brand-admin";
+import { getAdminContext, type AdminContext } from "@/lib/brand-admin";
 
 // Toda acción de admin verifica autorización en el servidor (no solo en la UI),
 // porque las server actions son alcanzables por POST directo. Además resuelve la
@@ -56,18 +50,6 @@ function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignIn
     brief: String(formData.get("brief") || "").trim(),
     open: openRaw === "on" || openRaw === "true",
   };
-}
-
-// Cambiar la marca activa del admin (selector multimarca). Guarda la cookie y
-// recarga el panel apuntando a la base de esa marca.
-export async function entrarMarca(formData: FormData) {
-  const email = await currentEmail();
-  if (!isAdmin(email)) throw new Error("No autorizado");
-  const slug = String(formData.get("slug") || "");
-  if (!managedBrands().some((b) => b.slug === slug)) return;
-  await setSelectedBrandCookie(slug);
-  revalidatePath("/admin", "layout");
-  redirect("/admin");
 }
 
 export async function crearCampana(formData: FormData) {

@@ -49,7 +49,7 @@ Tablas Airtable: `node scripts/setup-airtable.mjs` crea Creadoras, Entregas, **C
 - ✅ Campañas en Airtable (tabla `Campañas`), leídas por el portal público.
 - ✅ Panel `/admin` (allowlist): CRUD de campañas, aprobar/rechazar entregas (aprobar otorga estrellas), vista de creadoras.
 - ✅ Recompensas accionables con candado por GMV + canjes (`/admin/canjes`), historial de estrellas (`/historial`).
-- ✅ **Admin multimarca**: `/admin/marcas` lista todas las marcas gestionadas; "entrar" a una apunta todo el panel a SU base de Airtable (datos aislados por marca). El lado público sigue sirviendo la marca del env (`NEXT_PUBLIC_BRAND`). Marcas nuevas: copia la plantilla en `lib/brands.ts` (identidad + mecánica) y conecta su base con `AIRTABLE_BASE_<SLUG>`.
+- ✅ **Tres capas**: (1) club **público** (tema de la marca del env `NEXT_PUBLIC_BRAND`); (2) **consola de operador** `/console`, nivel superior neutral (Indie Pro), lista todas las marcas y entra a cada una; (3) **admin por marca** `/admin`, con el branding de la marca seleccionada. "Entrar" a un club apunta todo el panel a SU base de Airtable (datos aislados por marca); el lado público nunca cambia de marca. Marcas nuevas: copia la plantilla en `lib/brands.ts` (identidad + mecánica) y conecta su base con `AIRTABLE_BASE_<SLUG>`.
 - Las estrellas se derivan de entregas **aprobadas** (inscribirse deja la campaña "pendiente").
 
 ## Pendiente (roadmap)

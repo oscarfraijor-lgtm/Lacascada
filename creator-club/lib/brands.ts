@@ -155,9 +155,9 @@ const BRANDS: Record<string, RawBrand> = {
 
   // ── PLANTILLAS de marcas gestionadas por Indie Pro ──
   // Identidad/colores PLACEHOLDER y base de Airtable PENDIENTE: aparecen en el
-  // selector de /admin/marcas como "Pendiente" hasta que completes su brandkit
-  // (copiando el patrón de color-dreams) y configures AIRTABLE_BASE_<SLUG> en el
-  // env del deploy de admin. Solo así se vuelven gestionables aquí.
+  // selector de /console (la consola de operador) como "Pendiente" hasta que
+  // completes su brandkit (copiando el patrón de color-dreams) y configures
+  // AIRTABLE_BASE_<SLUG> en el env de la consola. Solo así se vuelven gestionables.
   anyeluz: {
     slug: "anyeluz",
     name: "Anyeluz",

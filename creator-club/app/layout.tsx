@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Red_Hat_Display, Red_Hat_Text } from "next/font/google";
 import "./globals.css";
-import Nav from "@/components/Nav";
 import { BRAND } from "@/lib/schema";
 
 const rhd = Red_Hat_Display({
@@ -20,27 +19,14 @@ export const metadata: Metadata = {
   description: `Comunidad de creadoras de ${BRAND.name}. Misiones, estrellas y recompensas.`,
 };
 
-// Paleta de la marca activa: sobreescribe las CSS variables del tema (globals.css
-// trae Color Dreams como default). Así cada deploy se pinta con su marca.
-const brandTheme = {
-  "--color-cream": BRAND.cream,
-  "--color-cream-deep": BRAND.creamDeep,
-  "--color-brand": BRAND.violet,
-  "--color-brand-deep": BRAND.violetDeep,
-  "--color-ink": BRAND.ink,
-  "--color-ink-soft": BRAND.inkSoft,
-  "--color-lime": BRAND.lime,
-} as React.CSSProperties;
-
+// Root NEUTRO: no inyecta tema ni navegación. Cada área (club público / consola
+// de operador / admin por marca) aplica su propio tema y chrome en su layout.
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" style={brandTheme} className={`${rhd.variable} ${rht.variable} h-full antialiased`}>
-      <body className="min-h-full bg-cream text-ink">
-        <Nav />
-        <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">{children}</main>
-      </body>
+    <html lang="es" className={`${rhd.variable} ${rht.variable} h-full antialiased`}>
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }
