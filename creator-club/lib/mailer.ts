@@ -14,11 +14,11 @@ export interface SendResult {
 
 export async function sendMagicLink(email: string, url: string): Promise<SendResult> {
   if (!mailerConfigured()) {
-    console.log(`\n🔑 [Color Club] Magic link para ${email}:\n${url}\n`);
+    console.log(`\n🔑 [${BRAND.club}] Magic link para ${email}:\n${url}\n`);
     return { delivered: "console", devLink: url };
   }
 
-  const from = process.env.RESEND_FROM || "Color Club <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM || `${BRAND.club} <onboarding@resend.dev>`;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {

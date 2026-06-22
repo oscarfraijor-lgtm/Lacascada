@@ -4,9 +4,9 @@ import { getCurrentCreator } from "@/lib/session";
 import { getStarLedger } from "@/lib/data";
 
 function fmtDate(iso?: string): string {
-  if (!iso) return "—";
+  if (!iso) return "Sin fecha";
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "Sin fecha";
   return d.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" });
 }
 
