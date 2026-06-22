@@ -64,12 +64,14 @@ const CD_MISSIONS: Mission[] = [
   { id: "referir", title: "Refiere a otra creadora", detail: "Invita a alguien que se active y venda.", stars: 200, category: "comunidad", requiresSale: true },
 ];
 
+// minStars/minGmvMXN alimentan el candado real (lib/rewards.ts). Las recompensas
+// con costo exigen además GMV atribuible > 0 (anti-fuga), aunque su minGmvMXN sea 0.
 const CD_REWARDS: Reward[] = [
-  { id: "r-status", title: "Subir de nivel + insignia", detail: "Estatus, badge y acceso a misiones premium.", cost: "Acumula estrellas", kind: "estatus", payer: "club" },
-  { id: "r-muestra", title: "Muestra de colchón", detail: "Pruébalo 30 noches (atado a tu primera venta).", cost: "Nivel Soñadora", kind: "producto", payer: "marca" },
-  { id: "r-boost", title: "Boost de comisión +1%", detail: "Más ganancia por cada venta vía Targeted Collab.", cost: "Nivel Soñadora", kind: "boost", payer: "marca" },
-  { id: "r-colchon", title: "Colchón propio (regalo)", detail: "Tuyo para siempre.", cost: "Nivel Insomne Pro · $60K GMV", kind: "producto", payer: "marca" },
-  { id: "r-cdmx", title: "Experiencia CDMX", detail: "Noche de Sueños + sesión de fotos + kit de creadora.", cost: "Nivel Embajadora · $150K GMV", kind: "experiencia", payer: "marca" },
+  { id: "r-status", title: "Subir de nivel + insignia", detail: "Estatus, badge y acceso a misiones premium.", cost: "Acumula estrellas", kind: "estatus", payer: "club", minStars: 0, minGmvMXN: 0 },
+  { id: "r-muestra", title: "Muestra de colchón", detail: "Pruébalo 30 noches (atado a tu primera venta).", cost: "Nivel Soñadora + tu primera venta", kind: "producto", payer: "marca", minStars: 500, minGmvMXN: 0 },
+  { id: "r-boost", title: "Boost de comisión +1%", detail: "Más ganancia por cada venta vía Targeted Collab.", cost: "Nivel Soñadora + tu primera venta", kind: "boost", payer: "marca", minStars: 500, minGmvMXN: 0 },
+  { id: "r-colchon", title: "Colchón propio (regalo)", detail: "Tuyo para siempre.", cost: "Nivel Insomne Pro · $60K GMV", kind: "producto", payer: "marca", minStars: 1500, minGmvMXN: 60000 },
+  { id: "r-cdmx", title: "Experiencia CDMX", detail: "Noche de Sueños + sesión de fotos + kit de creadora.", cost: "Nivel Embajadora · $150K GMV", kind: "experiencia", payer: "marca", minStars: 4000, minGmvMXN: 150000 },
 ];
 
 const CD_CAMPAIGN_SEED: Campaign[] = [

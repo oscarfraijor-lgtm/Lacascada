@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, Check, ShoppingBag } from "lucide-react";
+import { Star, Check, ShoppingBag, Lock } from "lucide-react";
 import { getCreator, getMissions } from "@/lib/data";
 import type { MissionCategory } from "@/lib/schema";
 
@@ -39,7 +39,8 @@ export default async function MisionesPage() {
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Misiones</h1>
         <p className="text-sm text-ink-soft">
-          Completa misiones, gana estrellas y sube de nivel. Las de venta valen más.
+          Completa misiones, gana estrellas y sube de nivel. Las de venta valen más y
+          se activan con tu primera venta atribuible.
         </p>
       </header>
 
@@ -56,16 +57,24 @@ export default async function MisionesPage() {
                 <li
                   key={m.id}
                   className={`flex items-center justify-between rounded-2xl border p-4 ${
-                    m.done ? "border-lime/60 bg-lime/15" : "border-ink/10 bg-white"
+                    m.done
+                      ? "border-lime/60 bg-lime/15"
+                      : m.locked
+                        ? "border-ink/10 bg-ink/[0.02]"
+                        : "border-ink/10 bg-white"
                   }`}
                 >
                   <div className="flex items-start gap-3 pr-3">
                     <span
                       className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full ${
-                        m.done ? "bg-lime text-ink" : "bg-brand/15 text-brand-deep"
+                        m.done
+                          ? "bg-lime text-ink"
+                          : m.locked
+                            ? "bg-ink/5 text-ink-soft"
+                            : "bg-brand/15 text-brand-deep"
                       }`}
                     >
-                      {m.done ? <Check size={15} /> : <Star size={14} />}
+                      {m.done ? <Check size={15} /> : m.locked ? <Lock size={13} /> : <Star size={14} />}
                     </span>
                     <div>
                       <p className="font-semibold text-ink">
@@ -77,10 +86,19 @@ export default async function MisionesPage() {
                         )}
                       </p>
                       <p className="text-xs text-ink-soft">{m.detail}</p>
+                      {m.locked && m.lockReason && (
+                        <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-ink-soft">
+                          <Lock size={11} /> {m.lockReason}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-sm font-bold text-ink">
-                    <Star size={13} className="fill-ink" /> {m.stars}
+                  <span
+                    className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-sm font-bold ${
+                      m.locked ? "bg-ink/5 text-ink-soft" : "bg-lime text-ink"
+                    }`}
+                  >
+                    <Star size={13} className={m.locked ? "" : "fill-ink"} /> {m.stars}
                   </span>
                 </li>
               ))}

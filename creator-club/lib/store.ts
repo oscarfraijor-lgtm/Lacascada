@@ -55,14 +55,20 @@ interface DB {
   creators: CreatorRecord[];
   participations: Participation[];
   campaigns?: Campaign[];
+  canjes?: Canje[];
 }
 
 async function readDB(): Promise<DB> {
   try {
     const db = JSON.parse(await fs.readFile(FILE, "utf8")) as DB;
-    return { creators: db.creators ?? [], participations: db.participations ?? [], campaigns: db.campaigns };
+    return {
+      creators: db.creators ?? [],
+      participations: db.participations ?? [],
+      campaigns: db.campaigns,
+      canjes: db.canjes ?? [],
+    };
   } catch {
-    return { creators: [], participations: [] };
+    return { creators: [], participations: [], canjes: [] };
   }
 }
 async function writeDB(db: DB): Promise<void> {
@@ -186,7 +192,7 @@ export async function participationsFor(email: string): Promise<Participation[]>
     const recs = await fetchAll<{ Email: string; Campaña: string; Estado: string; Link?: string; Motivo?: string }>(TABLES.Entregas, {
       filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
     });
-    return recs.map((r) => ({ creatorEmail: r.fields.Email, campaignId: r.fields.Campaña, status: r.fields.Estado, link: r.fields.Link, reason: r.fields.Motivo, id: r.id }));
+    return recs.map((r) => ({ creatorEmail: r.fields.Email, campaignId: r.fields.Campaña, status: r.fields.Estado, link: r.fields.Link, reason: r.fields.Motivo, id: r.id, createdAt: r.createdTime }));
   }
   const db = await readDB();
   return db.participations.filter((x) => x.creatorEmail === email);
@@ -265,6 +271,125 @@ export function starsFromApproved(parts: Participation[], campaigns: Campaign[])
   return parts
     .filter((p) => p.status === "aprobada")
     .reduce((s, p) => s + (byId.get(p.campaignId)?.stars ?? 0), 0);
+}
+
+// ── Canjes (solicitudes de recompensa) ──────────────────────────────────
+// La creadora "solicita" una recompensa desbloqueada; el equipo la aprueba o
+// rechaza en /admin. Las recompensas con costo NO se aprueban sin GMV atribuible
+// (gate anti-fuga en la server action). El catálogo de recompensas vive en código
+// (lib/brands.ts); aquí solo persiste la transacción (espejo de Entregas).
+export const CANJE_STATUS = ["solicitada", "aprobada", "rechazada"] as const;
+export type CanjeStatus = (typeof CANJE_STATUS)[number];
+
+export interface Canje {
+  id?: string;
+  creatorEmail: string;
+  rewardId: string;
+  rewardTitle: string; // snapshot para el panel y el historial
+  status: string; // CanjeStatus
+  reason?: string; // motivo de rechazo (visible para la creadora)
+  createdAt?: string;
+}
+
+interface CanjeFields {
+  Email: string;
+  Recompensa: string;
+  Titulo?: string;
+  Estado: string;
+  Motivo?: string;
+}
+
+function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: string }): Canje {
+  return {
+    id: r.id,
+    creatorEmail: r.fields.Email,
+    rewardId: r.fields.Recompensa,
+    rewardTitle: r.fields.Titulo ?? "",
+    status: r.fields.Estado,
+    reason: r.fields.Motivo,
+    createdAt: r.createdTime,
+  };
+}
+
+// Solicitar un canje. Dedupe: una sola solicitud ABIERTA (solicitada o aprobada)
+// por recompensa y creadora. Un rechazo permite volver a solicitar sobre el mismo
+// registro (no se acumulan canjes muertos).
+export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string): Promise<Canje> {
+  if (airtableConfigured()) {
+    const existing = await fetchAll<CanjeFields>(TABLES.Canjes, {
+      filterByFormula: `AND(LOWER({Email})='${creatorEmail.toLowerCase()}',{Recompensa}='${rewardId}')`,
+    });
+    const open = existing.find((r) => r.fields.Estado === "solicitada" || r.fields.Estado === "aprobada");
+    if (open) return canjeToRecord(open);
+    const rejected = existing.find((r) => r.fields.Estado === "rechazada");
+    if (rejected) {
+      await airtableUpdate(TABLES.Canjes, rejected.id, { Estado: "solicitada", Motivo: "", Titulo: rewardTitle });
+      return { ...canjeToRecord(rejected), status: "solicitada", reason: undefined, rewardTitle };
+    }
+    const r = await airtableCreate(TABLES.Canjes, {
+      Email: creatorEmail,
+      Recompensa: rewardId,
+      Titulo: rewardTitle,
+      Estado: "solicitada",
+    });
+    return { id: r.id, creatorEmail, rewardId, rewardTitle, status: "solicitada" };
+  }
+  const db = await readDB();
+  db.canjes = db.canjes ?? [];
+  const existing = db.canjes.filter((x) => x.creatorEmail === creatorEmail && x.rewardId === rewardId);
+  const open = existing.find((x) => x.status === "solicitada" || x.status === "aprobada");
+  if (open) return open;
+  const rejected = existing.find((x) => x.status === "rechazada");
+  if (rejected) {
+    rejected.status = "solicitada";
+    rejected.reason = undefined;
+    rejected.rewardTitle = rewardTitle;
+    await writeDB(db);
+    return rejected;
+  }
+  const rec: Canje = { id: "loc_" + Date.now(), creatorEmail, rewardId, rewardTitle, status: "solicitada", createdAt: new Date().toISOString() };
+  db.canjes.push(rec);
+  await writeDB(db);
+  return rec;
+}
+
+export async function canjesFor(email: string): Promise<Canje[]> {
+  if (airtableConfigured()) {
+    const recs = await fetchAll<CanjeFields>(TABLES.Canjes, {
+      filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
+    });
+    return recs.map(canjeToRecord);
+  }
+  return (await readDB()).canjes?.filter((x) => x.creatorEmail === email) ?? [];
+}
+
+// Todos los canjes (para el panel de admin).
+export async function listCanjes(): Promise<Canje[]> {
+  if (airtableConfigured()) {
+    const recs = await fetchAll<CanjeFields>(TABLES.Canjes);
+    return recs.map(canjeToRecord);
+  }
+  return (await readDB()).canjes ?? [];
+}
+
+export async function getCanjeById(id: string): Promise<Canje | undefined> {
+  return (await listCanjes()).find((c) => c.id === id);
+}
+
+export async function setCanjeStatus(id: string, status: CanjeStatus, reason?: string): Promise<void> {
+  // El motivo solo aplica a "rechazada"; en cualquier otro estado se limpia.
+  const motivo = status === "rechazada" ? (reason ?? "") : "";
+  if (airtableConfigured()) {
+    await airtableUpdate(TABLES.Canjes, id, { Estado: status, Motivo: motivo });
+    return;
+  }
+  const db = await readDB();
+  const c = (db.canjes ?? []).find((x) => x.id === id);
+  if (c) {
+    c.status = status;
+    c.reason = motivo || undefined;
+    await writeDB(db);
+  }
 }
 
 // ── Campañas ─────────────────────────────────────────────────────────────

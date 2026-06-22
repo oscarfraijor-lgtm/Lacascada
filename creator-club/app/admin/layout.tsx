@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Megaphone, Inbox, Users, ShieldCheck } from "lucide-react";
+import { Megaphone, Inbox, Gift, Users, ShieldCheck } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { airtableConfigured } from "@/lib/airtable";
+import { BRAND } from "@/lib/schema";
 
 const TABS = [
   { href: "/admin", label: "Campañas", icon: Megaphone },
   { href: "/admin/inscripciones", label: "Inscripciones", icon: Inbox },
+  { href: "/admin/canjes", label: "Canjes", icon: Gift },
   { href: "/admin/creadoras", label: "Creadoras", icon: Users },
 ];
 
@@ -36,7 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-brand-deep">
             Panel de admin
           </p>
-          <h1 className="font-display text-2xl font-extrabold text-ink">Color Club</h1>
+          <h1 className="font-display text-2xl font-extrabold text-ink">{BRAND.club}</h1>
         </div>
         <span className="rounded-full bg-cream-deep px-3 py-1 text-xs font-semibold text-ink-soft">
           Datos: {airtableConfigured() ? "Airtable" : "archivo local"} · {email}

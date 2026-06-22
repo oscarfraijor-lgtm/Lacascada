@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { Star, ChevronRight, Lock, ArrowRight } from "lucide-react";
+import { Star, ChevronRight, ArrowRight, History } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
-import { getMissions, getLeaderboard, getRewards } from "@/lib/data";
+import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
 import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
 import type { Creator } from "@/lib/types";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
+import RewardStateChip from "@/components/RewardStateChip";
 
 const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.round((v / max) * 100)));
 
@@ -44,7 +45,7 @@ export default async function Home() {
   const next = nextLevel(level.key);
   const missions = (await getMissions(creator)).filter((m) => !m.done).slice(0, 4);
   const leaderboard = await getLeaderboard();
-  const rewards = await getRewards();
+  const rewardsView = await getRewardsView();
 
   return (
     <div className="space-y-6">
@@ -66,6 +67,9 @@ export default async function Home() {
               <span className="font-display text-4xl font-black">{stars.toLocaleString("es-MX")}</span>
             </div>
             <p className="text-xs uppercase tracking-widest text-white/60">estrellas</p>
+            <Link href="/historial" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-lime underline">
+              <History size={12} /> Ver cómo las ganaste
+            </Link>
           </div>
         </div>
         {next ? (
@@ -180,15 +184,15 @@ export default async function Home() {
             </Link>
           </div>
           <ul className="space-y-3">
-            {rewards.slice(0, 4).map((r) => (
-              <li key={r.id} className="flex items-start gap-3 rounded-2xl border border-ink/10 bg-white p-4">
-                <span className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full ${r.kind === "estatus" ? "bg-lime text-ink" : "bg-brand/15 text-brand-deep"}`}>
-                  {r.kind === "estatus" ? <Star size={15} className="fill-ink" /> : <Lock size={15} />}
-                </span>
-                <div>
+            {rewardsView.rewards.slice(0, 4).map((r) => (
+              <li key={r.id} className="flex items-start justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4">
+                <div className="min-w-0">
                   <p className="font-semibold text-ink">{r.title}</p>
-                  <p className="text-xs text-ink-soft">{r.cost}</p>
+                  <p className="text-xs text-ink-soft">
+                    {r.state === "bloqueada" ? r.missing : r.requirement}
+                  </p>
                 </div>
+                <RewardStateChip state={r.state} />
               </li>
             ))}
           </ul>

@@ -23,7 +23,11 @@ export interface Reward {
   id: string;
   title: string;
   detail: string;
-  cost: string; // descripción del requisito (estrellas / GMV)
+  cost: string; // descripción legible del requisito (estrellas / GMV)
   kind: "estatus" | "producto" | "boost" | "cash" | "experiencia";
   payer: "club" | "marca";
+  // Umbrales del candado real (default 0). Las recompensas con costo
+  // (kind != "estatus") exigen además GMV atribuible > 0 (anti-fuga).
+  minStars?: number;
+  minGmvMXN?: number;
 }

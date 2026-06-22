@@ -53,6 +53,11 @@ const TABLES = [
       checkbox("Activa"),
     ],
   },
+  {
+    name: "Canjes",
+    description: "Solicitudes de canje de recompensa (creadora pide, equipo aprueba)",
+    fields: [text("Email"), text("Recompensa"), text("Titulo"), text("Estado"), text("Motivo")],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
@@ -96,6 +101,8 @@ async function ensureFields() {
     { table: "Creadoras", field: text("Portafolio") },
     { table: "Creadoras", field: number("GMV_MXN") },
     { table: "Creadoras", field: text("GMV_Fecha") },
+    { table: "Canjes", field: text("Titulo") },
+    { table: "Canjes", field: text("Motivo") },
   ];
   for (const w of want) {
     const t = tables.find((x) => x.name === w.table);

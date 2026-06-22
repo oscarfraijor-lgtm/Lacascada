@@ -10,11 +10,18 @@ import {
   deleteCampaign,
   setParticipationStatus,
   setCreatorGmv,
+  getCanjeById,
+  getCreatorByEmail,
+  setCanjeStatus,
   PARTICIPATION_STATUS,
+  CANJE_STATUS,
   type ParticipationStatus,
+  type CanjeStatus,
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
 import { BRAND } from "@/lib/schema";
+import { getBrand } from "@/lib/brands";
+import { canApproveCanje } from "@/lib/rewards";
 
 // Toda acción de admin verifica autorización en el servidor (no solo en la UI),
 // porque las server actions son alcanzables por POST directo.
@@ -88,6 +95,33 @@ export async function cambiarEstadoEntrega(formData: FormData) {
   revalidatePath("/admin/inscripciones");
   revalidatePath("/admin/creadoras");
   revalidatePath("/campanas");
+  revalidatePath("/");
+}
+
+// Canjes: aprobar/rechazar una solicitud de recompensa. Gate anti-fuga: una
+// recompensa con costo NO se aprueba sin GMV atribuible suficiente. La UI ya
+// lo bloquea; esto cubre el POST directo (defensa en profundidad, server-side).
+export async function cambiarEstadoCanje(formData: FormData) {
+  await assertAdmin();
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "") as CanjeStatus;
+  const reason = String(formData.get("reason") || "").trim();
+  if (!id || !CANJE_STATUS.includes(status)) return;
+
+  if (status === "aprobada") {
+    const canje = await getCanjeById(id);
+    if (!canje) return;
+    const reward = getBrand().rewards.find((r) => r.id === canje.rewardId);
+    const creator = await getCreatorByEmail(canje.creatorEmail);
+    const gmv = creator?.gmvMXN ?? 0;
+    if (reward && !canApproveCanje(reward, gmv)) {
+      throw new Error("No se puede aprobar un canje con costo sin GMV atribuible suficiente.");
+    }
+  }
+
+  await setCanjeStatus(id, status, status === "rechazada" ? reason : undefined);
+  revalidatePath("/admin/canjes");
+  revalidatePath("/recompensas");
   revalidatePath("/");
 }
 
