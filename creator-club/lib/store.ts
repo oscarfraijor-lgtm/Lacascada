@@ -1,8 +1,14 @@
 // Persistencia: Airtable si está configurado; si no, archivo local JSON (.data/store.json)
 // para que el flujo funcione en dev sin cuentas externas. La UI no cambia al migrar.
+//
+// Multimarca: cada función acepta una conexión opcional `conn` (base de otra marca).
+// El lado público NO la pasa (usa la marca del env de este deploy). El panel de admin
+// multimarca pasa la conexión de la marca seleccionada, así sus datos viven en SU base
+// y nunca se cruzan. En modo archivo local (dev) `conn` se ignora (archivo compartido).
 import { promises as fs } from "fs";
 import path from "path";
 import {
+  type Conn,
   airtableConfigured,
   airtableCreate,
   airtableUpdate,
@@ -77,8 +83,8 @@ async function writeDB(db: DB): Promise<void> {
 }
 
 // ── Creadoras ──────────────────────────────────────────────────────────
-export async function createCreator(c: CreatorRecord): Promise<CreatorRecord> {
-  if (airtableConfigured()) {
+export async function createCreator(c: CreatorRecord, conn?: Conn): Promise<CreatorRecord> {
+  if (airtableConfigured(conn)) {
     const r = await airtableCreate(TABLES.Creadoras, {
       Nombre: c.name,
       Handle: c.handle,
@@ -86,7 +92,7 @@ export async function createCreator(c: CreatorRecord): Promise<CreatorRecord> {
       Seguidores: c.followers ?? "",
       Ciudad: c.city ?? "",
       Portafolio: c.portfolio ?? "",
-    });
+    }, conn);
     return { ...c, id: r.id };
   }
   const db = await readDB();
@@ -124,20 +130,20 @@ function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?:
   };
 }
 
-export async function getCreatorByEmail(email: string): Promise<CreatorRecord | null> {
-  if (airtableConfigured()) {
+export async function getCreatorByEmail(email: string, conn?: Conn): Promise<CreatorRecord | null> {
+  if (airtableConfigured(conn)) {
     const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras, {
       filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
-    });
+    }, conn);
     return recs[0] ? creadoraToRecord(recs[0]) : null;
   }
   const db = await readDB();
   return db.creators.find((x) => x.email === email) ?? null;
 }
 
-export async function listCreators(): Promise<CreatorRecord[]> {
-  if (airtableConfigured()) {
-    const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras);
+export async function listCreators(conn?: Conn): Promise<CreatorRecord[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras, {}, conn);
     return recs.map(creadoraToRecord);
   }
   return (await readDB()).creators;
@@ -145,9 +151,9 @@ export async function listCreators(): Promise<CreatorRecord[]> {
 
 // El equipo captura a mano el GMV atribuible de la creadora (export de TT Shop
 // Analytics). NO es tiempo real: se guarda con la fecha "actualizado al".
-export async function setCreatorGmv(id: string, gmvMXN: number, gmvDate: string): Promise<void> {
-  if (airtableConfigured()) {
-    await airtableUpdate(TABLES.Creadoras, id, { GMV_MXN: gmvMXN, GMV_Fecha: gmvDate });
+export async function setCreatorGmv(id: string, gmvMXN: number, gmvDate: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Creadoras, id, { GMV_MXN: gmvMXN, GMV_Fecha: gmvDate }, conn);
     return;
   }
   const db = await readDB();
@@ -160,12 +166,12 @@ export async function setCreatorGmv(id: string, gmvMXN: number, gmvDate: string)
 }
 
 // ── Inscripciones / Entregas ────────────────────────────────────────────
-export async function addParticipation(p: Participation): Promise<Participation> {
-  if (airtableConfigured()) {
+export async function addParticipation(p: Participation, conn?: Conn): Promise<Participation> {
+  if (airtableConfigured(conn)) {
     // Dedupe: no crear una segunda inscripción de la misma creadora a la misma campaña.
     const existing = await fetchAll<{ Email: string; Campaña: string; Estado: string }>(TABLES.Entregas, {
       filterByFormula: `AND(LOWER({Email})='${p.creatorEmail.toLowerCase()}',{Campaña}='${p.campaignId}')`,
-    });
+    }, conn);
     if (existing[0]) {
       const r = existing[0];
       return { ...p, id: r.id, status: r.fields.Estado };
@@ -175,7 +181,7 @@ export async function addParticipation(p: Participation): Promise<Participation>
       Campaña: p.campaignId,
       Estado: p.status,
       Link: p.link ?? "",
-    });
+    }, conn);
     return { ...p, id: r.id };
   }
   const db = await readDB();
@@ -187,11 +193,11 @@ export async function addParticipation(p: Participation): Promise<Participation>
   return rec;
 }
 
-export async function participationsFor(email: string): Promise<Participation[]> {
-  if (airtableConfigured()) {
+export async function participationsFor(email: string, conn?: Conn): Promise<Participation[]> {
+  if (airtableConfigured(conn)) {
     const recs = await fetchAll<{ Email: string; Campaña: string; Estado: string; Link?: string; Motivo?: string }>(TABLES.Entregas, {
       filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
-    });
+    }, conn);
     return recs.map((r) => ({ creatorEmail: r.fields.Email, campaignId: r.fields.Campaña, status: r.fields.Estado, link: r.fields.Link, reason: r.fields.Motivo, id: r.id, createdAt: r.createdTime }));
   }
   const db = await readDB();
@@ -199,9 +205,9 @@ export async function participationsFor(email: string): Promise<Participation[]>
 }
 
 // Todas las inscripciones (para el panel de admin).
-export async function listParticipations(): Promise<Participation[]> {
-  if (airtableConfigured()) {
-    const recs = await fetchAll<{ Email: string; Campaña: string; Estado: string; Link?: string; Motivo?: string }>(TABLES.Entregas);
+export async function listParticipations(conn?: Conn): Promise<Participation[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<{ Email: string; Campaña: string; Estado: string; Link?: string; Motivo?: string }>(TABLES.Entregas, {}, conn);
     return recs.map((r) => ({
       id: r.id,
       creatorEmail: r.fields.Email,
@@ -218,12 +224,13 @@ export async function listParticipations(): Promise<Participation[]> {
 export async function setParticipationStatus(
   id: string,
   status: ParticipationStatus,
-  reason?: string
+  reason?: string,
+  conn?: Conn
 ): Promise<void> {
   // El motivo solo aplica a "rechazada"; en cualquier otro estado se limpia.
   const motivo = status === "rechazada" ? (reason ?? "") : "";
-  if (airtableConfigured()) {
-    await airtableUpdate(TABLES.Entregas, id, { Estado: status, Motivo: motivo });
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Entregas, id, { Estado: status, Motivo: motivo }, conn);
     return;
   }
   const db = await readDB();
@@ -240,16 +247,17 @@ export async function setParticipationStatus(
 export async function submitDelivery(
   creatorEmail: string,
   campaignId: string,
-  link: string
+  link: string,
+  conn?: Conn
 ): Promise<boolean> {
-  if (airtableConfigured()) {
+  if (airtableConfigured(conn)) {
     const recs = await fetchAll<{ Estado: string }>(TABLES.Entregas, {
       filterByFormula: `AND(LOWER({Email})='${creatorEmail.toLowerCase()}',{Campaña}='${campaignId}')`,
-    });
+    }, conn);
     const rec = recs[0];
     if (!rec) return false;
     const nextStatus = rec.fields.Estado === "aprobada" ? "aprobada" : "entregada";
-    await airtableUpdate(TABLES.Entregas, rec.id, { Link: link, Estado: nextStatus, Motivo: "" });
+    await airtableUpdate(TABLES.Entregas, rec.id, { Link: link, Estado: nextStatus, Motivo: "" }, conn);
     return true;
   }
   const db = await readDB();
@@ -314,16 +322,16 @@ function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: strin
 // Solicitar un canje. Dedupe: una sola solicitud ABIERTA (solicitada o aprobada)
 // por recompensa y creadora. Un rechazo permite volver a solicitar sobre el mismo
 // registro (no se acumulan canjes muertos).
-export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string): Promise<Canje> {
-  if (airtableConfigured()) {
+export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string, conn?: Conn): Promise<Canje> {
+  if (airtableConfigured(conn)) {
     const existing = await fetchAll<CanjeFields>(TABLES.Canjes, {
       filterByFormula: `AND(LOWER({Email})='${creatorEmail.toLowerCase()}',{Recompensa}='${rewardId}')`,
-    });
+    }, conn);
     const open = existing.find((r) => r.fields.Estado === "solicitada" || r.fields.Estado === "aprobada");
     if (open) return canjeToRecord(open);
     const rejected = existing.find((r) => r.fields.Estado === "rechazada");
     if (rejected) {
-      await airtableUpdate(TABLES.Canjes, rejected.id, { Estado: "solicitada", Motivo: "", Titulo: rewardTitle });
+      await airtableUpdate(TABLES.Canjes, rejected.id, { Estado: "solicitada", Motivo: "", Titulo: rewardTitle }, conn);
       return { ...canjeToRecord(rejected), status: "solicitada", reason: undefined, rewardTitle };
     }
     const r = await airtableCreate(TABLES.Canjes, {
@@ -331,7 +339,7 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
       Recompensa: rewardId,
       Titulo: rewardTitle,
       Estado: "solicitada",
-    });
+    }, conn);
     return { id: r.id, creatorEmail, rewardId, rewardTitle, status: "solicitada" };
   }
   const db = await readDB();
@@ -353,34 +361,34 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
   return rec;
 }
 
-export async function canjesFor(email: string): Promise<Canje[]> {
-  if (airtableConfigured()) {
+export async function canjesFor(email: string, conn?: Conn): Promise<Canje[]> {
+  if (airtableConfigured(conn)) {
     const recs = await fetchAll<CanjeFields>(TABLES.Canjes, {
       filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
-    });
+    }, conn);
     return recs.map(canjeToRecord);
   }
   return (await readDB()).canjes?.filter((x) => x.creatorEmail === email) ?? [];
 }
 
 // Todos los canjes (para el panel de admin).
-export async function listCanjes(): Promise<Canje[]> {
-  if (airtableConfigured()) {
-    const recs = await fetchAll<CanjeFields>(TABLES.Canjes);
+export async function listCanjes(conn?: Conn): Promise<Canje[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<CanjeFields>(TABLES.Canjes, {}, conn);
     return recs.map(canjeToRecord);
   }
   return (await readDB()).canjes ?? [];
 }
 
-export async function getCanjeById(id: string): Promise<Canje | undefined> {
-  return (await listCanjes()).find((c) => c.id === id);
+export async function getCanjeById(id: string, conn?: Conn): Promise<Canje | undefined> {
+  return (await listCanjes(conn)).find((c) => c.id === id);
 }
 
-export async function setCanjeStatus(id: string, status: CanjeStatus, reason?: string): Promise<void> {
+export async function setCanjeStatus(id: string, status: CanjeStatus, reason?: string, conn?: Conn): Promise<void> {
   // El motivo solo aplica a "rechazada"; en cualquier otro estado se limpia.
   const motivo = status === "rechazada" ? (reason ?? "") : "";
-  if (airtableConfigured()) {
-    await airtableUpdate(TABLES.Canjes, id, { Estado: status, Motivo: motivo });
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Canjes, id, { Estado: status, Motivo: motivo }, conn);
     return;
   }
   const db = await readDB();
@@ -421,9 +429,9 @@ interface CampanaFields {
   Activa?: boolean;
 }
 
-export async function listCampaigns(): Promise<Campaign[]> {
-  if (airtableConfigured()) {
-    const recs = await fetchAll<CampanaFields>(TABLES.Campanas);
+export async function listCampaigns(conn?: Conn): Promise<Campaign[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<CampanaFields>(TABLES.Campanas, {}, conn);
     return recs.map((r) => ({
       recordId: r.id,
       id: r.fields.Id || slugify(r.fields["Título"] ?? r.id),
@@ -448,12 +456,12 @@ export async function listCampaigns(): Promise<Campaign[]> {
 }
 
 // Solo las campañas activas (lo que ve el portal público).
-export async function listOpenCampaigns(): Promise<Campaign[]> {
-  return (await listCampaigns()).filter((c) => c.open);
+export async function listOpenCampaigns(conn?: Conn): Promise<Campaign[]> {
+  return (await listCampaigns(conn)).filter((c) => c.open);
 }
 
-export async function getCampaignById(id: string): Promise<Campaign | undefined> {
-  return (await listCampaigns()).find((c) => c.id === id);
+export async function getCampaignById(id: string, conn?: Conn): Promise<Campaign | undefined> {
+  return (await listCampaigns(conn)).find((c) => c.id === id);
 }
 
 async function uniqueSlug(base: string, existing: Campaign[]): Promise<string> {
@@ -464,12 +472,12 @@ async function uniqueSlug(base: string, existing: Campaign[]): Promise<string> {
   return slug;
 }
 
-export async function createCampaign(input: CampaignInput): Promise<Campaign> {
-  const all = await listCampaigns();
+export async function createCampaign(input: CampaignInput, conn?: Conn): Promise<Campaign> {
+  const all = await listCampaigns(conn);
   const id = await uniqueSlug(input.title, all);
   const campaign: Campaign = { ...input, id };
-  if (airtableConfigured()) {
-    const r = await airtableCreate(TABLES.Campanas, campaignToAirtableFields({ ...input, id }));
+  if (airtableConfigured(conn)) {
+    const r = await airtableCreate(TABLES.Campanas, campaignToAirtableFields({ ...input, id }), conn);
     return { ...campaign, recordId: r.id };
   }
   const db = await readDB();
@@ -479,11 +487,11 @@ export async function createCampaign(input: CampaignInput): Promise<Campaign> {
   return campaign;
 }
 
-export async function updateCampaign(id: string, patch: Partial<CampaignInput>): Promise<void> {
-  if (airtableConfigured()) {
-    const current = await getCampaignById(id);
+export async function updateCampaign(id: string, patch: Partial<CampaignInput>, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getCampaignById(id, conn);
     if (!current?.recordId) throw new Error(`Campaña ${id} no encontrada`);
-    await airtableUpdate(TABLES.Campanas, current.recordId, campaignToAirtableFields(patch));
+    await airtableUpdate(TABLES.Campanas, current.recordId, campaignToAirtableFields(patch), conn);
     return;
   }
   const db = await readDB();
@@ -495,14 +503,14 @@ export async function updateCampaign(id: string, patch: Partial<CampaignInput>):
   }
 }
 
-export async function setCampaignOpen(id: string, open: boolean): Promise<void> {
-  await updateCampaign(id, { open });
+export async function setCampaignOpen(id: string, open: boolean, conn?: Conn): Promise<void> {
+  await updateCampaign(id, { open }, conn);
 }
 
-export async function deleteCampaign(id: string): Promise<void> {
-  if (airtableConfigured()) {
-    const current = await getCampaignById(id);
-    if (current?.recordId) await airtableDelete(TABLES.Campanas, current.recordId);
+export async function deleteCampaign(id: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getCampaignById(id, conn);
+    if (current?.recordId) await airtableDelete(TABLES.Campanas, current.recordId, conn);
     return;
   }
   const db = await readDB();

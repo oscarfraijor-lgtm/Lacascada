@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import {
@@ -19,15 +20,21 @@ import {
   type CanjeStatus,
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
-import { BRAND } from "@/lib/schema";
-import { getBrand } from "@/lib/brands";
 import { canApproveCanje } from "@/lib/rewards";
+import {
+  getAdminContext,
+  setSelectedBrandCookie,
+  managedBrands,
+  type AdminContext,
+} from "@/lib/brand-admin";
 
 // Toda acción de admin verifica autorización en el servidor (no solo en la UI),
-// porque las server actions son alcanzables por POST directo.
-async function assertAdmin(): Promise<void> {
+// porque las server actions son alcanzables por POST directo. Además resuelve la
+// marca seleccionada: las escrituras van a SU base (multimarca).
+async function adminCtx(): Promise<AdminContext> {
   const email = await currentEmail();
   if (!isAdmin(email)) throw new Error("No autorizado");
+  return getAdminContext();
 }
 
 function revalidateCampaigns(): void {
@@ -36,11 +43,11 @@ function revalidateCampaigns(): void {
   revalidatePath("/");
 }
 
-function parseCampaignForm(formData: FormData): CampaignInput {
+function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignInput {
   const openRaw = String(formData.get("open") || "");
   return {
     title: String(formData.get("title") || "").trim(),
-    brand: String(formData.get("brand") || "").trim() || BRAND.name,
+    brand: String(formData.get("brand") || "").trim() || defaultBrand,
     tag: String(formData.get("tag") || "").trim(),
     stars: Math.max(0, Math.round(Number(formData.get("stars") || 0)) || 0),
     reward: String(formData.get("reward") || "").trim(),
@@ -51,46 +58,63 @@ function parseCampaignForm(formData: FormData): CampaignInput {
   };
 }
 
+// Cambiar la marca activa del admin (selector multimarca). Guarda la cookie y
+// recarga el panel apuntando a la base de esa marca.
+export async function entrarMarca(formData: FormData) {
+  const email = await currentEmail();
+  if (!isAdmin(email)) throw new Error("No autorizado");
+  const slug = String(formData.get("slug") || "");
+  if (!managedBrands().some((b) => b.slug === slug)) return;
+  await setSelectedBrandCookie(slug);
+  revalidatePath("/admin", "layout");
+  redirect("/admin");
+}
+
 export async function crearCampana(formData: FormData) {
-  await assertAdmin();
-  const input = parseCampaignForm(formData);
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const input = parseCampaignForm(formData, ctx.brand.name);
   if (!input.title) return;
-  await createCampaign(input);
+  await createCampaign(input, ctx.conn ?? undefined);
   revalidateCampaigns();
 }
 
 export async function editarCampana(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   if (!id) return;
-  await updateCampaign(id, parseCampaignForm(formData));
+  await updateCampaign(id, parseCampaignForm(formData, ctx.brand.name), ctx.conn ?? undefined);
   revalidateCampaigns();
 }
 
 export async function alternarCampana(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   const open = String(formData.get("open") || "") === "true";
   if (!id) return;
-  await setCampaignOpen(id, open);
+  await setCampaignOpen(id, open, ctx.conn ?? undefined);
   revalidateCampaigns();
 }
 
 export async function eliminarCampana(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   if (!id) return;
-  await deleteCampaign(id);
+  await deleteCampaign(id, ctx.conn ?? undefined);
   revalidateCampaigns();
 }
 
 export async function cambiarEstadoEntrega(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "") as ParticipationStatus;
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !PARTICIPATION_STATUS.includes(status)) return;
-  await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined);
+  await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined, ctx.conn ?? undefined);
   // Aprobar otorga estrellas automáticamente (se derivan de entregas aprobadas).
   revalidatePath("/admin/inscripciones");
   revalidatePath("/admin/creadoras");
@@ -101,25 +125,28 @@ export async function cambiarEstadoEntrega(formData: FormData) {
 // Canjes: aprobar/rechazar una solicitud de recompensa. Gate anti-fuga: una
 // recompensa con costo NO se aprueba sin GMV atribuible suficiente. La UI ya
 // lo bloquea; esto cubre el POST directo (defensa en profundidad, server-side).
+// El catálogo y el GMV se leen de la MARCA seleccionada (su base).
 export async function cambiarEstadoCanje(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const conn = ctx.conn ?? undefined;
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "") as CanjeStatus;
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !CANJE_STATUS.includes(status)) return;
 
   if (status === "aprobada") {
-    const canje = await getCanjeById(id);
+    const canje = await getCanjeById(id, conn);
     if (!canje) return;
-    const reward = getBrand().rewards.find((r) => r.id === canje.rewardId);
-    const creator = await getCreatorByEmail(canje.creatorEmail);
+    const reward = ctx.brand.rewards.find((r) => r.id === canje.rewardId);
+    const creator = await getCreatorByEmail(canje.creatorEmail, conn);
     const gmv = creator?.gmvMXN ?? 0;
     if (reward && !canApproveCanje(reward, gmv)) {
       throw new Error("No se puede aprobar un canje con costo sin GMV atribuible suficiente.");
     }
   }
 
-  await setCanjeStatus(id, status, status === "rechazada" ? reason : undefined);
+  await setCanjeStatus(id, status, status === "rechazada" ? reason : undefined, conn);
   revalidatePath("/admin/canjes");
   revalidatePath("/recompensas");
   revalidatePath("/");
@@ -128,12 +155,13 @@ export async function cambiarEstadoCanje(formData: FormData) {
 // El equipo captura a mano el GMV atribuible de la creadora (export TT Shop
 // Analytics). Enciende los niveles que dependen de GMV. NO es tiempo real.
 export async function capturarGmv(formData: FormData) {
-  await assertAdmin();
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   const gmv = Math.max(0, Math.round(Number(formData.get("gmv") || 0)) || 0);
   const date = String(formData.get("date") || "").trim();
   if (!id) return;
-  await setCreatorGmv(id, gmv, date);
+  await setCreatorGmv(id, gmv, date, ctx.conn ?? undefined);
   revalidatePath("/admin/creadoras");
   revalidatePath("/");
 }

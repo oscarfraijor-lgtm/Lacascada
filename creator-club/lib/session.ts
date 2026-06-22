@@ -11,6 +11,7 @@ export async function setCreatorCookie(email: string): Promise<void> {
   c.set(COOKIE, email.toLowerCase(), {
     httpOnly: true,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 24 * 180,
   });

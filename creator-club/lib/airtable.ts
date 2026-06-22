@@ -1,6 +1,11 @@
 // Cliente Airtable por fetch directo (mismo patrón que lives-app).
 // Cuando AIRTABLE_TOKEN + AIRTABLE_BASE_ID estén en el env, las funciones de
-// data.ts leen de aquí; sin env, la app usa datos mock.
+// store.ts leen de aquí; sin env, la app usa el archivo local.
+//
+// Multimarca: cada llamada acepta una conexión opcional (base + token) para
+// apuntar a la base de OTRA marca (panel de admin multimarca). Sin conexión
+// explícita se usa la del env (la marca de ESTE deploy). Así los datos de cada
+// marca viven en SU base y NUNCA se cruzan.
 
 export const TABLES = {
   Creadoras: "Creadoras",
@@ -13,16 +18,30 @@ export const TABLES = {
   Niveles: "Niveles",
 } as const;
 
-const BASE_ID = process.env.AIRTABLE_BASE_ID;
-
-function token(): string {
-  const t = process.env.AIRTABLE_TOKEN;
-  if (!t) throw new Error("AIRTABLE_TOKEN missing in env");
-  return t;
+// Conexión a una base concreta de Airtable (base + token).
+export interface Conn {
+  baseId: string;
+  token: string;
 }
 
-export function airtableConfigured(): boolean {
-  return !!process.env.AIRTABLE_TOKEN && !!process.env.AIRTABLE_BASE_ID;
+// Conexión por defecto: la marca del env de este deploy.
+export function envConn(): Conn | null {
+  const baseId = process.env.AIRTABLE_BASE_ID;
+  const token = process.env.AIRTABLE_TOKEN;
+  return baseId && token ? { baseId, token } : null;
+}
+
+// Resuelve la conexión a usar: la explícita (otra marca) o la del env.
+function resolve(conn?: Conn | null): Conn {
+  const c = conn ?? envConn();
+  if (!c) throw new Error("Airtable no configurado (sin base/token)");
+  return c;
+}
+
+// ¿Hay base Airtable para esta conexión? Sin conexión explícita, mira el env.
+export function airtableConfigured(conn?: Conn | null): boolean {
+  if (conn !== undefined) return conn !== null;
+  return !!envConn();
 }
 
 export interface AirtableRecord<T> {
@@ -33,18 +52,20 @@ export interface AirtableRecord<T> {
 
 export async function fetchAll<T>(
   table: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
+  conn?: Conn | null
 ): Promise<AirtableRecord<T>[]> {
+  const { baseId, token } = resolve(conn);
   const out: AirtableRecord<T>[] = [];
   let offset: string | undefined;
   do {
     const qs = new URLSearchParams({ pageSize: "100", ...params });
     if (offset) qs.set("offset", offset);
-    const url = `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(
+    const url = `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(
       table
     )}?${qs.toString()}`;
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token()}` },
+      headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
     if (!res.ok) {
@@ -62,14 +83,16 @@ export async function fetchAll<T>(
 
 export async function airtableCreate(
   table: string,
-  fields: Record<string, unknown>
+  fields: Record<string, unknown>,
+  conn?: Conn | null
 ): Promise<{ id: string }> {
+  const { baseId, token } = resolve(conn);
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}`,
+    `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}`,
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token()}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ fields, typecast: false }),
@@ -83,14 +106,16 @@ export async function airtableCreate(
 export async function airtableUpdate(
   table: string,
   recordId: string,
-  fields: Record<string, unknown>
+  fields: Record<string, unknown>,
+  conn?: Conn | null
 ): Promise<{ id: string }> {
+  const { baseId, token } = resolve(conn);
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${recordId}`,
+    `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}/${recordId}`,
     {
       method: "PATCH",
       headers: {
-        Authorization: `Bearer ${token()}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ fields, typecast: false }),
@@ -101,10 +126,15 @@ export async function airtableUpdate(
   return { id: json.id };
 }
 
-export async function airtableDelete(table: string, recordId: string): Promise<void> {
+export async function airtableDelete(
+  table: string,
+  recordId: string,
+  conn?: Conn | null
+): Promise<void> {
+  const { baseId, token } = resolve(conn);
   const res = await fetch(
-    `https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(table)}/${recordId}`,
-    { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } }
+    `https://api.airtable.com/v0/${baseId}/${encodeURIComponent(table)}/${recordId}`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
   );
   if (!res.ok) throw new Error(`Airtable delete ${res.status}: ${await res.text()}`);
 }

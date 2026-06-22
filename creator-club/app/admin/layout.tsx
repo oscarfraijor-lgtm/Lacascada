@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Megaphone, Inbox, Gift, Users, ShieldCheck } from "lucide-react";
+import { Megaphone, Inbox, Gift, Users, Building2, ShieldCheck, ChevronsUpDown } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
-import { airtableConfigured } from "@/lib/airtable";
-import { BRAND } from "@/lib/schema";
+import { getAdminContext, managedBrands } from "@/lib/brand-admin";
 
 const TABS = [
   { href: "/admin", label: "Campañas", icon: Megaphone },
   { href: "/admin/inscripciones", label: "Inscripciones", icon: Inbox },
   { href: "/admin/canjes", label: "Canjes", icon: Gift },
   { href: "/admin/creadoras", label: "Creadoras", icon: Users },
+  { href: "/admin/marcas", label: "Marcas", icon: Building2 },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +31,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     );
   }
 
+  const ctx = await getAdminContext();
+  const brandCount = managedBrands().length;
+  const dataLabel = ctx.fileStore ? "archivo local" : ctx.configured ? "Airtable" : "pendiente";
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -38,10 +42,24 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p className="font-display text-xs font-bold uppercase tracking-[0.2em] text-brand-deep">
             Panel de admin
           </p>
-          <h1 className="font-display text-2xl font-extrabold text-ink">{BRAND.club}</h1>
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-2xl font-extrabold text-ink">{ctx.brand.club}</h1>
+            {/* Selector de marca: a qué club estás entrando ahora mismo */}
+            <Link
+              href="/admin/marcas"
+              title="Cambiar de marca"
+              className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3 py-1 text-xs font-bold text-ink transition hover:border-brand hover:text-brand"
+            >
+              {ctx.brand.name}
+              <ChevronsUpDown size={13} className="text-ink-soft" />
+              <span className="rounded-full bg-cream-deep px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
+                {brandCount}
+              </span>
+            </Link>
+          </div>
         </div>
         <span className="rounded-full bg-cream-deep px-3 py-1 text-xs font-semibold text-ink-soft">
-          Datos: {airtableConfigured() ? "Airtable" : "archivo local"} · {email}
+          Datos: {dataLabel} · {email}
         </span>
       </header>
 

@@ -38,7 +38,12 @@ interface BrandMechanics {
   campaignSeed?: Campaign[];
 }
 
-export type BrandConfig = BrandIdentity & Required<BrandMechanics>;
+// Metadatos del panel multimarca (opcionales).
+interface BrandMeta {
+  deployUrl?: string; // URL del deploy propio de la marca (para "abrir" desde el admin)
+}
+
+export type BrandConfig = BrandIdentity & Required<BrandMechanics> & BrandMeta;
 
 // ── Color Dreams (marca de referencia; también es el fallback de mecánica) ──
 const CD_LEVELS: Level[] = [
@@ -83,7 +88,26 @@ const CD_CAMPAIGN_SEED: Campaign[] = [
 ];
 
 // ── Registro de marcas ──────────────────────────────────────────────────────
-type RawBrand = BrandIdentity & BrandMechanics;
+type RawBrand = BrandIdentity & BrandMechanics & BrandMeta;
+
+// Paleta neutra para marcas plantilla (aún sin brandkit). Se ajusta al activar.
+// `lime` es el color de CTA/acento: usa un acento saturado (un gris se vuelve
+// invisible como botón sobre cream) hasta personalizar el brandkit.
+const STUB_PALETTE = {
+  cream: "#F4F2EC",
+  creamDeep: "#E8E5DC",
+  violet: "#5B5B6B",
+  violetDeep: "#3E3E4C",
+  ink: "#2A2A33",
+  inkSoft: "#5A5A66",
+  lime: "#E0A33A",
+};
+// Identidad mínima compartida por las marcas plantilla de Indie Pro.
+const STUB_OPERATOR = {
+  operator: "INDIEPRO MUSIC & MARKETING S.C.",
+  operatorShort: "Indie Pro Marketing",
+  contactEmail: "afiliadostiktok@indiepro.com.mx",
+};
 
 const BRANDS: Record<string, RawBrand> = {
   "color-dreams": {
@@ -128,11 +152,59 @@ const BRANDS: Record<string, RawBrand> = {
     inkSoft: "#6B5248",
     lime: "#F4B740",
   },
+
+  // ── PLANTILLAS de marcas gestionadas por Indie Pro ──
+  // Identidad/colores PLACEHOLDER y base de Airtable PENDIENTE: aparecen en el
+  // selector de /admin/marcas como "Pendiente" hasta que completes su brandkit
+  // (copiando el patrón de color-dreams) y configures AIRTABLE_BASE_<SLUG> en el
+  // env del deploy de admin. Solo así se vuelven gestionables aquí.
+  anyeluz: {
+    slug: "anyeluz",
+    name: "Anyeluz",
+    club: "Anyeluz Club",
+    tagline: "Crea y brilla.",
+    category: "belleza y skincare",
+    ...STUB_OPERATOR,
+    ...STUB_PALETTE,
+  },
+  "origen-botanico": {
+    slug: "origen-botanico",
+    name: "Origen Botánico",
+    club: "Origen Club",
+    tagline: "Crea y conecta.",
+    category: "bienestar botánico",
+    ...STUB_OPERATOR,
+    ...STUB_PALETTE,
+  },
+  ole: {
+    slug: "ole",
+    name: "Ole",
+    club: "Ole Club",
+    tagline: "Crea y comparte.",
+    category: "categoría por definir", // reemplazar por el rubro real de Ole
+    ...STUB_OPERATOR,
+    ...STUB_PALETTE,
+  },
 };
 
-export function getBrand(): BrandConfig {
-  const slug = process.env.NEXT_PUBLIC_BRAND || "color-dreams";
-  const cfg = BRANDS[slug] ?? BRANDS["color-dreams"];
+// Todas las marcas registradas (para el selector multimarca del admin).
+export function getAllBrandSlugs(): string[] {
+  return Object.keys(BRANDS);
+}
+
+// ¿La marca define su PROPIA mecánica (no hereda la de Color Dreams)? Las
+// plantillas sin levels/missions/rewards/campaignSeed heredan copy de Color
+// Dreams; útil para avisar antes de deployar público o aprobar canjes con GMV.
+export function hasOwnMechanics(slug: string): boolean {
+  const cfg = BRANDS[slug];
+  return !!(cfg && cfg.levels && cfg.missions && cfg.rewards && cfg.campaignSeed);
+}
+
+// Config completa de una marca por slug (con fallback de mecánica a Color Dreams).
+// null si el slug no existe en el registro.
+export function getBrandConfig(slug: string): BrandConfig | null {
+  const cfg = BRANDS[slug];
+  if (!cfg) return null;
   return {
     ...cfg,
     levels: cfg.levels ?? CD_LEVELS,
@@ -140,4 +212,17 @@ export function getBrand(): BrandConfig {
     rewards: cfg.rewards ?? CD_REWARDS,
     campaignSeed: cfg.campaignSeed ?? CD_CAMPAIGN_SEED,
   };
+}
+
+// Marca de ESTE deploy (NEXT_PUBLIC_BRAND). Es la que ve el lado público.
+export function getBrand(): BrandConfig {
+  const slug = process.env.NEXT_PUBLIC_BRAND || "color-dreams";
+  // Aviso fuerte si se deploya público una marca plantilla: heredaría las
+  // misiones/recompensas/campañas (y su copy) de Color Dreams.
+  if (slug !== "color-dreams" && BRANDS[slug] && !hasOwnMechanics(slug)) {
+    console.warn(
+      `[brands] '${slug}' no tiene mecánica propia: hereda misiones/recompensas/campañas de Color Dreams (copy de otra marca). NO deployar público sin definir levels/missions/rewards/campaignSeed.`
+    );
+  }
+  return getBrandConfig(slug) ?? getBrandConfig("color-dreams")!;
 }

@@ -1,13 +1,18 @@
 import { Star, Save } from "lucide-react";
 import { listCreators, listParticipations, listCampaigns, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
+import { getAdminContext } from "@/lib/brand-admin";
+import AdminBrandPending from "@/components/AdminBrandPending";
 import { capturarGmv } from "../actions";
 
 export default async function AdminCreadorasPage() {
+  const ctx = await getAdminContext();
+  if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
+  const conn = ctx.conn ?? undefined;
   const [creators, parts, campaigns] = await Promise.all([
-    listCreators(),
-    listParticipations(),
-    listCampaigns(),
+    listCreators(conn),
+    listParticipations(conn),
+    listCampaigns(conn),
   ]);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -28,7 +33,7 @@ export default async function AdminCreadorasPage() {
         creator: c,
         stars,
         gmv,
-        level: levelForStars(stars, gmv),
+        level: levelForStars(stars, gmv, ctx.brand.levels),
         aprobadas: mine.filter((p) => p.status === "aprobada").length,
         total: mine.length,
       };
@@ -59,7 +64,7 @@ export default async function AdminCreadorasPage() {
                   </span>
                 </p>
                 <p className="truncate text-xs text-ink-soft">
-                  {creator.handle || "—"}
+                  {creator.handle || "Sin handle"}
                   <span className="mx-1.5 text-ink/30">·</span>
                   {creator.email}
                   {creator.city ? <><span className="mx-1.5 text-ink/30">·</span>{creator.city}</> : null}

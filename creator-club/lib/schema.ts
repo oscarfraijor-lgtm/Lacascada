@@ -34,15 +34,17 @@ export const BRAND = getBrand();
 export const LEVELS: Level[] = BRAND.levels;
 export const MISSIONS: Mission[] = BRAND.missions;
 
-export function levelForStars(stars: number, gmvMXN: number): Level {
-  let current = LEVELS[0];
-  for (const lvl of LEVELS) {
+// `levels` por defecto = la marca del env (lado público). El admin multimarca
+// pasa los niveles de la marca seleccionada.
+export function levelForStars(stars: number, gmvMXN: number, levels: Level[] = LEVELS): Level {
+  let current = levels[0];
+  for (const lvl of levels) {
     if (stars >= lvl.minStars && gmvMXN >= lvl.minGmvMXN) current = lvl;
   }
   return current;
 }
 
-export function nextLevel(current: LevelKey): Level | null {
-  const i = LEVELS.findIndex((l) => l.key === current);
-  return i >= 0 && i < LEVELS.length - 1 ? LEVELS[i + 1] : null;
+export function nextLevel(current: LevelKey, levels: Level[] = LEVELS): Level | null {
+  const i = levels.findIndex((l) => l.key === current);
+  return i >= 0 && i < levels.length - 1 ? levels[i + 1] : null;
 }

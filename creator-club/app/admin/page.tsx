@@ -1,11 +1,14 @@
 import { Star, Plus, Power, Trash2, Save } from "lucide-react";
 import { listCampaigns } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
-import { BRAND } from "@/lib/schema";
+import { getAdminContext } from "@/lib/brand-admin";
+import AdminBrandPending from "@/components/AdminBrandPending";
 import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from "./actions";
 
 export default async function AdminCampanasPage() {
-  const campaigns = await listCampaigns();
+  const ctx = await getAdminContext();
+  if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
+  const campaigns = await listCampaigns(ctx.conn ?? undefined);
   const activas = campaigns.filter((c) => c.open).length;
 
   return (
@@ -16,7 +19,7 @@ export default async function AdminCampanasPage() {
           <Plus size={18} className="text-brand-deep" /> Nueva campaña
         </h2>
         <form action={crearCampana} className="space-y-4">
-          <CampaignFields />
+          <CampaignFields brandName={ctx.brand.name} />
           <button
             type="submit"
             className="font-display rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink transition hover:brightness-95"
@@ -62,7 +65,7 @@ export default async function AdminCampanasPage() {
 
             <form action={editarCampana} className="space-y-4">
               <input type="hidden" name="id" value={c.id} />
-              <CampaignFields c={c} />
+              <CampaignFields c={c} brandName={ctx.brand.name} />
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="submit"
@@ -102,7 +105,7 @@ export default async function AdminCampanasPage() {
 }
 
 // Campos compartidos entre crear y editar. Sin `c` = formulario vacío.
-function CampaignFields({ c }: { c?: Campaign }) {
+function CampaignFields({ c, brandName }: { c?: Campaign; brandName: string }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -111,7 +114,7 @@ function CampaignFields({ c }: { c?: Campaign }) {
         <Field name="stars" label="Estrellas" type="number" defaultValue={c?.stars?.toString() ?? "0"} />
         <Field name="deadline" label="Deadline" defaultValue={c?.deadline} placeholder="Cupo abierto" />
         <Field name="reward" label="Recompensa" defaultValue={c?.reward} placeholder="Qué recibe la creadora" />
-        <Field name="brand" label="Marca" defaultValue={c?.brand ?? BRAND.name} />
+        <Field name="brand" label="Marca" defaultValue={c?.brand ?? brandName} />
       </div>
       <Field
         name="requirements"

@@ -1,5 +1,7 @@
 import { Star, Check, X, RotateCcw, ExternalLink, UserCheck } from "lucide-react";
 import { listParticipations, listCreators, listCampaigns } from "@/lib/store";
+import { getAdminContext } from "@/lib/brand-admin";
+import AdminBrandPending from "@/components/AdminBrandPending";
 import { cambiarEstadoEntrega } from "../actions";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
@@ -14,10 +16,13 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 const ORDER: Record<string, number> = { entregada: 0, inscrita: 1, aceptada: 2, aprobada: 3, rechazada: 4 };
 
 export default async function AdminInscripcionesPage() {
+  const ctx = await getAdminContext();
+  if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
+  const conn = ctx.conn ?? undefined;
   const [parts, creators, campaigns] = await Promise.all([
-    listParticipations(),
-    listCreators(),
-    listCampaigns(),
+    listParticipations(conn),
+    listCreators(conn),
+    listCampaigns(conn),
   ]);
   const creatorByEmail = new Map(creators.map((c) => [c.email.toLowerCase(), c]));
   const campaignById = new Map(campaigns.map((c) => [c.id, c]));
