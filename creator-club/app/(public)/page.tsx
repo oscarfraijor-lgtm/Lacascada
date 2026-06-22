@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, ChevronRight, ArrowRight, History } from "lucide-react";
+import { Star, ChevronRight, ArrowRight, History, Gift } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
@@ -67,9 +67,14 @@ export default async function Home() {
               <span className="font-display text-4xl font-black">{stars.toLocaleString("es-MX")}</span>
             </div>
             <p className="text-xs uppercase tracking-widest text-white/60">estrellas</p>
-            <Link href="/historial" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-lime underline">
-              <History size={12} /> Ver cómo las ganaste
-            </Link>
+            <div className="mt-1 flex items-center justify-end gap-3 text-xs font-semibold">
+              <Link href="/historial" className="inline-flex items-center gap-1 text-lime underline">
+                <History size={12} /> Ver cómo las ganaste
+              </Link>
+              <Link href="/canjes" className="inline-flex items-center gap-1 text-lime underline">
+                <Gift size={12} /> Mis canjes
+              </Link>
+            </div>
           </div>
         </div>
         {next ? (

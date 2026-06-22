@@ -19,12 +19,22 @@ export default async function RecompensasPage() {
 
   return (
     <div className="space-y-5">
-      <header>
-        <h1 className="font-display text-2xl font-extrabold text-ink">Recompensas</h1>
-        <p className="text-sm text-ink-soft">
-          Tu estatus es gratis. Lo que tiene costo (producto, boosts, experiencias) se
-          desbloquea con tus ventas atribuibles en TikTok Shop.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-extrabold text-ink">Recompensas</h1>
+          <p className="text-sm text-ink-soft">
+            Tu estatus es gratis. Lo que tiene costo (producto, boosts, experiencias) se
+            desbloquea con tus ventas atribuibles en TikTok Shop.
+          </p>
+        </div>
+        {view.signedIn && (
+          <Link
+            href="/canjes"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ink/15 px-4 py-2 text-sm font-semibold text-ink transition hover:border-brand hover:text-brand"
+          >
+            <Gift size={15} /> Mis canjes
+          </Link>
+        )}
       </header>
 
       {view.signedIn ? (
