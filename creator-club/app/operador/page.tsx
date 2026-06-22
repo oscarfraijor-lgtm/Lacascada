@@ -3,6 +3,9 @@ import { MailCheck, AlertCircle, ShieldCheck } from "lucide-react";
 import { OPERATOR_THEME } from "@/lib/theme";
 import { solicitarAccesoOperador } from "./actions";
 
+// Título neutral (no el de la marca del deploy) para la puerta del equipo.
+export const metadata = { title: "Consola · Indie Pro" };
+
 // Entrada NEUTRAL del equipo (Indie Pro), separada del club público de cualquier
 // marca. Aquí entran Mabel/Oscar/Paulina; al validar el enlace caen en /console.
 export default async function OperadorPage({

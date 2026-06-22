@@ -6,6 +6,9 @@ import { isAdmin } from "@/lib/roles";
 import { cerrarSesion } from "@/lib/auth-actions";
 import { OPERATOR_THEME } from "@/lib/theme";
 
+// Título neutral (Indie Pro), no el de la marca del deploy.
+export const metadata = { title: "Consola · Indie Pro" };
+
 // Consola de operador: nivel SUPERIOR, neutral (Indie Pro), por encima de los
 // clubs. Desde aquí Mabel/Oscar/Paulina eligen un club y entran a su admin.
 export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
