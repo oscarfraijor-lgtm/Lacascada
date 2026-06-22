@@ -1,4 +1,5 @@
-import { Star, Save, Download } from "lucide-react";
+import Link from "next/link";
+import { Star, Save, Download, ChevronRight } from "lucide-react";
 import { listCreators, listParticipations, listCampaigns, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
 import { getAdminContext } from "@/lib/brand-admin";
@@ -68,7 +69,12 @@ export default async function AdminCreadorasPage() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-semibold text-ink">
-                  {creator.name}{" "}
+                  <Link
+                    href={`/admin/creadoras/${encodeURIComponent(creator.email)}`}
+                    className="inline-flex items-center gap-0.5 hover:text-brand hover:underline"
+                  >
+                    {creator.name} <ChevronRight size={14} className="text-ink-soft" />
+                  </Link>
                   <span className="ml-1 text-xs font-semibold text-ink-soft">
                     {level.badge} {level.name}
                   </span>
