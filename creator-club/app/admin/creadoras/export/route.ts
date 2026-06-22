@@ -95,7 +95,7 @@ export async function GET(req: Request) {
       else partsByEmail.set(k, [p]);
     }
     headers = [
-      "Nombre", "Handle", "Email", "Ciudad", "Seguidores",
+      "Nombre", "Handle", "Afiliado TTS", "Email", "Ciudad", "Seguidores",
       "Estrellas", "GMV (MXN)", "GMV actualizado", "Nivel",
       "Campañas aprobadas", "Campañas totales",
     ];
@@ -107,7 +107,7 @@ export async function GET(req: Request) {
         const level = levelForStars(stars, gmv, ctx.brand.levels);
         return {
           row: [
-            c.name, c.handle ?? "", c.email, c.city ?? "", c.followers ?? "",
+            c.name, c.handle ?? "", c.affiliateHandle ?? "", c.email, c.city ?? "", c.followers ?? "",
             stars, gmv, c.gmvDate ?? "", level.name,
             mine.filter((p) => p.status === "aprobada").length, mine.length,
           ] as unknown[],

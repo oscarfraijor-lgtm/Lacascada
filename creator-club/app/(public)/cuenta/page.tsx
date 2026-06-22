@@ -56,6 +56,22 @@ export default async function CuentaPage({
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Afiliado de TikTok Shop
+          </span>
+          <input
+            name="affiliateHandle"
+            type="text"
+            defaultValue={me.affiliateHandle}
+            placeholder="@tu_cuenta_afiliada o link de TikTok Shop"
+            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+          />
+          <p className="mt-1 text-[11px] text-ink-soft">
+            La cuenta con la que generas ventas. Nos sirve para acreditar tu GMV y tus recompensas.
+          </p>
+        </label>
+
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Tu portafolio
           </span>
           <textarea

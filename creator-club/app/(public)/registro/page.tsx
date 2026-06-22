@@ -39,6 +39,7 @@ export default async function RegistroPage({
         <Field name="name" label="Nombre completo" placeholder="Tu nombre" required />
         <Field name="handle" label="Usuario de TikTok" placeholder="@tucuenta" />
         <Field name="email" label="Correo" type="email" placeholder="tu@correo.com" required />
+        <Field name="affiliateHandle" label="Afiliado de TikTok Shop (opcional)" placeholder="@tu_cuenta_afiliada o link" />
 
         <label className="block">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">

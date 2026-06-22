@@ -44,6 +44,7 @@ export async function getCreator(): Promise<Creator | null> {
     id: session.id ?? "",
     name: session.name,
     handle: session.handle || "",
+    affiliateHandle: session.affiliateHandle,
     stars,
     gmvMXN,
     level: levelForStars(stars, gmvMXN).key,
@@ -55,11 +56,18 @@ export async function getMissions(creator: Creator): Promise<MissionWithStatus[]
   const gmv = creator.gmvMXN ?? 0;
   // Candado honesto por GMV: las misiones de venta solo se activan cuando hay
   // venta atribuible (anti-fuga). No fingimos "completada" sin tracking real.
+  // La misión "Conecta tu TikTok afiliado" se da por cumplida cuando la creadora
+  // registra su @afiliado / link de TikTok Shop en su perfil (no otorga estrellas:
+  // las estrellas solo salen de entregas aprobadas, esto es solo estado visual).
+  const connectedAffiliate = !!creator.affiliateHandle?.trim();
   return MISSIONS.map((m) => {
     const locked = m.requiresSale && gmv <= 0;
+    const done =
+      creator.completedMissionIds.includes(m.id) ||
+      (m.id === "conectar-tt" && connectedAffiliate);
     return {
       ...m,
-      done: creator.completedMissionIds.includes(m.id),
+      done,
       locked,
       lockReason: locked ? "Se activa con tu primera venta atribuible en TikTok Shop." : undefined,
     };

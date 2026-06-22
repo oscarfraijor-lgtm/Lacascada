@@ -82,6 +82,13 @@ export default async function AdminCreadorasPage() {
                 {creator.portfolio && (
                   <p className="mt-0.5 truncate text-xs text-ink-soft">📎 {creator.portfolio}</p>
                 )}
+                {creator.affiliateHandle ? (
+                  <p className="mt-0.5 truncate text-xs font-semibold text-brand-deep">
+                    Afiliado TTS: {creator.affiliateHandle}
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-xs text-ink-soft/70">Sin afiliado de TikTok Shop registrado</p>
+                )}
               </div>
               <div className="flex shrink-0 items-center gap-4">
                 <span className="text-xs text-ink-soft">{aprobadas}/{total} campañas</span>

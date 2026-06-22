@@ -4,6 +4,7 @@ export interface Creator {
   id: string;
   name: string;
   handle: string; // @tiktok
+  affiliateHandle?: string; // @usuario o link de afiliado de TikTok Shop
   avatar?: string;
   stars: number;
   gmvMXN: number;

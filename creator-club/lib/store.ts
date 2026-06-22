@@ -34,6 +34,7 @@ export interface CreatorRecord {
   followers?: string;
   city?: string;
   portfolio?: string;
+  affiliateHandle?: string; // @usuario o link de afiliado de TikTok Shop (a qué cuenta atribuir GMV)
   gmvMXN?: number; // GMV atribuible capturado a mano por el equipo
   gmvDate?: string; // "actualizado al" (nunca tiempo real)
   createdAt?: string;
@@ -98,6 +99,7 @@ export async function createCreator(c: CreatorRecord, conn?: Conn): Promise<Crea
       Seguidores: c.followers ?? "",
       Ciudad: c.city ?? "",
       Portafolio: c.portfolio ?? "",
+      AfiliadoHandle: c.affiliateHandle ?? "",
     }, conn);
     return { ...c, id: r.id };
   }
@@ -117,6 +119,7 @@ interface CreadoraFields {
   Seguidores?: string;
   Ciudad?: string;
   Portafolio?: string;
+  AfiliadoHandle?: string;
   GMV_MXN?: number;
   GMV_Fecha?: string;
 }
@@ -124,7 +127,7 @@ interface CreadoraFields {
 // Campos editables por la creadora desde su perfil. NO incluye email (es la clave
 // de identidad) ni GMV (lo captura el equipo). El email se omite a propósito.
 export type CreatorPatch = Partial<
-  Pick<CreatorRecord, "name" | "handle" | "followers" | "city" | "portfolio">
+  Pick<CreatorRecord, "name" | "handle" | "followers" | "city" | "portfolio" | "affiliateHandle">
 >;
 
 // Edita el perfil de una creadora (por id). Solo los campos presentes en el patch.
@@ -136,6 +139,7 @@ export async function updateCreator(id: string, patch: CreatorPatch, conn?: Conn
     if (patch.followers !== undefined) fields.Seguidores = patch.followers;
     if (patch.city !== undefined) fields.Ciudad = patch.city;
     if (patch.portfolio !== undefined) fields.Portafolio = patch.portfolio;
+    if (patch.affiliateHandle !== undefined) fields.AfiliadoHandle = patch.affiliateHandle;
     if (Object.keys(fields).length) await airtableUpdate(TABLES.Creadoras, id, fields, conn);
     return;
   }
@@ -156,6 +160,7 @@ function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?:
     followers: r.fields.Seguidores,
     city: r.fields.Ciudad,
     portfolio: r.fields.Portafolio,
+    affiliateHandle: r.fields.AfiliadoHandle,
     gmvMXN: r.fields.GMV_MXN,
     gmvDate: r.fields.GMV_Fecha,
     createdAt: r.createdTime,

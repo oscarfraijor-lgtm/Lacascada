@@ -18,6 +18,7 @@ export async function actualizarCuenta(formData: FormData) {
   await updateCreator(me.id, {
     name,
     handle: String(formData.get("handle") || "").trim(),
+    affiliateHandle: String(formData.get("affiliateHandle") || "").trim(),
     followers: String(formData.get("followers") || "").trim(),
     city: String(formData.get("city") || "").trim(),
     portfolio: String(formData.get("portfolio") || "").trim(),

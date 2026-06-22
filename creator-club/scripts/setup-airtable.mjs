@@ -99,6 +99,7 @@ async function ensureFields() {
     { table: "Entregas", field: text("Motivo") },
     { table: "Campañas", field: text("Requisitos") },
     { table: "Creadoras", field: text("Portafolio") },
+    { table: "Creadoras", field: text("AfiliadoHandle") },
     { table: "Creadoras", field: number("GMV_MXN") },
     { table: "Creadoras", field: text("GMV_Fecha") },
     { table: "Canjes", field: text("Titulo") },

@@ -13,6 +13,7 @@ export async function registrar(formData: FormData) {
   const followers = String(formData.get("followers") || "").trim();
   const city = String(formData.get("city") || "").trim();
   const portfolio = String(formData.get("portfolio") || "").trim();
+  const affiliateHandle = String(formData.get("affiliateHandle") || "").trim();
   const consent = formData.get("consent");
 
   if (!name || !email) redirect("/registro?error=faltan");
@@ -26,7 +27,7 @@ export async function registrar(formData: FormData) {
   const existing = await getCreatorByEmail(email);
   if (existing) redirect(`/acceso?ya=1&email=${encodeURIComponent(email)}`);
 
-  await createCreator({ name, handle, email, followers, city, portfolio });
+  await createCreator({ name, handle, email, followers, city, portfolio, affiliateHandle });
   await setCreatorCookie(email);
   redirect("/campanas?bienvenida=1");
 }

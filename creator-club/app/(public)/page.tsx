@@ -35,6 +35,7 @@ export default async function Home() {
     id: session.id ?? "",
     name: session.name,
     handle: session.handle || "",
+    affiliateHandle: session.affiliateHandle,
     stars,
     gmvMXN: gmv,
     level: levelForStars(stars, gmv).key,
