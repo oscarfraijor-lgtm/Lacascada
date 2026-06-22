@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Star, Clock, Check, Send, AlertCircle, ListChecks } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listOpenCampaigns, type Participation } from "@/lib/store";
+import SubmitButton from "@/components/SubmitButton";
 import { participar, entregarVideo } from "./actions";
 import TrustBar from "@/components/TrustBar";
 import { BRAND } from "@/lib/schema";
@@ -87,12 +88,9 @@ export default async function CampanasPage({
                 ) : me ? (
                   <form action={participar}>
                     <input type="hidden" name="campaignId" value={c.id} />
-                    <button
-                      type="submit"
-                      className="font-display w-full rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep"
-                    >
+                    <SubmitButton className="font-display w-full rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep">
                       Participar
-                    </button>
+                    </SubmitButton>
                   </form>
                 ) : (
                   <Link
@@ -167,13 +165,12 @@ function JoinedBlock({
           placeholder="https://tiktok.com/@tu/video..."
           className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
         />
-        <button
-          type="submit"
-          title="Enviar mi video"
+        <SubmitButton
+          pendingLabel="…"
           className="font-display flex shrink-0 items-center gap-1 rounded-xl bg-brand px-3 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
         >
           <Send size={14} /> {part.status === "entregada" ? "Actualizar" : "Enviar"}
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

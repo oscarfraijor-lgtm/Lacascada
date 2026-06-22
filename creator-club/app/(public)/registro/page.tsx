@@ -2,6 +2,7 @@ import Link from "next/link";
 import { registrar } from "./actions";
 import { BRAND } from "@/lib/schema";
 import TrustBar from "@/components/TrustBar";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function RegistroPage({
   searchParams,
@@ -67,12 +68,12 @@ export default async function RegistroPage({
           </span>
         </label>
 
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Creando tu cuenta…"
           className="font-display w-full rounded-full bg-lime py-3 text-base font-extrabold text-ink transition hover:brightness-95"
         >
           Quiero unirme
-        </button>
+        </SubmitButton>
         <p className="text-center text-xs text-ink-soft">
           ¿Ya tienes cuenta?{" "}
           <Link href="/acceso" className="font-semibold text-brand-deep">

@@ -3,6 +3,7 @@ import { Star, Lock, Gift, Clock, Check } from "lucide-react";
 import { getRewardsView, type RewardView } from "@/lib/data";
 import { BRAND } from "@/lib/schema";
 import RewardStateChip from "@/components/RewardStateChip";
+import SubmitButton from "@/components/SubmitButton";
 import { solicitarCanje } from "./actions";
 
 const KIND_LABEL: Record<string, string> = {
@@ -108,12 +109,9 @@ function RewardFooter({ r, signedIn }: { r: RewardView; signedIn: boolean }) {
         <form action={solicitarCanje} className="space-y-2">
           <input type="hidden" name="rewardId" value={r.id} />
           <p className="text-xs font-semibold text-brand-deep">{r.requirement}</p>
-          <button
-            type="submit"
-            className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep"
-          >
+          <SubmitButton className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep">
             <Gift size={15} /> Solicitar canje
-          </button>
+          </SubmitButton>
         </form>
       );
 
@@ -140,12 +138,9 @@ function RewardFooter({ r, signedIn }: { r: RewardView; signedIn: boolean }) {
           {r.unlocked ? (
             <form action={solicitarCanje}>
               <input type="hidden" name="rewardId" value={r.id} />
-              <button
-                type="submit"
-                className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep"
-              >
+              <SubmitButton className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-brand py-2.5 text-sm font-extrabold text-white transition hover:bg-brand-deep">
                 <Gift size={15} /> Solicitar de nuevo
-              </button>
+              </SubmitButton>
             </form>
           ) : (
             <p className="flex items-start gap-1.5 text-xs text-ink-soft">
