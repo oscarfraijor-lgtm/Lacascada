@@ -1,4 +1,4 @@
-import { Check, X, RotateCcw, Lock, Star, Download } from "lucide-react";
+import { Check, X, RotateCcw, Lock, Star, Download, PackageCheck } from "lucide-react";
 import { listCanjes, listCreators } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
@@ -9,10 +9,11 @@ import { cambiarEstadoCanje } from "../actions";
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   solicitada: { label: "Solicitada", cls: "bg-brand/15 text-brand-deep" },
   aprobada: { label: "Aprobada", cls: "bg-lime text-ink" },
+  entregada: { label: "Entregada", cls: "bg-ink text-white" },
   rechazada: { label: "Rechazada", cls: "bg-ink/10 text-ink-soft" },
 };
-// Orden: lo que necesita acción primero.
-const ORDER: Record<string, number> = { solicitada: 0, rechazada: 1, aprobada: 2 };
+// Orden: lo que necesita acción primero; entregada (cerrado) al final.
+const ORDER: Record<string, number> = { solicitada: 0, aprobada: 1, rechazada: 2, entregada: 3 };
 
 export default async function AdminCanjesPage() {
   const ctx = await getAdminContext();
@@ -74,7 +75,7 @@ export default async function AdminCanjesPage() {
           </div>
 
           <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-            {c.status !== "aprobada" &&
+            {c.status !== "aprobada" && c.status !== "entregada" &&
               (approvable ? (
                 <StatusButton id={c.id!} status="aprobada" className="bg-lime text-ink hover:brightness-95">
                   <Check size={14} /> Aprobar
@@ -84,7 +85,12 @@ export default async function AdminCanjesPage() {
                   <Lock size={13} /> Sin GMV atribuible
                 </span>
               ))}
-            {c.status !== "rechazada" && (
+            {c.status === "aprobada" && (
+              <StatusButton id={c.id!} status="entregada" className="bg-ink text-white hover:brightness-110">
+                <PackageCheck size={14} /> Marcar entregada
+              </StatusButton>
+            )}
+            {c.status !== "rechazada" && c.status !== "entregada" && (
               <form action={cambiarEstadoCanje} className="flex items-center gap-1">
                 <input type="hidden" name="id" value={c.id} />
                 <input type="hidden" name="status" value="rechazada" />
@@ -104,6 +110,11 @@ export default async function AdminCanjesPage() {
             {c.status === "aprobada" && (
               <StatusButton id={c.id!} status="solicitada" className="bg-ink/5 text-ink-soft hover:bg-ink/10">
                 <RotateCcw size={14} /> Reabrir
+              </StatusButton>
+            )}
+            {c.status === "entregada" && (
+              <StatusButton id={c.id!} status="aprobada" className="bg-ink/5 text-ink-soft hover:bg-ink/10">
+                <RotateCcw size={14} /> Deshacer entrega
               </StatusButton>
             )}
           </div>
@@ -147,6 +158,7 @@ export default async function AdminCanjesPage() {
           statuses={[
             { value: "solicitada", label: "Solicitada (por revisar)" },
             { value: "aprobada", label: "Aprobada" },
+            { value: "entregada", label: "Entregada" },
             { value: "rechazada", label: "Rechazada" },
           ]}
           searchPlaceholder="Buscar por creadora, correo, handle o recompensa…"

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Gift, ArrowLeft, Clock, Check, X, Inbox } from "lucide-react";
+import { Gift, ArrowLeft, Clock, Check, X, Inbox, PackageCheck } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { canjesFor, type Canje } from "@/lib/store";
 
@@ -26,6 +26,12 @@ const STATUS_META: Record<
     cls: "bg-lime text-ink",
     Icon: Check,
     note: "¡Aprobada! El equipo te contacta para entregarte tu recompensa.",
+  },
+  entregada: {
+    label: "Entregada",
+    cls: "bg-ink text-white",
+    Icon: PackageCheck,
+    note: "Tu recompensa ya fue entregada. ¡Disfrútala!",
   },
   rechazada: {
     label: "Rechazada",
@@ -56,7 +62,7 @@ export default async function CanjesPage() {
 
   const canjes = await canjesFor(me.email);
   // Lo que necesita seguimiento primero (solicitada), luego aprobadas, luego rechazadas.
-  const ORDER: Record<string, number> = { solicitada: 0, aprobada: 1, rechazada: 2 };
+  const ORDER: Record<string, number> = { solicitada: 0, aprobada: 1, entregada: 2, rechazada: 3 };
   const rows = [...canjes].sort(
     (a, b) =>
       (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9) ||

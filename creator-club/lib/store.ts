@@ -336,7 +336,9 @@ export function starsFromApproved(parts: Participation[], campaigns: Campaign[])
 // rechaza en /admin. Las recompensas con costo NO se aprueban sin GMV atribuible
 // (gate anti-fuga en la server action). El catálogo de recompensas vive en código
 // (lib/brands.ts); aquí solo persiste la transacción (espejo de Entregas).
-export const CANJE_STATUS = ["solicitada", "aprobada", "rechazada"] as const;
+// entregada = recompensa con costo ya entregada/pagada por el equipo (estado
+// terminal que cierra el ciclo del canje).
+export const CANJE_STATUS = ["solicitada", "aprobada", "rechazada", "entregada"] as const;
 export type CanjeStatus = (typeof CANJE_STATUS)[number];
 
 export interface Canje {
@@ -377,7 +379,11 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
     const existing = await fetchAll<CanjeFields>(TABLES.Canjes, {
       filterByFormula: `AND(LOWER({Email})='${escFormula(creatorEmail.toLowerCase())}',{Recompensa}='${escFormula(rewardId)}')`,
     }, conn);
-    const open = existing.find((r) => r.fields.Estado === "solicitada" || r.fields.Estado === "aprobada");
+    // solicitada/aprobada/entregada = ya hay un canje vigente o cerrado (no se
+    // vuelve a solicitar una recompensa ya entregada). Solo un rechazo reabre.
+    const open = existing.find(
+      (r) => r.fields.Estado === "solicitada" || r.fields.Estado === "aprobada" || r.fields.Estado === "entregada"
+    );
     if (open) return canjeToRecord(open);
     const rejected = existing.find((r) => r.fields.Estado === "rechazada");
     if (rejected) {
@@ -395,7 +401,7 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
   const db = await readDB();
   db.canjes = db.canjes ?? [];
   const existing = db.canjes.filter((x) => x.creatorEmail === creatorEmail && x.rewardId === rewardId);
-  const open = existing.find((x) => x.status === "solicitada" || x.status === "aprobada");
+  const open = existing.find((x) => x.status === "solicitada" || x.status === "aprobada" || x.status === "entregada");
   if (open) return open;
   const rejected = existing.find((x) => x.status === "rechazada");
   if (rejected) {

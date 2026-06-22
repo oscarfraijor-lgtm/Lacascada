@@ -10,6 +10,7 @@ export type RewardStatusKey =
   | "bloqueada" //  aún no cumple el criterio
   | "solicitada" //  ya pidió el canje, en revisión del equipo
   | "aprobada" //  el equipo aprobó el canje
+  | "entregada" //  el equipo ya entregó/pagó la recompensa (cerrado)
   | "rechazada"; //  el equipo lo rechazó (puede volver a solicitar)
 
 // Una recompensa con costo real (producto/boost/cash/experiencia) NO se entrega
@@ -35,6 +36,7 @@ export function rewardState(
 ): RewardStatusKey {
   if (canjeStatus === "solicitada") return "solicitada";
   if (canjeStatus === "aprobada") return "aprobada";
+  if (canjeStatus === "entregada") return "entregada";
   if (canjeStatus === "rechazada") return "rechazada";
   if (!rewardHasCost(r)) return rewardUnlocked(r, stars, gmv) ? "disponible" : "bloqueada";
   return rewardUnlocked(r, stars, gmv) ? "desbloqueada" : "bloqueada";

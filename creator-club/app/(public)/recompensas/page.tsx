@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, Lock, Gift, Clock, Check } from "lucide-react";
+import { Star, Lock, Gift, Clock, Check, PackageCheck } from "lucide-react";
 import { getRewardsView, type RewardView } from "@/lib/data";
 import { BRAND } from "@/lib/schema";
 import RewardStateChip from "@/components/RewardStateChip";
@@ -136,6 +136,13 @@ function RewardFooter({ r, signedIn }: { r: RewardView; signedIn: boolean }) {
       return (
         <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
           <Check size={13} className="text-brand-deep" /> Canje aprobado. El equipo te contacta para entregarlo.
+        </p>
+      );
+
+    case "entregada":
+      return (
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+          <PackageCheck size={13} className="text-brand-deep" /> Entregada. ¡Disfrútala!
         </p>
       );
 

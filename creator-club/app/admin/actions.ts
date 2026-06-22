@@ -197,17 +197,22 @@ export async function cambiarEstadoCanje(formData: FormData) {
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !CANJE_STATUS.includes(status)) return;
 
-  // Se carga una vez: sirve para el gate (aprobada) y para el aviso por correo.
+  // Se carga una vez: sirve para el gate (aprobada/entregada) y para el aviso.
   const canje =
-    status === "aprobada" || status === "rechazada" ? await getCanjeById(id, conn) : undefined;
+    status === "aprobada" || status === "rechazada" || status === "entregada"
+      ? await getCanjeById(id, conn)
+      : undefined;
 
-  if (status === "aprobada") {
+  // El gate anti-fuga aplica a APROBAR y a ENTREGAR (ambas "conceden" la
+  // recompensa con costo): sin GMV atribuible suficiente => NO procede. Cubre el
+  // POST directo que intente saltar de solicitada a entregada sin aprobar.
+  if (status === "aprobada" || status === "entregada") {
     if (!canje) return;
     const reward = ctx.brand.rewards.find((r) => r.id === canje.rewardId);
     const creator = await getCreatorByEmail(canje.creatorEmail, conn);
     const gmv = creator?.gmvMXN ?? 0;
     // Fail-closed: recompensa desconocida (catálogo cambió) o sin GMV suficiente
-    // => NO se aprueba (no-op, sin 500). La UI ya esconde el botón; esto cubre el
+    // => no procede (no-op, sin 500). La UI ya esconde el botón; esto cubre el
     // POST directo y los canjes huérfanos.
     if (!reward || !canApproveCanje(reward, gmv)) return;
   }
@@ -227,6 +232,14 @@ export async function cambiarEstadoCanje(formData: FormData) {
         `Aprobamos tu canje: ${title}`,
         `¡Canje aprobado! ${title}`,
         "El equipo te contacta para coordinar la entrega de tu recompensa.",
+        "/canjes"
+      );
+    } else if (status === "entregada") {
+      await notifyCreator(
+        canje.creatorEmail,
+        `Entregamos tu recompensa: ${title}`,
+        `¡Recompensa entregada! ${title}`,
+        "Tu recompensa ya fue entregada. ¡Disfrútala!",
         "/canjes"
       );
     } else if (status === "rechazada") {

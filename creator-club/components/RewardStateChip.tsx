@@ -1,4 +1,4 @@
-import { Lock, Check, Clock, Star, Gift, type LucideIcon } from "lucide-react";
+import { Lock, Check, Clock, Star, Gift, PackageCheck, type LucideIcon } from "lucide-react";
 import type { RewardStatusKey } from "@/lib/rewards";
 
 // Chip de estado de una recompensa. Reutilizado en /recompensas y el dashboard.
@@ -8,6 +8,7 @@ const MAP: Record<RewardStatusKey, { label: string; cls: string; Icon: LucideIco
   bloqueada: { label: "Bloqueada", cls: "bg-ink/5 text-ink-soft", Icon: Lock },
   solicitada: { label: "En revisión", cls: "bg-brand/15 text-brand-deep", Icon: Clock },
   aprobada: { label: "Aprobada", cls: "bg-lime text-ink", Icon: Check },
+  entregada: { label: "Entregada", cls: "bg-ink text-white", Icon: PackageCheck },
   rechazada: { label: "Rechazada", cls: "bg-ink/10 text-ink-soft", Icon: Lock },
 };
 
