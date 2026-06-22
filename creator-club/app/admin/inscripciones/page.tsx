@@ -2,6 +2,7 @@ import { Star, Check, X, RotateCcw, ExternalLink, UserCheck, Download } from "lu
 import { listParticipations, listCreators, listCampaigns } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
+import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
 import { cambiarEstadoEntrega } from "../actions";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
@@ -30,6 +31,92 @@ export default async function AdminInscripcionesPage() {
   const rows = [...parts].sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9));
   const porRevisar = parts.filter((p) => p.status === "inscrita" || p.status === "entregada").length;
 
+  const items: FilterItem[] = rows.map((p) => {
+    const creator = creatorByEmail.get(p.creatorEmail.toLowerCase());
+    const campaign = campaignById.get(p.campaignId);
+    const meta = STATUS_META[p.status] ?? STATUS_META.inscrita;
+    const enRevision = p.status === "inscrita" || p.status === "entregada";
+    return {
+      key: p.id ?? `${p.creatorEmail}-${p.campaignId}`,
+      search: [creator?.name, creator?.email ?? p.creatorEmail, creator?.handle, campaign?.title ?? p.campaignId]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+      status: p.status,
+      tags: enRevision ? ["revisar"] : [],
+      node: (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="font-semibold text-ink">{creator?.name ?? p.creatorEmail}</p>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.cls}`}>
+                {meta.label}
+              </span>
+            </div>
+            <p className="text-xs text-ink-soft">
+              {campaign?.title ?? p.campaignId}
+              {campaign ? (
+                <span className="ml-1 inline-flex items-center gap-0.5 align-middle font-semibold text-brand-deep">
+                  <Star size={11} className="fill-lime text-lime" /> {campaign.stars}
+                </span>
+              ) : null}
+              <span className="mx-1.5 text-ink/30">·</span>
+              {creator?.handle || p.creatorEmail}
+            </p>
+            {p.status === "rechazada" && p.reason && (
+              <p className="mt-0.5 text-xs font-semibold text-brand-deep">Motivo: {p.reason}</p>
+            )}
+            {p.link && (
+              <a
+                href={p.link}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-brand underline"
+              >
+                <ExternalLink size={11} /> Ver entrega
+              </a>
+            )}
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+            {p.status === "inscrita" && (
+              <StatusButton id={p.id!} status="aceptada" className="bg-brand/10 text-brand-deep hover:bg-brand/20">
+                <UserCheck size={14} /> Aceptar
+              </StatusButton>
+            )}
+            {p.status !== "aprobada" && (
+              <StatusButton id={p.id!} status="aprobada" className="bg-lime text-ink hover:brightness-95">
+                <Check size={14} /> Aprobar
+              </StatusButton>
+            )}
+            {p.status !== "rechazada" && (
+              <form action={cambiarEstadoEntrega} className="flex items-center gap-1">
+                <input type="hidden" name="id" value={p.id} />
+                <input type="hidden" name="status" value="rechazada" />
+                <input
+                  name="reason"
+                  placeholder="Motivo…"
+                  className="w-24 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
+                />
+                <button
+                  type="submit"
+                  className="flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-ink/10"
+                >
+                  <X size={14} /> Rechazar
+                </button>
+              </form>
+            )}
+            {p.status !== "inscrita" && (
+              <StatusButton id={p.id!} status="inscrita" className="bg-ink/5 text-ink-soft hover:bg-ink/10">
+                <RotateCcw size={14} /> Pendiente
+              </StatusButton>
+            )}
+          </div>
+        </div>
+      ),
+    };
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -51,92 +138,25 @@ export default async function AdminInscripcionesPage() {
         </div>
       </div>
 
-      {rows.length === 0 && (
+      {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">
           Todavía no hay inscripciones.
         </p>
+      ) : (
+        <AdminFilterList
+          items={items}
+          statuses={[
+            { value: "revisar", label: "Por revisar" },
+            { value: "inscrita", label: "Pendiente" },
+            { value: "aceptada", label: "Aceptada" },
+            { value: "entregada", label: "Video recibido" },
+            { value: "aprobada", label: "Aprobada" },
+            { value: "rechazada", label: "Rechazada" },
+          ]}
+          searchPlaceholder="Buscar por creadora, correo, handle o campaña…"
+          emptyLabel="Ninguna inscripción coincide con tu búsqueda."
+        />
       )}
-
-      <ul className="space-y-2">
-        {rows.map((p) => {
-          const creator = creatorByEmail.get(p.creatorEmail.toLowerCase());
-          const campaign = campaignById.get(p.campaignId);
-          const meta = STATUS_META[p.status] ?? STATUS_META.inscrita;
-          return (
-            <li
-              key={p.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-semibold text-ink">{creator?.name ?? p.creatorEmail}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.cls}`}>
-                    {meta.label}
-                  </span>
-                </div>
-                <p className="text-xs text-ink-soft">
-                  {campaign?.title ?? p.campaignId}
-                  {campaign ? (
-                    <span className="ml-1 inline-flex items-center gap-0.5 align-middle font-semibold text-brand-deep">
-                      <Star size={11} className="fill-lime text-lime" /> {campaign.stars}
-                    </span>
-                  ) : null}
-                  <span className="mx-1.5 text-ink/30">·</span>
-                  {creator?.handle || p.creatorEmail}
-                </p>
-                {p.status === "rechazada" && p.reason && (
-                  <p className="mt-0.5 text-xs font-semibold text-brand-deep">Motivo: {p.reason}</p>
-                )}
-                {p.link && (
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-brand underline"
-                  >
-                    <ExternalLink size={11} /> Ver entrega
-                  </a>
-                )}
-              </div>
-
-              <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                {p.status === "inscrita" && (
-                  <StatusButton id={p.id!} status="aceptada" className="bg-brand/10 text-brand-deep hover:bg-brand/20">
-                    <UserCheck size={14} /> Aceptar
-                  </StatusButton>
-                )}
-                {p.status !== "aprobada" && (
-                  <StatusButton id={p.id!} status="aprobada" className="bg-lime text-ink hover:brightness-95">
-                    <Check size={14} /> Aprobar
-                  </StatusButton>
-                )}
-                {p.status !== "rechazada" && (
-                  <form action={cambiarEstadoEntrega} className="flex items-center gap-1">
-                    <input type="hidden" name="id" value={p.id} />
-                    <input type="hidden" name="status" value="rechazada" />
-                    <input
-                      name="reason"
-                      placeholder="Motivo…"
-                      className="w-24 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
-                    />
-                    <button
-                      type="submit"
-                      className="flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-ink/10"
-                    >
-                      <X size={14} /> Rechazar
-                    </button>
-                  </form>
-                )}
-                {p.status !== "inscrita" && (
-                  <StatusButton id={p.id!} status="inscrita" className="bg-ink/5 text-ink-soft hover:bg-ink/10">
-                    <RotateCcw size={14} /> Pendiente
-                  </StatusButton>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }
