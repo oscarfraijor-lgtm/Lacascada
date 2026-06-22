@@ -1,4 +1,4 @@
-import { Check, X, RotateCcw, Lock, Star } from "lucide-react";
+import { Check, X, RotateCcw, Lock, Star, Download } from "lucide-react";
 import { listCanjes, listCreators } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
@@ -28,9 +28,19 @@ export default async function AdminCanjesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-lg font-extrabold text-ink">Canjes ({canjes.length})</h2>
-        <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand-deep">
-          {pendientes} por revisar
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand-deep">
+            {pendientes} por revisar
+          </span>
+          {canjes.length > 0 && (
+            <a
+              href="/admin/creadoras/export?type=canjes"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-bold text-ink-soft transition hover:border-brand hover:text-brand"
+            >
+              <Download size={14} /> CSV
+            </a>
+          )}
+        </div>
       </div>
 
       <p className="rounded-2xl border border-brand/15 bg-white px-4 py-3 text-xs text-ink-soft">

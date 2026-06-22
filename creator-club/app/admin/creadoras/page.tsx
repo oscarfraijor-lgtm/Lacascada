@@ -1,4 +1,4 @@
-import { Star, Save } from "lucide-react";
+import { Star, Save, Download } from "lucide-react";
 import { listCreators, listParticipations, listCampaigns, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
 import { getAdminContext } from "@/lib/brand-admin";
@@ -42,9 +42,19 @@ export default async function AdminCreadorasPage() {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-display text-lg font-extrabold text-ink">
-        Creadoras ({creators.length})
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-lg font-extrabold text-ink">
+          Creadoras ({creators.length})
+        </h2>
+        {creators.length > 0 && (
+          <a
+            href="/admin/creadoras/export"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-bold text-ink-soft transition hover:border-brand hover:text-brand"
+          >
+            <Download size={14} /> Exportar CSV
+          </a>
+        )}
+      </div>
 
       {creators.length === 0 && (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">

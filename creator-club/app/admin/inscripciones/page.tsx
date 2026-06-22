@@ -1,4 +1,4 @@
-import { Star, Check, X, RotateCcw, ExternalLink, UserCheck } from "lucide-react";
+import { Star, Check, X, RotateCcw, ExternalLink, UserCheck, Download } from "lucide-react";
 import { listParticipations, listCreators, listCampaigns } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
@@ -36,9 +36,19 @@ export default async function AdminInscripcionesPage() {
         <h2 className="font-display text-lg font-extrabold text-ink">
           Inscripciones ({parts.length})
         </h2>
-        <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand-deep">
-          {porRevisar} por revisar
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-bold text-brand-deep">
+            {porRevisar} por revisar
+          </span>
+          {parts.length > 0 && (
+            <a
+              href="/admin/creadoras/export?type=inscripciones"
+              className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-xs font-bold text-ink-soft transition hover:border-brand hover:text-brand"
+            >
+              <Download size={14} /> CSV
+            </a>
+          )}
+        </div>
       </div>
 
       {rows.length === 0 && (
