@@ -37,9 +37,10 @@ Sin `AIRTABLE_TOKEN` en el env, la app corre con **datos mock** (`lib/mock.ts`) 
 | `AIRTABLE_TOKEN` + `AIRTABLE_BASE_ID` | Usa Airtable; sin ellas, archivo local `.data/store.json` |
 | `AUTH_SECRET` | Firma los magic links (HMAC). Genera: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | `RESEND_API_KEY` + `RESEND_FROM` | Envío real del enlace por correo. Sin key = modo dev (enlace en pantalla/terminal) |
-| `ADMIN_EMAILS` | Correos con acceso a `/admin` (separados por coma) |
+| `ADMIN_EMAILS` | Correos con acceso a `/admin` (separados por coma). Aquí van Mabel, Oscar y Paulina |
+| `AIRTABLE_BASE_<SLUG>` (+ opcional `AIRTABLE_TOKEN_<SLUG>`) | **Multimarca**: conecta la base de otra marca al panel de admin (ej. `AIRTABLE_BASE_ANYELUZ`). El token cae al `AIRTABLE_TOKEN` global si la base comparte cuenta de Airtable; si vive en otra cuenta, define `AIRTABLE_TOKEN_<SLUG>` con un PAT que la acceda |
 
-Tablas Airtable: `node scripts/setup-airtable.mjs` crea Creadoras, Entregas y **Campañas** (y siembra el seed). Reinicia el dev server después.
+Tablas Airtable: `node scripts/setup-airtable.mjs` crea Creadoras, Entregas, **Campañas** y **Canjes** (y siembra el seed). Reinicia el dev server después.
 
 ## Estado
 
@@ -47,6 +48,8 @@ Tablas Airtable: `node scripts/setup-airtable.mjs` crea Creadoras, Entregas y **
 - ✅ Login por correo (magic link firmado + Resend/modo dev), maneja expiración y correo no registrado.
 - ✅ Campañas en Airtable (tabla `Campañas`), leídas por el portal público.
 - ✅ Panel `/admin` (allowlist): CRUD de campañas, aprobar/rechazar entregas (aprobar otorga estrellas), vista de creadoras.
+- ✅ Recompensas accionables con candado por GMV + canjes (`/admin/canjes`), historial de estrellas (`/historial`).
+- ✅ **Admin multimarca**: `/admin/marcas` lista todas las marcas gestionadas; "entrar" a una apunta todo el panel a SU base de Airtable (datos aislados por marca). El lado público sigue sirviendo la marca del env (`NEXT_PUBLIC_BRAND`). Marcas nuevas: copia la plantilla en `lib/brands.ts` (identidad + mecánica) y conecta su base con `AIRTABLE_BASE_<SLUG>`.
 - Las estrellas se derivan de entregas **aprobadas** (inscribirse deja la campaña "pendiente").
 
 ## Pendiente (roadmap)
