@@ -38,6 +38,52 @@ export async function sendMagicLink(email: string, url: string): Promise<SendRes
   return { delivered: "email" };
 }
 
+// Aviso transaccional a la creadora (entrega aceptada/aprobada/rechazada, canje
+// resuelto). Mismo patrón que sendMagicLink: sin RESEND_API_KEY imprime en consola
+// (dev); con key, envía por Resend. OJO PROD: con Resend en modo test solo entrega
+// al correo dueño de la cuenta; para llegar a las creadoras hay que verificar el
+// dominio (reco club.indiepro.com.mx con DKIM+SPF) y poner RESEND_FROM en él.
+export interface Notification {
+  subject: string;
+  heading: string;
+  body: string;
+  cta?: { url: string; label: string };
+}
+
+export async function sendNotification(to: string, n: Notification): Promise<SendResult> {
+  if (!mailerConfigured()) {
+    console.log(`\n📧 [${BRAND.club}] Para ${to}: ${n.subject}\n${n.heading} — ${n.body}\n`);
+    return { delivered: "console" };
+  }
+  const from = process.env.RESEND_FROM || `${BRAND.club} <onboarding@resend.dev>`;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to: [to], subject: n.subject, html: notificationHtml(n) }),
+  });
+  if (!res.ok) {
+    throw new Error(`Resend ${res.status}: ${await res.text()}`);
+  }
+  return { delivered: "email" };
+}
+
+function notificationHtml(n: Notification): string {
+  const cta = n.cta
+    ? `<p style="margin:24px 0"><a href="${n.cta.url}" style="background:${BRAND.lime};color:${BRAND.ink};text-decoration:none;font-weight:800;padding:13px 26px;border-radius:999px;display:inline-block">${n.cta.label}</a></p>`
+    : "";
+  return `<!doctype html><html><body style="margin:0;background:${BRAND.cream};font-family:Arial,Helvetica,sans-serif;color:${BRAND.ink}">
+  <div style="max-width:480px;margin:0 auto;padding:32px 24px">
+    <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.violetDeep};font-weight:700">${BRAND.club} · ${BRAND.name}</p>
+    <h1 style="font-size:22px;margin:8px 0 6px">${n.heading}</h1>
+    <p style="color:${BRAND.ink};opacity:.85;line-height:1.5">${n.body}</p>
+    ${cta}
+    <p style="font-size:12px;color:${BRAND.ink};opacity:.55;line-height:1.5">Recibes este correo porque eres parte del ${BRAND.club}.</p>
+  </div></body></html>`;
+}
+
 function magicLinkHtml(url: string): string {
   return `<!doctype html><html><body style="margin:0;background:${BRAND.cream};font-family:Arial,Helvetica,sans-serif;color:${BRAND.ink}">
   <div style="max-width:480px;margin:0 auto;padding:32px 24px">

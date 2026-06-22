@@ -241,6 +241,10 @@ export async function participationsFor(email: string, conn?: Conn): Promise<Par
   return db.participations.filter((x) => x.creatorEmail === email);
 }
 
+export async function getParticipationById(id: string, conn?: Conn): Promise<Participation | undefined> {
+  return (await listParticipations(conn)).find((p) => p.id === id);
+}
+
 // Todas las inscripciones (para el panel de admin).
 export async function listParticipations(conn?: Conn): Promise<Participation[]> {
   if (airtableConfigured(conn)) {

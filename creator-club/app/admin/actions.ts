@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import {
@@ -9,6 +10,8 @@ import {
   setCampaignOpen,
   deleteCampaign,
   setParticipationStatus,
+  getParticipationById,
+  getCampaignById,
   setCreatorGmv,
   getCanjeById,
   getCreatorByEmail,
@@ -21,7 +24,37 @@ import {
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
 import { canApproveCanje } from "@/lib/rewards";
+import { sendNotification } from "@/lib/mailer";
 import { getAdminContext, type AdminContext } from "@/lib/brand-admin";
+
+// URL base del deploy (para los CTA absolutos de los correos).
+async function baseUrl(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
+  const proto =
+    h.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
+// Aviso por correo a la creadora. TOLERANTE: si Resend no está configurado, o el
+// dominio no está verificado (modo test entrega solo al dueño de la cuenta), NO
+// rompe la acción del equipo. Solo registra el fallo. DEPENDE de verificar el
+// dominio para llegar de verdad a las creadoras.
+async function notifyCreator(
+  to: string,
+  subject: string,
+  heading: string,
+  body: string,
+  ctaPath?: string
+): Promise<void> {
+  try {
+    const cta = ctaPath ? { url: `${await baseUrl()}${ctaPath}`, label: "Abrir mi club" } : undefined;
+    await sendNotification(to, { subject, heading, body, cta });
+  } catch (e) {
+    console.warn("[notify] no se pudo enviar el aviso a la creadora:", e);
+  }
+}
 
 // Toda acción de admin verifica autorización en el servidor (no solo en la UI),
 // porque las server actions son alcanzables por POST directo. Además resuelve la
@@ -98,16 +131,56 @@ export async function eliminarCampana(formData: FormData) {
 export async function cambiarEstadoEntrega(formData: FormData) {
   const ctx = await adminCtx();
   if (!ctx.configured) return;
+  const conn = ctx.conn ?? undefined;
   const id = String(formData.get("id") || "");
   const status = String(formData.get("status") || "") as ParticipationStatus;
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !PARTICIPATION_STATUS.includes(status)) return;
-  await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined, ctx.conn ?? undefined);
+  await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined, conn);
   // Aprobar otorga estrellas automáticamente (se derivan de entregas aprobadas).
   revalidatePath("/admin/inscripciones");
   revalidatePath("/admin/creadoras");
   revalidatePath("/campanas");
   revalidatePath("/");
+
+  // Aviso por correo en las transiciones que le importan a la creadora.
+  if (status === "aceptada" || status === "aprobada" || status === "rechazada") {
+    const part = await getParticipationById(id, conn);
+    if (part) {
+      const campaign = await getCampaignById(part.campaignId, conn);
+      const title = campaign?.title ?? part.campaignId;
+      if (status === "aceptada") {
+        await notifyCreator(
+          part.creatorEmail,
+          `Te aceptamos en ${title}`,
+          `¡Te aceptamos en ${title}!`,
+          "Ya puedes grabar y subir el link de tu video desde tu club.",
+          "/campanas"
+        );
+      } else if (status === "aprobada") {
+        const stars = campaign?.stars ?? 0;
+        await notifyCreator(
+          part.creatorEmail,
+          `Aprobamos tu entrega de ${title}`,
+          `¡Entrega aprobada! ${title}`,
+          stars > 0
+            ? `Sumaste ${stars} estrellas. Revisa tu progreso en tu club.`
+            : "Tu entrega quedó aprobada. Revisa tu progreso en tu club.",
+          "/"
+        );
+      } else {
+        await notifyCreator(
+          part.creatorEmail,
+          `Tu entrega de ${title} necesita ajustes`,
+          `Revisemos tu entrega de ${title}`,
+          reason
+            ? `Motivo: ${reason}. Corrige y vuelve a enviar tu video.`
+            : "Necesita un ajuste. Corrige y vuelve a enviar tu video.",
+          "/campanas"
+        );
+      }
+    }
+  }
 }
 
 // Canjes: aprobar/rechazar una solicitud de recompensa. Gate anti-fuga: una
@@ -123,8 +196,11 @@ export async function cambiarEstadoCanje(formData: FormData) {
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !CANJE_STATUS.includes(status)) return;
 
+  // Se carga una vez: sirve para el gate (aprobada) y para el aviso por correo.
+  const canje =
+    status === "aprobada" || status === "rechazada" ? await getCanjeById(id, conn) : undefined;
+
   if (status === "aprobada") {
-    const canje = await getCanjeById(id, conn);
     if (!canje) return;
     const reward = ctx.brand.rewards.find((r) => r.id === canje.rewardId);
     const creator = await getCreatorByEmail(canje.creatorEmail, conn);
@@ -139,6 +215,31 @@ export async function cambiarEstadoCanje(formData: FormData) {
   revalidatePath("/admin/canjes");
   revalidatePath("/recompensas");
   revalidatePath("/");
+
+  // Aviso por correo a la creadora (tolerante). Solo si el cambio sucedió: en
+  // aprobada el gate puede haber hecho return antes (no se manda "aprobada" sin GMV).
+  if (canje) {
+    const title = canje.rewardTitle || canje.rewardId;
+    if (status === "aprobada") {
+      await notifyCreator(
+        canje.creatorEmail,
+        `Aprobamos tu canje: ${title}`,
+        `¡Canje aprobado! ${title}`,
+        "El equipo te contacta para coordinar la entrega de tu recompensa.",
+        "/canjes"
+      );
+    } else if (status === "rechazada") {
+      await notifyCreator(
+        canje.creatorEmail,
+        `Tu solicitud de ${title} no procedió`,
+        `Sobre tu solicitud de ${title}`,
+        reason
+          ? `Motivo: ${reason}. Cuando cumplas el requisito puedes solicitarla de nuevo.`
+          : "No procedió esta vez. Cuando cumplas el requisito puedes solicitarla de nuevo.",
+        "/recompensas"
+      );
+    }
+  }
 }
 
 // El equipo captura a mano el GMV atribuible de la creadora (export TT Shop
