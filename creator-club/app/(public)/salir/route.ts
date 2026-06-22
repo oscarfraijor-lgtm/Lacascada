@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
+// El logout real vive en la server action cerrarSesion (POST, lib/auth-actions).
+// Un GET aquí NO cierra sesión a propósito: Next prefetcha los <Link> en
+// producción, y un GET destructivo te sacaría solo. Aquí solo redirige.
 export async function GET(req: Request) {
-  const c = await cookies();
-  c.delete("cc_creator"); // sesión
-  c.delete("cc_admin_brand"); // marca seleccionada en el admin (no quedar cruzada entre operadores)
   return NextResponse.redirect(new URL("/", req.url));
 }

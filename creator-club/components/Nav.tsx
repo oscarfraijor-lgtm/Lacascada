@@ -3,6 +3,7 @@ import { Home, Megaphone, Target, Trophy, Gift, LogOut, ShieldCheck } from "luci
 import { BRAND } from "@/lib/schema";
 import { getCurrentCreator, currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
+import { cerrarSesion } from "@/lib/auth-actions";
 
 const LINKS = [
   { href: "/", label: "Inicio", icon: Home },
@@ -43,14 +44,16 @@ export default async function Nav() {
             </Link>
           )}
           {me || admin ? (
-            <Link
-              href="/salir"
-              className="ml-1 flex items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-ink/10"
-              title="Salir"
-            >
-              <span className="hidden sm:inline">{me ? me.name.split(" ")[0] : "Salir"}</span>
-              <LogOut size={15} />
-            </Link>
+            <form action={cerrarSesion}>
+              <button
+                type="submit"
+                className="ml-1 flex items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-ink/10"
+                title="Salir"
+              >
+                <span className="hidden sm:inline">{me ? me.name.split(" ")[0] : "Salir"}</span>
+                <LogOut size={15} />
+              </button>
+            </form>
           ) : (
             <>
               <Link

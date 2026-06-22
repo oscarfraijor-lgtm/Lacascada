@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LogOut, ShieldCheck } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
+import { cerrarSesion } from "@/lib/auth-actions";
 import { OPERATOR_THEME } from "@/lib/theme";
 
 // Consola de operador: nivel SUPERIOR, neutral (Indie Pro), por encima de los
@@ -41,13 +42,15 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-ink-soft sm:inline">{email}</span>
-            <Link
-              href="/salir"
-              className="flex items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-ink/10"
-            >
-              <span className="hidden sm:inline">Salir</span>
-              <LogOut size={15} />
-            </Link>
+            <form action={cerrarSesion}>
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-ink/10"
+              >
+                <span className="hidden sm:inline">Salir</span>
+                <LogOut size={15} />
+              </button>
+            </form>
           </div>
         </div>
       </header>
