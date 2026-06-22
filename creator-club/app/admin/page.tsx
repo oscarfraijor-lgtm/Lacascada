@@ -1,5 +1,5 @@
 import { Star, Plus, Power, Trash2, Save } from "lucide-react";
-import { listCampaigns } from "@/lib/store";
+import { listCampaigns, listParticipations } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
@@ -8,8 +8,14 @@ import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from ".
 export default async function AdminCampanasPage() {
   const ctx = await getAdminContext();
   if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
-  const campaigns = await listCampaigns(ctx.conn ?? undefined);
+  const [campaigns, parts] = await Promise.all([
+    listCampaigns(ctx.conn ?? undefined),
+    listParticipations(ctx.conn ?? undefined),
+  ]);
   const activas = campaigns.filter((c) => c.open).length;
+  // Cuántas inscripciones tiene cada campaña (no se puede borrar si tiene).
+  const inscritasPorCampana = new Map<string, number>();
+  for (const p of parts) inscritasPorCampana.set(p.campaignId, (inscritasPorCampana.get(p.campaignId) ?? 0) + 1);
 
   return (
     <div className="space-y-6">
@@ -87,15 +93,21 @@ export default async function AdminCampanasPage() {
                   <Power size={14} /> {c.open ? "Desactivar" : "Activar"}
                 </button>
               </form>
-              <form action={eliminarCampana}>
-                <input type="hidden" name="id" value={c.id} />
-                <button
-                  type="submit"
-                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10"
-                >
-                  <Trash2 size={14} /> Eliminar
-                </button>
-              </form>
+              {(inscritasPorCampana.get(c.id) ?? 0) > 0 ? (
+                <span className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-ink-soft">
+                  {inscritasPorCampana.get(c.id)} inscritas · usa Desactivar para retirarla
+                </span>
+              ) : (
+                <form action={eliminarCampana}>
+                  <input type="hidden" name="id" value={c.id} />
+                  <button
+                    type="submit"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10"
+                  >
+                    <Trash2 size={14} /> Eliminar
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         ))}

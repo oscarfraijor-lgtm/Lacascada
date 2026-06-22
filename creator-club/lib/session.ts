@@ -3,12 +3,14 @@
 // Más adelante: magic-link con next-auth v5.
 import { cookies } from "next/headers";
 import { getCreatorByEmail, type CreatorRecord } from "@/lib/store";
+import { signSession, verifySession } from "@/lib/token";
 
 const COOKIE = "cc_creator";
 
 export async function setCreatorCookie(email: string): Promise<void> {
   const c = await cookies();
-  c.set(COOKIE, email.toLowerCase(), {
+  // Token firmado, NO el email en claro (si no, cualquiera se haría admin).
+  c.set(COOKIE, signSession(email), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -24,7 +26,8 @@ export async function clearCreatorCookie(): Promise<void> {
 
 export async function currentEmail(): Promise<string | null> {
   const c = await cookies();
-  return c.get(COOKIE)?.value ?? null;
+  // Verifica la firma; una cookie manipulada o caducada => sin sesión.
+  return verifySession(c.get(COOKIE)?.value);
 }
 
 export async function getCurrentCreator(): Promise<CreatorRecord | null> {

@@ -39,8 +39,8 @@ export default async function MisionesPage() {
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Misiones</h1>
         <p className="text-sm text-ink-soft">
-          Completa misiones, gana estrellas y sube de nivel. Las de venta valen más y
-          se activan con tu primera venta atribuible.
+          Completa misiones para subir de nivel. El equipo acredita tus estrellas al validar
+          tu avance; las de venta valen más y se activan con tu primera venta atribuible.
         </p>
       </header>
 

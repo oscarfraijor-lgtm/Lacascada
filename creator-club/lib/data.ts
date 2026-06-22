@@ -83,15 +83,28 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
   }
   const me = meEmail?.toLowerCase();
   return creators
-    .map((c) => ({
-      name: c.name,
-      handle: c.handle || "",
-      stars: starsFromApproved(partsByEmail.get(c.email.toLowerCase()) ?? [], campaigns),
-      isMe: !!me && c.email.toLowerCase() === me,
-    }))
+    .map((c) => {
+      const isMe = !!me && c.email.toLowerCase() === me;
+      return {
+        // Privacidad: en el ranking público solo va el nombre completo + handle de
+        // una misma; a las demás se les muestra nombre corto y sin handle (LFPDPPP).
+        name: isMe ? c.name : shortName(c.name),
+        handle: isMe ? c.handle || "" : "",
+        stars: starsFromApproved(partsByEmail.get(c.email.toLowerCase()) ?? [], campaigns),
+        isMe,
+      };
+    })
+    .filter((r) => r.stars > 0) // el ranking solo lista a quien ya ganó estrellas
     .sort((a, b) => b.stars - a.stars)
     .map((row, i) => ({ rank: i + 1, ...row }))
     .slice(0, 20);
+}
+
+// "María Fernanda García" -> "María G." para el ranking público.
+function shortName(full: string): string {
+  const parts = (full || "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return parts[0] || "Creadora";
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
 // Catálogo de recompensas con su estado real para la creadora actual: Disponible
@@ -178,16 +191,19 @@ export async function getStarLedger(): Promise<LedgerEntry[]> {
     listCampaigns(),
   ]);
   const byId = new Map(campaigns.map((c) => [c.id, c]));
-  return parts
-    .filter((p) => p.status === "aprobada")
-    .map((p) => {
-      const c = byId.get(p.campaignId);
-      return {
-        campaignId: p.campaignId,
-        title: c?.title ?? p.campaignId,
-        stars: c?.stars ?? 0,
-        date: p.createdAt,
-      };
-    })
-    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  // Una línea por campaña (dedupe por si hubiera 2 aprobadas de la misma).
+  const seen = new Set<string>();
+  const rows: LedgerEntry[] = [];
+  for (const p of parts) {
+    if (p.status !== "aprobada" || seen.has(p.campaignId)) continue;
+    seen.add(p.campaignId);
+    const c = byId.get(p.campaignId);
+    rows.push({
+      campaignId: p.campaignId,
+      title: c?.title ?? p.campaignId,
+      stars: c?.stars ?? 0,
+      date: p.createdAt,
+    });
+  }
+  return rows.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }

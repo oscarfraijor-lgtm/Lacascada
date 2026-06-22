@@ -6,12 +6,16 @@ import { getCreatorByEmail } from "@/lib/store";
 import { isAdmin } from "@/lib/roles";
 import { signAccessToken } from "@/lib/token";
 import { sendMagicLink } from "@/lib/mailer";
+import { isValidEmail } from "@/lib/email";
 
 export async function solicitarAcceso(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
-  if (!email || !email.includes("@")) redirect("/acceso?error=email");
+  if (!isValidEmail(email)) redirect("/acceso?error=email");
 
   // Solo enviamos enlace a correos ya registrados o a admins.
+  // Decisión deliberada: a una creadora NO registrada sí le decimos "regístrate
+  // primero" (onboarding > anti-enumeración; aquí no se revela quién es admin —
+  // eso se protege en /operador, que siempre dice "revisa tu correo").
   const creator = await getCreatorByEmail(email);
   const admin = isAdmin(email);
   if (!creator && !admin) {

@@ -9,12 +9,13 @@ export default async function AccesoPage({
   searchParams: Promise<{
     error?: string;
     nuevo?: string;
+    ya?: string;
     email?: string;
     enviado?: string;
     dev?: string;
   }>;
 }) {
-  const { error, nuevo, email, enviado, dev } = await searchParams;
+  const { error, nuevo, ya, email, enviado, dev } = await searchParams;
 
   return (
     <div className="mx-auto max-w-md">
@@ -70,6 +71,11 @@ export default async function AccesoPage({
                 Regístrate primero
               </Link>
               .
+            </p>
+          )}
+          {ya && (
+            <p className="mb-4 rounded-lg bg-cream-deep px-3 py-2 text-center text-sm font-semibold text-ink">
+              Ya tienes cuenta con ese correo. Te mandamos un enlace para entrar.
             </p>
           )}
 

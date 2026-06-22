@@ -44,6 +44,13 @@ export function airtableConfigured(conn?: Conn | null): boolean {
   return !!envConn();
 }
 
+// Escapa un valor para interpolarlo seguro dentro de un filterByFormula con
+// comillas simples (evita inyección de fórmula con valores tipo email/campaignId
+// del usuario). Airtable escapa la comilla simple con backslash.
+export function escFormula(s: string): string {
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 export interface AirtableRecord<T> {
   id: string;
   fields: T;

@@ -5,13 +5,14 @@ import { headers } from "next/headers";
 import { isAdmin } from "@/lib/roles";
 import { signAccessToken } from "@/lib/token";
 import { sendMagicLink } from "@/lib/mailer";
+import { isValidEmail } from "@/lib/email";
 
 // Acceso de OPERADOR (equipo Indie Pro): entrada neutral, no pasa por ninguna
 // marca. Solo los admins reciben enlace; para no revelar quién es admin, SIEMPRE
 // mostramos "revisa tu correo" (solo se envía de verdad si el correo es admin).
 export async function solicitarAccesoOperador(formData: FormData) {
   const email = String(formData.get("email") || "").trim().toLowerCase();
-  if (!email || !email.includes("@")) redirect("/operador?error=email");
+  if (!isValidEmail(email)) redirect("/operador?error=email");
 
   if (isAdmin(email)) {
     const h = await headers();

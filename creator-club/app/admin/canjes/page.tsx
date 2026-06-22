@@ -52,7 +52,8 @@ export default async function AdminCanjesPage() {
           const meta = STATUS_META[c.status] ?? STATUS_META.solicitada;
           const gmv = creator?.gmvMXN ?? 0;
           const hasCost = reward ? rewardHasCost(reward) : true;
-          const approvable = reward ? canApproveCanje(reward, gmv) : true;
+          // Recompensa fuera del catálogo (retirada) => no aprobable (fail-closed).
+          const approvable = reward ? canApproveCanje(reward, gmv) : false;
           return (
             <li
               key={c.id}

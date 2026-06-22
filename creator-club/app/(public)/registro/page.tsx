@@ -28,7 +28,9 @@ export default async function RegistroPage({
         <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
           {error === "consent"
             ? "Para unirte necesitas aceptar el aviso de privacidad y los términos."
-            : "Faltan datos. Completa al menos tu nombre y correo."}
+            : error === "email"
+              ? "Escribe un correo válido, por ejemplo tu@correo.com."
+              : "Faltan datos. Completa al menos tu nombre y correo."}
         </p>
       )}
 

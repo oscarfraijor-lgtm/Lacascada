@@ -7,6 +7,7 @@
 // y nunca se cruzan. En modo archivo local (dev) `conn` se ignora (archivo compartido).
 import { promises as fs } from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import {
   type Conn,
   airtableConfigured,
@@ -14,6 +15,7 @@ import {
   airtableUpdate,
   airtableDelete,
   fetchAll,
+  escFormula,
   TABLES,
 } from "@/lib/airtable";
 import {
@@ -85,6 +87,10 @@ async function writeDB(db: DB): Promise<void> {
 // ── Creadoras ──────────────────────────────────────────────────────────
 export async function createCreator(c: CreatorRecord, conn?: Conn): Promise<CreatorRecord> {
   if (airtableConfigured(conn)) {
+    // Dedupe por email también en Airtable (antes solo deduplicaba el archivo
+    // local): re-registrarse no debe crear una creadora duplicada.
+    const existing = await getCreatorByEmail(c.email, conn);
+    if (existing) return existing;
     const r = await airtableCreate(TABLES.Creadoras, {
       Nombre: c.name,
       Handle: c.handle,
@@ -98,7 +104,7 @@ export async function createCreator(c: CreatorRecord, conn?: Conn): Promise<Crea
   const db = await readDB();
   const existing = db.creators.find((x) => x.email === c.email);
   if (existing) return existing;
-  const rec: CreatorRecord = { ...c, id: "loc_" + Date.now(), createdAt: new Date().toISOString() };
+  const rec: CreatorRecord = { ...c, id: "loc_" + randomUUID(), createdAt: new Date().toISOString() };
   db.creators.push(rec);
   await writeDB(db);
   return rec;
@@ -133,7 +139,7 @@ function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?:
 export async function getCreatorByEmail(email: string, conn?: Conn): Promise<CreatorRecord | null> {
   if (airtableConfigured(conn)) {
     const recs = await fetchAll<CreadoraFields>(TABLES.Creadoras, {
-      filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
     }, conn);
     return recs[0] ? creadoraToRecord(recs[0]) : null;
   }
@@ -170,7 +176,7 @@ export async function addParticipation(p: Participation, conn?: Conn): Promise<P
   if (airtableConfigured(conn)) {
     // Dedupe: no crear una segunda inscripción de la misma creadora a la misma campaña.
     const existing = await fetchAll<{ Email: string; Campaña: string; Estado: string }>(TABLES.Entregas, {
-      filterByFormula: `AND(LOWER({Email})='${p.creatorEmail.toLowerCase()}',{Campaña}='${p.campaignId}')`,
+      filterByFormula: `AND(LOWER({Email})='${escFormula(p.creatorEmail.toLowerCase())}',{Campaña}='${escFormula(p.campaignId)}')`,
     }, conn);
     if (existing[0]) {
       const r = existing[0];
@@ -187,7 +193,7 @@ export async function addParticipation(p: Participation, conn?: Conn): Promise<P
   const db = await readDB();
   const dup = db.participations.find((x) => x.creatorEmail === p.creatorEmail && x.campaignId === p.campaignId);
   if (dup) return dup;
-  const rec: Participation = { ...p, id: "loc_" + Date.now(), createdAt: new Date().toISOString() };
+  const rec: Participation = { ...p, id: "loc_" + randomUUID(), createdAt: new Date().toISOString() };
   db.participations.push(rec);
   await writeDB(db);
   return rec;
@@ -196,7 +202,7 @@ export async function addParticipation(p: Participation, conn?: Conn): Promise<P
 export async function participationsFor(email: string, conn?: Conn): Promise<Participation[]> {
   if (airtableConfigured(conn)) {
     const recs = await fetchAll<{ Email: string; Campaña: string; Estado: string; Link?: string; Motivo?: string }>(TABLES.Entregas, {
-      filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
     }, conn);
     return recs.map((r) => ({ creatorEmail: r.fields.Email, campaignId: r.fields.Campaña, status: r.fields.Estado, link: r.fields.Link, reason: r.fields.Motivo, id: r.id, createdAt: r.createdTime }));
   }
@@ -252,12 +258,13 @@ export async function submitDelivery(
 ): Promise<boolean> {
   if (airtableConfigured(conn)) {
     const recs = await fetchAll<{ Estado: string }>(TABLES.Entregas, {
-      filterByFormula: `AND(LOWER({Email})='${creatorEmail.toLowerCase()}',{Campaña}='${campaignId}')`,
+      filterByFormula: `AND(LOWER({Email})='${escFormula(creatorEmail.toLowerCase())}',{Campaña}='${escFormula(campaignId)}')`,
     }, conn);
     const rec = recs[0];
     if (!rec) return false;
-    const nextStatus = rec.fields.Estado === "aprobada" ? "aprobada" : "entregada";
-    await airtableUpdate(TABLES.Entregas, rec.id, { Link: link, Estado: nextStatus, Motivo: "" }, conn);
+    // Una entrega ya APROBADA no puede cambiar su link sin re-revisión.
+    if (rec.fields.Estado === "aprobada") return false;
+    await airtableUpdate(TABLES.Entregas, rec.id, { Link: link, Estado: "entregada", Motivo: "" }, conn);
     return true;
   }
   const db = await readDB();
@@ -265,8 +272,9 @@ export async function submitDelivery(
     (x) => x.creatorEmail === creatorEmail && x.campaignId === campaignId
   );
   if (!p) return false;
+  if (p.status === "aprobada") return false;
   p.link = link;
-  if (p.status !== "aprobada") p.status = "entregada";
+  p.status = "entregada";
   p.reason = undefined;
   await writeDB(db);
   return true;
@@ -274,11 +282,18 @@ export async function submitDelivery(
 
 // Estrellas otorgadas: solo cuentan las participaciones APROBADAS.
 // (Inscribirse no da estrellas; el admin las "otorga" al aprobar la entrega.)
+// Dedupe por campaña: si por una race quedaran 2 aprobadas de la misma campaña,
+// no se cuentan doble.
 export function starsFromApproved(parts: Participation[], campaigns: Campaign[]): number {
   const byId = new Map(campaigns.map((c) => [c.id, c]));
-  return parts
-    .filter((p) => p.status === "aprobada")
-    .reduce((s, p) => s + (byId.get(p.campaignId)?.stars ?? 0), 0);
+  const counted = new Set<string>();
+  let total = 0;
+  for (const p of parts) {
+    if (p.status !== "aprobada" || counted.has(p.campaignId)) continue;
+    counted.add(p.campaignId);
+    total += byId.get(p.campaignId)?.stars ?? 0;
+  }
+  return total;
 }
 
 // ── Canjes (solicitudes de recompensa) ──────────────────────────────────
@@ -325,7 +340,7 @@ function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: strin
 export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string, conn?: Conn): Promise<Canje> {
   if (airtableConfigured(conn)) {
     const existing = await fetchAll<CanjeFields>(TABLES.Canjes, {
-      filterByFormula: `AND(LOWER({Email})='${creatorEmail.toLowerCase()}',{Recompensa}='${rewardId}')`,
+      filterByFormula: `AND(LOWER({Email})='${escFormula(creatorEmail.toLowerCase())}',{Recompensa}='${escFormula(rewardId)}')`,
     }, conn);
     const open = existing.find((r) => r.fields.Estado === "solicitada" || r.fields.Estado === "aprobada");
     if (open) return canjeToRecord(open);
@@ -355,7 +370,7 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
     await writeDB(db);
     return rejected;
   }
-  const rec: Canje = { id: "loc_" + Date.now(), creatorEmail, rewardId, rewardTitle, status: "solicitada", createdAt: new Date().toISOString() };
+  const rec: Canje = { id: "loc_" + randomUUID(), creatorEmail, rewardId, rewardTitle, status: "solicitada", createdAt: new Date().toISOString() };
   db.canjes.push(rec);
   await writeDB(db);
   return rec;
@@ -364,7 +379,7 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
 export async function canjesFor(email: string, conn?: Conn): Promise<Canje[]> {
   if (airtableConfigured(conn)) {
     const recs = await fetchAll<CanjeFields>(TABLES.Canjes, {
-      filterByFormula: `LOWER({Email})='${email.toLowerCase()}'`,
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
     }, conn);
     return recs.map(canjeToRecord);
   }

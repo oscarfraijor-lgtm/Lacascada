@@ -27,6 +27,7 @@ export default async function Nav() {
             <Link
               key={href}
               href={href}
+              aria-label={label}
               className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
             >
               <Icon size={16} />
@@ -36,6 +37,7 @@ export default async function Nav() {
           {admin && (
             <Link
               href="/console"
+              aria-label="Consola"
               className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-brand-deep transition hover:bg-brand/10"
               title="Consola de operador"
             >
@@ -47,6 +49,7 @@ export default async function Nav() {
             <form action={cerrarSesion}>
               <button
                 type="submit"
+                aria-label="Salir"
                 className="ml-1 flex items-center gap-1.5 rounded-full bg-ink/5 px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-ink/10"
                 title="Salir"
               >

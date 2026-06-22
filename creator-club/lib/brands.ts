@@ -61,7 +61,7 @@ const CD_MISSIONS: Mission[] = [
   { id: "prueba-30", title: "Prueba 30 Noches", detail: "Unboxing + armado en cámara de tu colchón Color Dreams.", stars: 250, category: "contenido", requiresSale: false },
   { id: "showcase", title: "Pinned + showcase", detail: "Fija tu mejor video y agrega el producto a tu perfil de TTS.", stars: 100, category: "contenido", requiresSale: false },
   { id: "primera-venta", title: "Tu primera venta", detail: "Genera tu primera venta atribuible en TikTok Shop.", stars: 300, category: "venta", requiresSale: true },
-  { id: "gmv-2k", title: "Cada $2,000 MXN de GMV", detail: "Ganas estrellas por cada AOV vendido (se valida por TTS).", stars: 100, category: "venta", requiresSale: true, repeatable: true },
+  { id: "gmv-2k", title: "Genera ventas", detail: "Tus ventas atribuibles en TikTok Shop cuentan para tu nivel y tus recompensas.", stars: 100, category: "venta", requiresSale: true },
   { id: "5-ventas", title: "5 ventas en el mes", detail: "Bonus por cerrar 5 ventas atribuibles en el mes.", stars: 250, category: "venta", requiresSale: true },
   { id: "cohost-live", title: "Co-host en Live de marca", detail: "Acompaña un Live oficial de Color Dreams.", stars: 200, category: "live", requiresSale: false },
   { id: "tu-live", title: "Hostea tu Live", detail: "Transmite mostrando Color Dreams (mínimo 30 min). GMV en Live cuenta doble.", stars: 250, category: "live", requiresSale: false },

@@ -13,6 +13,7 @@ import {
   getCanjeById,
   getCreatorByEmail,
   setCanjeStatus,
+  listParticipations,
   PARTICIPATION_STATUS,
   CANJE_STATUS,
   type ParticipationStatus,
@@ -85,6 +86,11 @@ export async function eliminarCampana(formData: FormData) {
   if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   if (!id) return;
+  // No borrar una campaña que ya tiene inscripciones: dejaría entregas huérfanas
+  // y reescribiría las estrellas/nivel de quienes participaron. Para retirarla se
+  // usa "Desactivar". (La UI muestra el conteo y oculta el botón si tiene inscripciones.)
+  const parts = await listParticipations(ctx.conn ?? undefined);
+  if (parts.some((p) => p.campaignId === id)) return;
   await deleteCampaign(id, ctx.conn ?? undefined);
   revalidateCampaigns();
 }
@@ -123,9 +129,10 @@ export async function cambiarEstadoCanje(formData: FormData) {
     const reward = ctx.brand.rewards.find((r) => r.id === canje.rewardId);
     const creator = await getCreatorByEmail(canje.creatorEmail, conn);
     const gmv = creator?.gmvMXN ?? 0;
-    if (reward && !canApproveCanje(reward, gmv)) {
-      throw new Error("No se puede aprobar un canje con costo sin GMV atribuible suficiente.");
-    }
+    // Fail-closed: recompensa desconocida (catálogo cambió) o sin GMV suficiente
+    // => NO se aprueba (no-op, sin 500). La UI ya esconde el botón; esto cubre el
+    // POST directo y los canjes huérfanos.
+    if (!reward || !canApproveCanje(reward, gmv)) return;
   }
 
   await setCanjeStatus(id, status, status === "rechazada" ? reason : undefined, conn);

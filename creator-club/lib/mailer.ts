@@ -43,7 +43,7 @@ function magicLinkHtml(url: string): string {
   <div style="max-width:480px;margin:0 auto;padding:32px 24px">
     <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.violetDeep};font-weight:700">${BRAND.club} · ${BRAND.name}</p>
     <h1 style="font-size:24px;margin:8px 0 4px">Entra a tu cuenta</h1>
-    <p style="color:${BRAND.ink};opacity:.8;line-height:1.5">Haz clic en el botón para acceder al ${BRAND.club}. El enlace caduca en 30 minutos y solo se puede usar una vez.</p>
+    <p style="color:${BRAND.ink};opacity:.8;line-height:1.5">Haz clic en el botón para acceder al ${BRAND.club}. El enlace caduca en 30 minutos. Por seguridad, no lo compartas.</p>
     <p style="margin:28px 0">
       <a href="${url}" style="background:${BRAND.lime};color:${BRAND.ink};text-decoration:none;font-weight:800;padding:14px 28px;border-radius:999px;display:inline-block">Entrar al club</a>
     </p>
