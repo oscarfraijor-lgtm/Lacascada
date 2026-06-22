@@ -98,6 +98,7 @@ async function ensureFields() {
   const want = [
     { table: "Entregas", field: text("Motivo") },
     { table: "Campañas", field: text("Requisitos") },
+    { table: "Campañas", field: number("Cupo") },
     { table: "Creadoras", field: text("Portafolio") },
     { table: "Creadoras", field: text("AfiliadoHandle") },
     { table: "Creadoras", field: number("GMV_MXN") },

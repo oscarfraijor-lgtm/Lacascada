@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Star, Clock, Check, Send, AlertCircle, ListChecks } from "lucide-react";
+import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
-import { participationsFor, listOpenCampaigns, type Participation } from "@/lib/store";
+import { participationsFor, listOpenCampaigns, listParticipations, type Participation } from "@/lib/store";
 import SubmitButton from "@/components/SubmitButton";
 import { participar, entregarVideo } from "./actions";
 import TrustBar from "@/components/TrustBar";
@@ -10,21 +10,30 @@ import { BRAND } from "@/lib/schema";
 export default async function CampanasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string }>;
+  searchParams: Promise<{ bienvenida?: string; lleno?: string }>;
 }) {
-  const { bienvenida } = await searchParams;
+  const { bienvenida, lleno } = await searchParams;
   const me = await getCurrentCreator();
-  const [campaigns, mine] = await Promise.all([
+  const [campaigns, mine, allParts] = await Promise.all([
     listOpenCampaigns(),
     me ? participationsFor(me.email) : Promise.resolve([]),
+    listParticipations(),
   ]);
   const byCampaign = new Map(mine.map((p) => [p.campaignId, p]));
+  // Conteo de inscripciones por campaña (para el cupo).
+  const countByCampaign = new Map<string, number>();
+  for (const p of allParts) countByCampaign.set(p.campaignId, (countByCampaign.get(p.campaignId) ?? 0) + 1);
 
   return (
     <div className="space-y-6">
       {bienvenida && me && (
         <p className="rounded-lg bg-lime/40 px-3 py-2 text-center text-sm font-semibold text-ink">
           ¡Bienvenida, {me.name.split(" ")[0]}! Elige una campaña para empezar.
+        </p>
+      )}
+      {lleno && (
+        <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
+          Esa campaña ya llegó a su cupo. ¡Explora las demás!
         </p>
       )}
 
@@ -56,6 +65,9 @@ export default async function CampanasPage({
       <div className="grid gap-4 sm:grid-cols-2">
         {campaigns.map((c) => {
           const part = byCampaign.get(c.id);
+          const hasCupo = !!c.cupo && c.cupo > 0;
+          const taken = countByCampaign.get(c.id) ?? 0;
+          const full = hasCupo && taken >= (c.cupo ?? 0);
           return (
             <div key={c.id} className="flex flex-col rounded-3xl border border-ink/10 bg-white p-5">
               <div className="mb-2 flex items-center justify-between">
@@ -75,6 +87,11 @@ export default async function CampanasPage({
                 <p className="flex items-center gap-1">
                   <Clock size={12} /> {c.deadline}
                 </p>
+                {hasCupo && (
+                  <p className={`flex items-center gap-1 font-semibold ${full ? "text-brand-deep" : "text-ink-soft"}`}>
+                    <Users size={12} /> {full ? "Cupo lleno" : `${taken}/${c.cupo} lugares`}
+                  </p>
+                )}
                 {c.requirements && (
                   <p className="flex items-start gap-1">
                     <ListChecks size={12} className="mt-0.5 shrink-0" />
@@ -85,6 +102,10 @@ export default async function CampanasPage({
               <div className="mt-4">
                 {part ? (
                   <JoinedBlock part={part} campaignId={c.id} stars={c.stars} />
+                ) : full ? (
+                  <span className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-extrabold text-ink-soft">
+                    <Users size={15} /> Cupo lleno
+                  </span>
                 ) : me ? (
                   <form action={participar}>
                     <input type="hidden" name="campaignId" value={c.id} />

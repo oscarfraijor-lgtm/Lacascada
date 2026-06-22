@@ -462,6 +462,7 @@ function campaignToAirtableFields(c: Partial<CampaignInput> & { id?: string }): 
   if (c.deadline !== undefined) f.Deadline = c.deadline;
   if (c.tag !== undefined) f.Tag = c.tag;
   if (c.requirements !== undefined) f.Requisitos = c.requirements;
+  if (c.cupo !== undefined) f.Cupo = c.cupo;
   if (c.open !== undefined) f.Activa = c.open;
   return f;
 }
@@ -476,6 +477,7 @@ interface CampanaFields {
   Deadline?: string;
   Tag?: string;
   Requisitos?: string;
+  Cupo?: number;
   Activa?: boolean;
 }
 
@@ -493,6 +495,7 @@ export async function listCampaigns(conn?: Conn): Promise<Campaign[]> {
       deadline: r.fields.Deadline ?? "",
       tag: r.fields.Tag ?? "",
       requirements: r.fields.Requisitos ?? "",
+      cupo: r.fields.Cupo != null ? Number(r.fields.Cupo) : undefined,
       open: !!r.fields.Activa,
     }));
   }

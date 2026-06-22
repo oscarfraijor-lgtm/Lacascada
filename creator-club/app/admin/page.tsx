@@ -125,6 +125,7 @@ function CampaignFields({ c, brandName }: { c?: Campaign; brandName: string }) {
         <Field name="tag" label="Tag" defaultValue={c?.tag} placeholder="Producto / Contenido / Live" />
         <Field name="stars" label="Estrellas" type="number" defaultValue={c?.stars?.toString() ?? "0"} />
         <Field name="deadline" label="Deadline" defaultValue={c?.deadline} placeholder="Cupo abierto" />
+        <Field name="cupo" label="Cupo (0 = sin límite)" type="number" defaultValue={c?.cupo?.toString() ?? "0"} />
         <Field name="reward" label="Recompensa" defaultValue={c?.reward} placeholder="Qué recibe la creadora" />
         <Field name="brand" label="Marca" defaultValue={c?.brand ?? brandName} />
       </div>

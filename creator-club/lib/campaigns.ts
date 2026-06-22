@@ -13,6 +13,7 @@ export interface Campaign {
   deadline: string; // texto legible
   tag: string;
   requirements?: string; // "Para calificar": criterios visibles antes de participar
+  cupo?: number; // máximo de inscripciones; 0 o ausente = sin límite
   open: boolean;
   recordId?: string; // id de registro en Airtable (solo presente al leer de Airtable)
 }

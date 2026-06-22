@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { addParticipation, submitDelivery, getCampaignById } from "@/lib/store";
+import { addParticipation, submitDelivery, getCampaignById, listParticipations } from "@/lib/store";
 import { getCurrentCreator } from "@/lib/session";
 
 // ¿Es un link http(s) válido? (rechaza javascript:, relativos, basura).
@@ -25,6 +25,18 @@ export async function participar(formData: FormData) {
   if (!campaign || !campaign.open) {
     revalidatePath("/campanas");
     return;
+  }
+  // Cupo: si la campaña tiene límite y ya está lleno, no inscribir (a menos que
+  // la creadora YA estuviera inscrita). Guard server-side: la card ya oculta el
+  // botón cuando está lleno; esto cubre el POST directo y la carrera de cupo.
+  if (campaign.cupo && campaign.cupo > 0) {
+    const all = await listParticipations();
+    const meEmail = me.email.toLowerCase();
+    const alreadyIn = all.some((p) => p.campaignId === campaignId && p.creatorEmail.toLowerCase() === meEmail);
+    const taken = all.filter((p) => p.campaignId === campaignId).length;
+    if (!alreadyIn && taken >= campaign.cupo) {
+      redirect("/campanas?lleno=1");
+    }
   }
   await addParticipation({ creatorEmail: me.email, campaignId, status: "inscrita" });
   revalidatePath("/campanas");

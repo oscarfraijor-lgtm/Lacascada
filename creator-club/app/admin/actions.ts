@@ -81,6 +81,7 @@ function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignIn
     reward: String(formData.get("reward") || "").trim(),
     deadline: String(formData.get("deadline") || "").trim() || "Cupo abierto",
     requirements: String(formData.get("requirements") || "").trim(),
+    cupo: Math.max(0, Math.round(Number(formData.get("cupo") || 0)) || 0),
     brief: String(formData.get("brief") || "").trim(),
     open: openRaw === "on" || openRaw === "true",
   };
