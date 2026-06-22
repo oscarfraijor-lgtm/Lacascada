@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, ChevronRight, ArrowRight, History, Gift } from "lucide-react";
+import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-react";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
@@ -60,6 +60,9 @@ export default async function Home() {
               Hola, {creator.name.split(" ")[0]}
             </h1>
             {creator.handle && <p className="text-sm text-white/70">{creator.handle}</p>}
+            <Link href="/cuenta" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/70 underline transition hover:text-lime">
+              <UserCog size={12} /> Editar perfil
+            </Link>
           </div>
           <div className="text-right">
             <div className="flex items-center justify-end gap-2">

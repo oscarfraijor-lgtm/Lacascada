@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Megaphone, Target, Trophy, Gift, LogOut, ShieldCheck } from "lucide-react";
+import { Home, Megaphone, Target, Trophy, Gift, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { BRAND } from "@/lib/schema";
 import { getCurrentCreator, currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
@@ -43,6 +43,17 @@ export default async function Nav() {
             >
               <ShieldCheck size={16} />
               <span className="hidden md:inline">Consola</span>
+            </Link>
+          )}
+          {me && (
+            <Link
+              href="/cuenta"
+              aria-label="Mi cuenta"
+              title="Mi cuenta"
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
+            >
+              <UserCog size={16} />
+              <span className="hidden md:inline">Cuenta</span>
             </Link>
           )}
           {me || admin ? (

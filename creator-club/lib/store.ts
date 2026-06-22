@@ -121,6 +121,32 @@ interface CreadoraFields {
   GMV_Fecha?: string;
 }
 
+// Campos editables por la creadora desde su perfil. NO incluye email (es la clave
+// de identidad) ni GMV (lo captura el equipo). El email se omite a propósito.
+export type CreatorPatch = Partial<
+  Pick<CreatorRecord, "name" | "handle" | "followers" | "city" | "portfolio">
+>;
+
+// Edita el perfil de una creadora (por id). Solo los campos presentes en el patch.
+export async function updateCreator(id: string, patch: CreatorPatch, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const fields: Record<string, unknown> = {};
+    if (patch.name !== undefined) fields.Nombre = patch.name;
+    if (patch.handle !== undefined) fields.Handle = patch.handle;
+    if (patch.followers !== undefined) fields.Seguidores = patch.followers;
+    if (patch.city !== undefined) fields.Ciudad = patch.city;
+    if (patch.portfolio !== undefined) fields.Portafolio = patch.portfolio;
+    if (Object.keys(fields).length) await airtableUpdate(TABLES.Creadoras, id, fields, conn);
+    return;
+  }
+  const db = await readDB();
+  const c = db.creators.find((x) => x.id === id);
+  if (c) {
+    Object.assign(c, patch);
+    await writeDB(db);
+  }
+}
+
 function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?: string }): CreatorRecord {
   return {
     id: r.id,
