@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Star, Lock, Gift, Clock, Check, PackageCheck } from "lucide-react";
 import { getRewardsView, type RewardView } from "@/lib/data";
+import { getClubViewer } from "@/lib/club-viewer";
 import { BRAND } from "@/lib/schema";
 import RewardStateChip from "@/components/RewardStateChip";
 import SubmitButton from "@/components/SubmitButton";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import { solicitarCanje } from "./actions";
 
 const KIND_LABEL: Record<string, string> = {
@@ -16,9 +18,11 @@ const KIND_LABEL: Record<string, string> = {
 
 export default async function RecompensasPage() {
   const view = await getRewardsView();
+  const { isAdminPreview } = await getClubViewer();
 
   return (
     <div className="space-y-5">
+      {isAdminPreview && <AdminPreviewBanner />}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-ink">Recompensas</h1>

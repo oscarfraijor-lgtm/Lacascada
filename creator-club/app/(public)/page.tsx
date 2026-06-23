@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-react";
-import { getCurrentCreator } from "@/lib/session";
+import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
 import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
@@ -8,6 +8,7 @@ import type { Creator } from "@/lib/types";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
 import RewardStateChip from "@/components/RewardStateChip";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 
 const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.round((v / max) * 100)));
 
@@ -20,7 +21,7 @@ const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
 };
 
 export default async function Home() {
-  const session = await getCurrentCreator();
+  const { creator: session, isAdminPreview } = await getClubViewer();
   if (!session) return <Welcome />;
 
   const [parts, campaigns] = await Promise.all([participationsFor(session.email), listCampaigns()]);
@@ -50,6 +51,7 @@ export default async function Home() {
 
   return (
     <div className="space-y-6">
+      {isAdminPreview && <AdminPreviewBanner />}
       {/* Hero personalizado */}
       <section className="overflow-hidden rounded-3xl bg-ink text-white">
         <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">

@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users } from "lucide-react";
-import { getCurrentCreator } from "@/lib/session";
+import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users, Eye } from "lucide-react";
+import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listOpenCampaigns, listParticipations, type Participation } from "@/lib/store";
 import SubmitButton from "@/components/SubmitButton";
 import { participar, entregarVideo } from "./actions";
 import TrustBar from "@/components/TrustBar";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import { BRAND } from "@/lib/schema";
 
 export default async function CampanasPage({
@@ -13,7 +14,7 @@ export default async function CampanasPage({
   searchParams: Promise<{ bienvenida?: string; lleno?: string }>;
 }) {
   const { bienvenida, lleno } = await searchParams;
-  const me = await getCurrentCreator();
+  const { creator: me, isAdminPreview } = await getClubViewer();
   const [campaigns, mine, allParts] = await Promise.all([
     listOpenCampaigns(),
     me ? participationsFor(me.email) : Promise.resolve([]),
@@ -26,6 +27,7 @@ export default async function CampanasPage({
 
   return (
     <div className="space-y-6">
+      {isAdminPreview && <AdminPreviewBanner />}
       {bienvenida && me && (
         <p className="rounded-lg bg-lime/40 px-3 py-2 text-center text-sm font-semibold text-ink">
           ¡Bienvenida, {me.name.split(" ")[0]}! Elige una campaña para empezar.
@@ -102,6 +104,10 @@ export default async function CampanasPage({
               <div className="mt-4">
                 {part ? (
                   <JoinedBlock part={part} campaignId={c.id} stars={c.stars} />
+                ) : isAdminPreview ? (
+                  <span className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-extrabold text-ink-soft">
+                    <Eye size={15} /> Vista de admin
+                  </span>
                 ) : full ? (
                   <span className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-extrabold text-ink-soft">
                     <Users size={15} /> Cupo lleno

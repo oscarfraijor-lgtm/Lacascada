@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Star, Check, ShoppingBag, Lock } from "lucide-react";
 import { getCreator, getMissions } from "@/lib/data";
+import { getClubViewer } from "@/lib/club-viewer";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import type { MissionCategory } from "@/lib/schema";
 
 const CAT_LABEL: Record<MissionCategory, string> = {
@@ -33,9 +35,11 @@ export default async function MisionesPage() {
     );
   }
   const missions = await getMissions(creator);
+  const { isAdminPreview } = await getClubViewer();
 
   return (
     <div className="space-y-6">
+      {isAdminPreview && <AdminPreviewBanner />}
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Misiones</h1>
         <p className="text-sm text-ink-soft">

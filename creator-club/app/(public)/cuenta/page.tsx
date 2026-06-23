@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, Check, Mail } from "lucide-react";
-import { getCurrentCreator } from "@/lib/session";
+import { ArrowLeft, Check, Mail, Eye } from "lucide-react";
+import { getClubViewer } from "@/lib/club-viewer";
 import SubmitButton from "@/components/SubmitButton";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import { actualizarCuenta } from "./actions";
 
 export default async function CuentaPage({
@@ -10,7 +11,30 @@ export default async function CuentaPage({
   searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const { ok, error } = await searchParams;
-  const me = await getCurrentCreator();
+  const { creator: me, isAdminPreview } = await getClubViewer();
+
+  // Admin previsualizando: no hay perfil de creadora que editar.
+  if (isAdminPreview) {
+    return (
+      <div className="mx-auto max-w-md space-y-4">
+        <AdminPreviewBanner />
+        <div className="rounded-3xl border border-ink/10 bg-white p-8 text-center">
+          <Eye className="mx-auto text-brand-deep" size={30} />
+          <h1 className="font-display mt-2 text-2xl font-extrabold text-ink">Mi cuenta</h1>
+          <p className="mt-1 text-sm text-ink-soft">
+            Esta sección es para que una creadora edite su perfil. Como admin no tienes un perfil de
+            creadora aquí; para editar a una creadora, usa la consola.
+          </p>
+          <Link
+            href="/console"
+            className="font-display mt-5 inline-flex items-center gap-1.5 rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink"
+          >
+            <ArrowLeft size={15} /> Volver a la consola
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!me) {
     return (

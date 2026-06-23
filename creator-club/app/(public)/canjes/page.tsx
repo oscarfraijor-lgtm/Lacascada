@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Gift, ArrowLeft, Clock, Check, X, Inbox, PackageCheck } from "lucide-react";
-import { getCurrentCreator } from "@/lib/session";
+import { getClubViewer } from "@/lib/club-viewer";
 import { canjesFor, type Canje } from "@/lib/store";
+import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 
 function fmtDate(iso?: string): string {
   if (!iso) return "Sin fecha";
@@ -42,7 +43,7 @@ const STATUS_META: Record<
 };
 
 export default async function CanjesPage() {
-  const me = await getCurrentCreator();
+  const { creator: me, isAdminPreview } = await getClubViewer();
   if (!me) {
     return (
       <div className="mx-auto max-w-md rounded-3xl border border-ink/10 bg-white p-8 text-center">
@@ -72,6 +73,7 @@ export default async function CanjesPage() {
 
   return (
     <div className="space-y-5">
+      {isAdminPreview && <AdminPreviewBanner />}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/" className="mb-1 flex items-center gap-1 text-xs font-semibold text-brand-deep">

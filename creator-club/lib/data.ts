@@ -13,7 +13,8 @@ import {
   rewardMissing,
   rewardRequirement,
 } from "@/lib/rewards";
-import { getCurrentCreator, currentEmail } from "@/lib/session";
+import { currentEmail } from "@/lib/session";
+import { getClubViewer } from "@/lib/club-viewer";
 import {
   participationsFor,
   listParticipations,
@@ -32,7 +33,7 @@ export interface MissionWithStatus extends Mission {
 // La creadora actual (de la sesión), con estrellas reales derivadas de sus
 // entregas aprobadas. null si no hay sesión.
 export async function getCreator(): Promise<Creator | null> {
-  const session = await getCurrentCreator();
+  const { creator: session } = await getClubViewer();
   if (!session) return null;
   const [parts, campaigns] = await Promise.all([
     participationsFor(session.email),
@@ -137,7 +138,7 @@ export interface RewardsView {
 
 export async function getRewardsView(): Promise<RewardsView> {
   const rewards = getBrand().rewards;
-  const session = await getCurrentCreator();
+  const { creator: session } = await getClubViewer();
   if (!session) {
     // Catálogo para visitantes: solo el requisito, sin estado personal.
     return {
@@ -192,7 +193,7 @@ export interface LedgerEntry {
 }
 
 export async function getStarLedger(): Promise<LedgerEntry[]> {
-  const session = await getCurrentCreator();
+  const { creator: session } = await getClubViewer();
   if (!session) return [];
   const [parts, campaigns] = await Promise.all([
     participationsFor(session.email),
