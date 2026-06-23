@@ -6,6 +6,8 @@ import { isAdmin } from "@/lib/roles";
 import { signAccessToken } from "@/lib/token";
 import { sendMagicLink } from "@/lib/mailer";
 import { isValidEmail } from "@/lib/email";
+import { setCreatorCookie } from "@/lib/session";
+import { adminPassphraseEnabled, verifyAdminPassphrase } from "@/lib/admin-passphrase";
 
 // Acceso de OPERADOR (equipo Indie Pro): entrada neutral, no pasa por ninguna
 // marca. Solo los admins reciben enlace; para no revelar quién es admin, SIEMPRE
@@ -30,4 +32,20 @@ export async function solicitarAccesoOperador(formData: FormData) {
     }
   }
   redirect("/operador?enviado=1");
+}
+
+// Acceso de admin con CLAVE del equipo (alternativa al magic link, sin correo).
+// Doble requisito: el correo debe estar en el allowlist de admins Y la clave debe
+// coincidir con ADMIN_PASSPHRASE. Una clave filtrada NO crea admins nuevos. La
+// sesión que se setea es la MISMA cookie firmada que el magic link (lib/session).
+// Mensaje genérico: no revela si falló el correo o la clave.
+export async function entrarConClave(formData: FormData) {
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const passphrase = String(formData.get("passphrase") || "");
+  if (!adminPassphraseEnabled()) redirect("/operador?clave=off");
+  if (!isAdmin(email) || !verifyAdminPassphrase(passphrase)) {
+    redirect("/operador?clave=bad");
+  }
+  await setCreatorCookie(email);
+  redirect("/console");
 }
