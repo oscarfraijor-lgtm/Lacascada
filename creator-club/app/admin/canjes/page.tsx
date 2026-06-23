@@ -1,5 +1,5 @@
 import { Check, X, RotateCcw, Lock, Star, Download, PackageCheck, Clock } from "lucide-react";
-import { listCanjes, listCreators } from "@/lib/store";
+import { listCanjes, listCreators, listRewards } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
@@ -22,9 +22,9 @@ export default async function AdminCanjesPage() {
   const ctx = await getAdminContext();
   if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
   const conn = ctx.conn ?? undefined;
-  const [canjes, creators] = await Promise.all([listCanjes(conn), listCreators(conn)]);
+  const [canjes, creators, rewards] = await Promise.all([listCanjes(conn), listCreators(conn), listRewards(conn)]);
   const creatorByEmail = new Map(creators.map((c) => [c.email.toLowerCase(), c]));
-  const rewardById = new Map(ctx.brand.rewards.map((r) => [r.id, r]));
+  const rewardById = new Map(rewards.map((r) => [r.id, r]));
 
   const rows = [...canjes].sort((a, b) => (ORDER[a.status] ?? 9) - (ORDER[b.status] ?? 9));
   const pendientes = canjes.filter((c) => c.status === "solicitada").length;

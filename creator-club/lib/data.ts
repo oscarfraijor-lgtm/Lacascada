@@ -2,7 +2,6 @@
 // (Creadoras/Entregas/Campañas). El catálogo de recompensas es estático (diseño
 // del programa); su candado (Disponible/Desbloqueada/Bloqueada) se calcula con
 // las estrellas + el GMV reales de la creadora.
-import { getBrand } from "@/lib/brands";
 import type { Creator, LeaderboardRow, Reward } from "@/lib/types";
 import { MISSIONS, type Mission, levelForStars } from "@/lib/schema";
 import {
@@ -33,6 +32,7 @@ import {
   canjesFor,
   misionesFor,
   listMisiones,
+  listActiveRewards,
   starsFromApproved,
 } from "@/lib/store";
 
@@ -191,7 +191,7 @@ export interface RewardsView {
 }
 
 export async function getRewardsView(): Promise<RewardsView> {
-  const rewards = getBrand().rewards;
+  const rewards = await listActiveRewards();
   const { creator: session } = await getClubViewer();
   if (!session) {
     // Catálogo para visitantes: solo el requisito, sin estado personal.

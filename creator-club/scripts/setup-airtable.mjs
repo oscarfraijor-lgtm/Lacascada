@@ -63,13 +63,18 @@ const TABLES = [
     description: "Tracking de misiones: inducción vista, video enviado/aprobado (equipo valida)",
     fields: [text("Email"), text("Mision"), text("Estado"), text("Link"), text("Motivo")],
   },
+  {
+    name: "Recompensas",
+    description: "Catálogo de premios (el equipo los prende/apaga y edita en /admin)",
+    fields: [text("Id"), text("Titulo"), multiline("Detalle"), text("Costo"), text("Kind"), text("Payer"), number("MinStars"), number("MinGmvMXN"), checkbox("Activa")],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
 // puede arrancar sin seed (crea sus campañas en /admin) o agregar su set aquí.
 const SEED_BY_BRAND = {
   "color-dreams": [
-    { Id: "prueba-30", "Título": "Prueba 30 Noches", Marca: "Color Dreams", Brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.", Recompensa: "Colchón a prueba + 250 estrellas", Estrellas: 250, Deadline: "Cupo abierto", Tag: "Producto", Requisitos: "Perfil completo + dirección de envío. No necesitas seguidores.", Activa: true },
+    { Id: "prueba-30", "Título": "Prueba 30 Noches", Marca: "Color Dreams", Brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.", Recompensa: "Colchón a prueba + 250 estrellas", Estrellas: 250, Deadline: "Cupo abierto", Tag: "Producto", Requisitos: "Perfil completo + dirección de envío. No necesitas seguidores.", Cupo: 10, Activa: true },
     { Id: "unboxing-express", "Título": "Unboxing Express", Marca: "Color Dreams", Brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.", Recompensa: "150 estrellas + boost de comisión", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Contenido", Requisitos: "Perfil completo + link de afiliado de TikTok Shop.", Activa: true },
     { Id: "recamara-makeover", "Título": "Recámara Makeover", Marca: "Color Dreams", Brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.", Recompensa: "200 estrellas", Estrellas: 200, Deadline: "Cupo abierto", Tag: "Contenido", Requisitos: "Perfil completo + dirección de envío. No necesitas seguidores.", Activa: true },
     { Id: "resena-real", "Título": "Reseña Real", Marca: "Color Dreams", Brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.", Recompensa: "150 estrellas", Estrellas: 150, Deadline: "Cupo abierto", Tag: "Reseña", Requisitos: "Haber completado Prueba 30 Noches.", Activa: true },
@@ -81,6 +86,19 @@ const SEED_BY_BRAND = {
 };
 const CAMPAIGN_SEED = SEED_BY_BRAND[BRAND_SLUG] || [];
 console.log(`Marca activa: ${BRAND_SLUG} (${CAMPAIGN_SEED.length} campañas en el seed)`);
+
+// Seed de premios (espejo de lib/brands.ts -> rewards). El equipo los prende/apaga
+// y edita en /admin después.
+const REWARDS_SEED_BY_BRAND = {
+  "color-dreams": [
+    { Id: "r-status", Titulo: "Subir de nivel + insignia", Detalle: "Estatus, badge y acceso a misiones premium.", Costo: "Acumula estrellas", Kind: "estatus", Payer: "club", MinStars: 0, MinGmvMXN: 0, Activa: true },
+    { Id: "r-muestra", Titulo: "Muestra de colchón", Detalle: "Pruébalo 30 noches (atado a tu primera venta).", Costo: "Nivel Soñadora + tu primera venta", Kind: "producto", Payer: "marca", MinStars: 500, MinGmvMXN: 0, Activa: true },
+    { Id: "r-boost", Titulo: "Boost de comisión +1%", Detalle: "Ganas 1% extra de comisión por cada venta que cierres.", Costo: "Nivel Soñadora + tu primera venta", Kind: "boost", Payer: "marca", MinStars: 500, MinGmvMXN: 0, Activa: true },
+    { Id: "r-colchon", Titulo: "Colchón propio (regalo)", Detalle: "Tuyo para siempre.", Costo: "Nivel Insomne Pro · $60K GMV", Kind: "producto", Payer: "marca", MinStars: 1500, MinGmvMXN: 60000, Activa: true },
+    { Id: "r-cdmx", Titulo: "Experiencia CDMX", Detalle: "Noche de Sueños + sesión de fotos + kit de creadora.", Costo: "Nivel Embajadora · $150K GMV", Kind: "experiencia", Payer: "marca", MinStars: 4000, MinGmvMXN: 150000, Activa: true },
+  ],
+};
+const REWARD_SEED = REWARDS_SEED_BY_BRAND[BRAND_SLUG] || [];
 
 // 1) Crear tablas (idempotente)
 for (const t of TABLES) {
@@ -165,6 +183,38 @@ if (missing.length === 0) {
     const j = await res.json().catch(() => ({}));
     if (res.ok) console.log(`✓ Campañas sembradas: ${batch.map((b) => b.fields.Id).join(", ")}`);
     else console.log(`✗ Seed campañas: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
+  }
+}
+
+// 3) Sembrar premios (solo los que falten, por Id)
+async function fetchExistingRewardIds() {
+  const ids = new Set();
+  let offset;
+  do {
+    const url = new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent("Recompensas")}`);
+    url.searchParams.set("pageSize", "100");
+    if (offset) url.searchParams.set("offset", offset);
+    const res = await fetch(url, { headers });
+    if (!res.ok) { console.log(`✗ No se pudieron leer premios: ${res.status}`); return ids; }
+    const j = await res.json();
+    for (const r of j.records ?? []) if (r.fields?.Id) ids.add(r.fields.Id);
+    offset = j.offset;
+  } while (offset);
+  return ids;
+}
+const existingRewards = await fetchExistingRewardIds();
+const missingRewards = REWARD_SEED.filter((r) => !existingRewards.has(r.Id));
+if (missingRewards.length === 0) {
+  console.log("• Premios: seed ya presente, nada que sembrar");
+} else {
+  for (let i = 0; i < missingRewards.length; i += 10) {
+    const batch = missingRewards.slice(i, i + 10).map((fields) => ({ fields }));
+    const res = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent("Recompensas")}`, {
+      method: "POST", headers, body: JSON.stringify({ records: batch, typecast: true }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok) console.log(`✓ Premios sembrados: ${batch.map((b) => b.fields.Id).join(", ")}`);
+    else console.log(`✗ Seed premios: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
   }
 }
 

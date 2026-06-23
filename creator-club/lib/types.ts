@@ -20,15 +20,22 @@ export interface LeaderboardRow {
   isMe?: boolean;
 }
 
+export type RewardKind = "estatus" | "producto" | "boost" | "cash" | "experiencia";
+
 export interface Reward {
   id: string;
   title: string;
   detail: string;
   cost: string; // descripción legible del requisito (estrellas / GMV)
-  kind: "estatus" | "producto" | "boost" | "cash" | "experiencia";
+  kind: RewardKind;
   payer: "club" | "marca";
   // Umbrales del candado real (default 0). Las recompensas con costo
   // (kind != "estatus") exigen además GMV atribuible > 0 (anti-fuga).
   minStars?: number;
   minGmvMXN?: number;
+  active?: boolean; // el equipo prende/apaga el premio en /admin (default true)
+  recordId?: string; // id del registro en Airtable (solo al leer de Airtable)
 }
+
+// Datos editables por el admin = todo menos el recordId.
+export type RewardInput = Omit<Reward, "recordId">;

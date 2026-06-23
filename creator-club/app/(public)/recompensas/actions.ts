@@ -2,9 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentCreator } from "@/lib/session";
-import { participationsFor, listCampaigns, requestCanje, misionesFor } from "@/lib/store";
+import { participationsFor, listCampaigns, requestCanje, misionesFor, getRewardById } from "@/lib/store";
 import { combinedStars } from "@/lib/data";
-import { getBrand } from "@/lib/brands";
 import { rewardState } from "@/lib/rewards";
 
 // La creadora solicita un canje. Se valida SERVER-SIDE que la recompensa exista
@@ -16,8 +15,8 @@ export async function solicitarCanje(formData: FormData) {
   const me = await getCurrentCreator();
   if (!me || !rewardId) return;
 
-  const reward = getBrand().rewards.find((r) => r.id === rewardId);
-  if (!reward) return;
+  const reward = await getRewardById(rewardId);
+  if (!reward || reward.active === false) return;
 
   const [parts, campaigns, completions] = await Promise.all([
     participationsFor(me.email),

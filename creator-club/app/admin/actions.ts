@@ -17,8 +17,14 @@ import {
   getCreatorByEmail,
   setCanjeStatus,
   listParticipations,
+  listCanjes,
   getMisionById,
   setMisionStatus,
+  getRewardById,
+  createReward,
+  updateReward,
+  setRewardActive,
+  deleteReward,
   PARTICIPATION_STATUS,
   CANJE_STATUS,
   MISION_STATUS,
@@ -27,6 +33,7 @@ import {
   type MisionStatus,
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
+import type { RewardInput, RewardKind } from "@/lib/types";
 import { canApproveCanje } from "@/lib/rewards";
 import { sendNotification } from "@/lib/mailer";
 import { getAdminContext, type AdminContext } from "@/lib/brand-admin";
@@ -226,7 +233,7 @@ export async function cambiarEstadoCanje(formData: FormData) {
   // POST directo que intente saltar de solicitada a entregada sin aprobar.
   if (status === "aprobada" || status === "entregada") {
     if (!canje) return;
-    const reward = ctx.brand.rewards.find((r) => r.id === canje.rewardId);
+    const reward = await getRewardById(canje.rewardId, conn);
     const creator = await getCreatorByEmail(canje.creatorEmail, conn);
     const gmv = creator?.gmvMXN ?? 0;
     // Fail-closed: recompensa desconocida (catálogo cambió) o sin GMV suficiente
@@ -344,4 +351,72 @@ export async function capturarGmv(formData: FormData) {
   await setCreatorGmv(id, gmv, date, ctx.conn ?? undefined);
   revalidatePath("/admin/creadoras");
   revalidatePath("/");
+}
+
+// ── Recompensas (premios; el equipo las prende/apaga y edita en /admin) ────
+// Anti-fuga: aunque el equipo capture kind/umbrales, el candado de costo (premio
+// con costo exige GMV atribuible, lib/rewards.canApproveCanje) se aplica SIEMPRE
+// al aprobar/entregar un canje. Editar el catálogo NO puede saltarse esa regla.
+const REWARD_KINDS: RewardKind[] = ["estatus", "producto", "boost", "cash", "experiencia"];
+
+function revalidateRewards(): void {
+  revalidatePath("/admin/recompensas");
+  revalidatePath("/recompensas");
+  revalidatePath("/");
+}
+
+function parseRewardForm(formData: FormData): Omit<RewardInput, "id"> {
+  const kindRaw = String(formData.get("kind") || "producto");
+  const activeRaw = String(formData.get("active") || "");
+  return {
+    title: String(formData.get("title") || "").trim(),
+    detail: String(formData.get("detail") || "").trim(),
+    cost: String(formData.get("cost") || "").trim(),
+    kind: REWARD_KINDS.includes(kindRaw as RewardKind) ? (kindRaw as RewardKind) : "producto",
+    payer: String(formData.get("payer") || "marca") === "club" ? "club" : "marca",
+    minStars: Math.max(0, Math.round(Number(formData.get("minStars") || 0)) || 0),
+    minGmvMXN: Math.max(0, Math.round(Number(formData.get("minGmvMXN") || 0)) || 0),
+    active: activeRaw === "on" || activeRaw === "true",
+  };
+}
+
+export async function crearRecompensa(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const input = parseRewardForm(formData);
+  if (!input.title) return;
+  await createReward({ id: "", ...input }, ctx.conn ?? undefined);
+  revalidateRewards();
+}
+
+export async function editarRecompensa(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await updateReward(id, parseRewardForm(formData), ctx.conn ?? undefined);
+  revalidateRewards();
+}
+
+export async function alternarRecompensa(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  const active = String(formData.get("active") || "") === "true";
+  if (!id) return;
+  await setRewardActive(id, active, ctx.conn ?? undefined);
+  revalidateRewards();
+}
+
+export async function eliminarRecompensa(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  // No borrar un premio con canjes (dejaría canjes huérfanos). Para retirarlo se
+  // usa "Desactivar" (la UI muestra el conteo y oculta el botón si tiene canjes).
+  const canjes = await listCanjes(ctx.conn ?? undefined);
+  if (canjes.some((c) => c.rewardId === id)) return;
+  await deleteReward(id, ctx.conn ?? undefined);
+  revalidateRewards();
 }

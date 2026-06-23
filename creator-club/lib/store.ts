@@ -24,6 +24,7 @@ import {
   CAMPAIGN_SEED,
   slugify,
 } from "@/lib/campaigns";
+import type { Reward, RewardInput, RewardKind } from "@/lib/types";
 import { BRAND } from "@/lib/schema";
 
 export interface CreatorRecord {
@@ -69,6 +70,7 @@ interface DB {
   campaigns?: Campaign[];
   canjes?: Canje[];
   misiones?: MisionCompletion[];
+  rewards?: Reward[];
 }
 
 async function readDB(): Promise<DB> {
@@ -80,6 +82,7 @@ async function readDB(): Promise<DB> {
       campaigns: db.campaigns,
       canjes: db.canjes ?? [],
       misiones: db.misiones ?? [],
+      rewards: db.rewards,
     };
   } catch {
     return { creators: [], participations: [], canjes: [], misiones: [] };
@@ -687,7 +690,7 @@ export async function getCampaignById(id: string, conn?: Conn): Promise<Campaign
   return (await listCampaigns(conn)).find((c) => c.id === id);
 }
 
-async function uniqueSlug(base: string, existing: Campaign[]): Promise<string> {
+async function uniqueSlug(base: string, existing: { id: string }[]): Promise<string> {
   const taken = new Set(existing.map((c) => c.id));
   let slug = slugify(base) || "campana";
   let n = 2;
@@ -738,5 +741,128 @@ export async function deleteCampaign(id: string, conn?: Conn): Promise<void> {
   }
   const db = await readDB();
   db.campaigns = (db.campaigns ?? CAMPAIGN_SEED.map((c) => ({ ...c }))).filter((x) => x.id !== id);
+  await writeDB(db);
+}
+
+// ── Recompensas (premios; el equipo las prende/apaga en /admin) ───────────
+// Espejo de Campañas: viven en Airtable (tabla Recompensas) y se editan desde
+// /admin. El candado anti-fuga (premio con costo exige GMV atribuible) NO está
+// aquí: vive en lib/rewards.ts y se aplica SIEMPRE, sin importar lo que capture
+// el equipo, así que un premio mal configurado no puede saltarse la regla.
+interface RecompensaFields {
+  Id?: string;
+  Titulo?: string;
+  Detalle?: string;
+  Costo?: string;
+  Kind?: string;
+  Payer?: string;
+  MinStars?: number;
+  MinGmvMXN?: number;
+  Activa?: boolean;
+}
+
+const REWARD_KINDS: RewardKind[] = ["estatus", "producto", "boost", "cash", "experiencia"];
+// Default seguro: un kind desconocido se trata como "producto" (con costo), para
+// que el candado anti-fuga (kind != estatus exige GMV) aplique aunque se capture mal.
+function coerceKind(k?: string): RewardKind {
+  return REWARD_KINDS.includes(k as RewardKind) ? (k as RewardKind) : "producto";
+}
+
+function rewardToAirtableFields(r: Partial<RewardInput>): Record<string, unknown> {
+  const f: Record<string, unknown> = {};
+  if (r.id !== undefined) f.Id = r.id;
+  if (r.title !== undefined) f.Titulo = r.title;
+  if (r.detail !== undefined) f.Detalle = r.detail;
+  if (r.cost !== undefined) f.Costo = r.cost;
+  if (r.kind !== undefined) f.Kind = r.kind;
+  if (r.payer !== undefined) f.Payer = r.payer;
+  if (r.minStars !== undefined) f.MinStars = r.minStars;
+  if (r.minGmvMXN !== undefined) f.MinGmvMXN = r.minGmvMXN;
+  if (r.active !== undefined) f.Activa = r.active;
+  return f;
+}
+
+function rewardFromAirtable(rec: { id: string; fields: RecompensaFields }): Reward {
+  const f = rec.fields;
+  return {
+    recordId: rec.id,
+    id: f.Id || slugify(f.Titulo ?? rec.id),
+    title: f.Titulo ?? "(sin título)",
+    detail: f.Detalle ?? "",
+    cost: f.Costo ?? "",
+    kind: coerceKind(f.Kind),
+    payer: f.Payer === "club" ? "club" : "marca",
+    minStars: f.MinStars != null ? Number(f.MinStars) : 0,
+    minGmvMXN: f.MinGmvMXN != null ? Number(f.MinGmvMXN) : 0,
+    active: f.Activa !== false,
+  };
+}
+
+export async function listRewards(conn?: Conn): Promise<Reward[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<RecompensaFields>(TABLES.Recompensas, {}, conn);
+    return recs.map(rewardFromAirtable);
+  }
+  // Archivo local: sembrar desde el seed de la marca la primera vez.
+  const db = await readDB();
+  if (!db.rewards) {
+    db.rewards = BRAND.rewards.map((r) => ({ ...r, active: r.active !== false }));
+    await writeDB(db);
+  }
+  return db.rewards;
+}
+
+// Solo los premios ACTIVOS (lo que ve la creadora en /recompensas).
+export async function listActiveRewards(conn?: Conn): Promise<Reward[]> {
+  return (await listRewards(conn)).filter((r) => r.active !== false);
+}
+
+export async function getRewardById(id: string, conn?: Conn): Promise<Reward | undefined> {
+  return (await listRewards(conn)).find((r) => r.id === id);
+}
+
+export async function createReward(input: RewardInput, conn?: Conn): Promise<Reward> {
+  const all = await listRewards(conn);
+  const id = await uniqueSlug(input.title, all);
+  const reward: Reward = { ...input, id, active: input.active ?? true };
+  if (airtableConfigured(conn)) {
+    const r = await airtableCreate(TABLES.Recompensas, rewardToAirtableFields({ ...input, id }), conn);
+    return { ...reward, recordId: r.id };
+  }
+  const db = await readDB();
+  db.rewards = db.rewards ?? all.map((r) => ({ ...r }));
+  db.rewards.push(reward);
+  await writeDB(db);
+  return reward;
+}
+
+export async function updateReward(id: string, patch: Partial<RewardInput>, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getRewardById(id, conn);
+    if (!current?.recordId) throw new Error(`Recompensa ${id} no encontrada`);
+    await airtableUpdate(TABLES.Recompensas, current.recordId, rewardToAirtableFields(patch), conn);
+    return;
+  }
+  const db = await readDB();
+  db.rewards = db.rewards ?? BRAND.rewards.map((r) => ({ ...r }));
+  const r = db.rewards.find((x) => x.id === id);
+  if (r) {
+    Object.assign(r, patch);
+    await writeDB(db);
+  }
+}
+
+export async function setRewardActive(id: string, active: boolean, conn?: Conn): Promise<void> {
+  await updateReward(id, { active }, conn);
+}
+
+export async function deleteReward(id: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getRewardById(id, conn);
+    if (current?.recordId) await airtableDelete(TABLES.Recompensas, current.recordId, conn);
+    return;
+  }
+  const db = await readDB();
+  db.rewards = (db.rewards ?? BRAND.rewards.map((r) => ({ ...r }))).filter((x) => x.id !== id);
   await writeDB(db);
 }
