@@ -159,11 +159,19 @@ function Stat({
   icon, label, value, highlight,
 }: { icon?: React.ReactNode; label: string; value: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-xl px-2.5 py-1.5 ${highlight ? "bg-brand/10" : "bg-cream-deep/50"}`}>
-      <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+    <div
+      className={`rounded-xl border px-2.5 py-1.5 ${
+        highlight ? "border-brand/40 bg-brand/15" : "border-transparent bg-cream-deep/50"
+      }`}
+    >
+      <p
+        className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide ${
+          highlight ? "text-brand-deep" : "text-ink-soft"
+        }`}
+      >
         {icon} {label}
       </p>
-      <p className={`font-display text-base font-extrabold ${highlight ? "text-ink" : "text-ink"}`}>{value}</p>
+      <p className={`font-display text-base font-extrabold ${highlight ? "text-brand-deep" : "text-ink"}`}>{value}</p>
     </div>
   );
 }

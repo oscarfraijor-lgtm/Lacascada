@@ -15,8 +15,13 @@ import {
 import { levelForStars } from "@/lib/schema";
 
 // Escapa un campo CSV (comillas, comas, saltos de línea). RFC 4180.
+// + Anti CSV-injection (CWE-1236): los campos vienen de texto libre PÚBLICO de la
+// creadora (nombre, @afiliado, portafolio, motivo…). Excel/Sheets ejecutan una
+// celda que empieza con = + - @ (o tab/CR) como fórmula. Se les antepone un
+// apóstrofo para que el spreadsheet las trate como texto.
 function cell(v: unknown): string {
-  const s = v === null || v === undefined ? "" : String(v);
+  let s = v === null || v === undefined ? "" : String(v);
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 function toCsv(headers: string[], rows: (unknown[])[]): string {

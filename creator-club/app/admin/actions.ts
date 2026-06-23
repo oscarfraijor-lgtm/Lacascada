@@ -41,7 +41,13 @@ async function baseUrl(): Promise<string> {
 // dominio no está verificado (modo test entrega solo al dueño de la cuenta), NO
 // rompe la acción del equipo. Solo registra el fallo. DEPENDE de verificar el
 // dominio para llegar de verdad a las creadoras.
+//
+// Multimarca: el correo se brandea con la marca SELECCIONADA (ctx.brand), no la
+// del env, para no exponerle a la creadora el nombre/colores de OTRA marca. El CTA
+// apunta al club correcto: el host actual si es la marca de este deploy, su
+// deployUrl si es otra marca gestionada, o se omite si esa marca no tiene deploy.
 async function notifyCreator(
+  ctx: AdminContext,
   to: string,
   subject: string,
   heading: string,
@@ -49,8 +55,13 @@ async function notifyCreator(
   ctaPath?: string
 ): Promise<void> {
   try {
-    const cta = ctaPath ? { url: `${await baseUrl()}${ctaPath}`, label: "Abrir mi club" } : undefined;
-    await sendNotification(to, { subject, heading, body, cta });
+    let url: string | undefined;
+    if (ctaPath) {
+      if (ctx.isEnvBrand) url = `${await baseUrl()}${ctaPath}`;
+      else if (ctx.brand.deployUrl) url = `${ctx.brand.deployUrl}${ctaPath}`;
+    }
+    const cta = url ? { url, label: "Abrir mi club" } : undefined;
+    await sendNotification(to, { subject, heading, body, cta }, ctx.brand);
   } catch (e) {
     console.warn("[notify] no se pudo enviar el aviso a la creadora:", e);
   }
@@ -152,6 +163,7 @@ export async function cambiarEstadoEntrega(formData: FormData) {
       const title = campaign?.title ?? part.campaignId;
       if (status === "aceptada") {
         await notifyCreator(
+          ctx,
           part.creatorEmail,
           `Te aceptamos en ${title}`,
           `¡Te aceptamos en ${title}!`,
@@ -161,6 +173,7 @@ export async function cambiarEstadoEntrega(formData: FormData) {
       } else if (status === "aprobada") {
         const stars = campaign?.stars ?? 0;
         await notifyCreator(
+          ctx,
           part.creatorEmail,
           `Aprobamos tu entrega de ${title}`,
           `¡Entrega aprobada! ${title}`,
@@ -171,6 +184,7 @@ export async function cambiarEstadoEntrega(formData: FormData) {
         );
       } else {
         await notifyCreator(
+          ctx,
           part.creatorEmail,
           `Tu entrega de ${title} necesita ajustes`,
           `Revisemos tu entrega de ${title}`,
@@ -228,6 +242,7 @@ export async function cambiarEstadoCanje(formData: FormData) {
     const title = canje.rewardTitle || canje.rewardId;
     if (status === "aprobada") {
       await notifyCreator(
+        ctx,
         canje.creatorEmail,
         `Aprobamos tu canje: ${title}`,
         `¡Canje aprobado! ${title}`,
@@ -236,6 +251,7 @@ export async function cambiarEstadoCanje(formData: FormData) {
       );
     } else if (status === "entregada") {
       await notifyCreator(
+        ctx,
         canje.creatorEmail,
         `Entregamos tu recompensa: ${title}`,
         `¡Recompensa entregada! ${title}`,
@@ -244,6 +260,7 @@ export async function cambiarEstadoCanje(formData: FormData) {
       );
     } else if (status === "rechazada") {
       await notifyCreator(
+        ctx,
         canje.creatorEmail,
         `Tu solicitud de ${title} no procedió`,
         `Sobre tu solicitud de ${title}`,

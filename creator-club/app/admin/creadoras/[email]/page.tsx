@@ -30,6 +30,7 @@ const PART_META: Record<string, { label: string; cls: string }> = {
 const CANJE_META: Record<string, { label: string; cls: string }> = {
   solicitada: { label: "Solicitada", cls: "bg-brand/15 text-brand-deep" },
   aprobada: { label: "Aprobada", cls: "bg-lime text-ink" },
+  entregada: { label: "Entregada", cls: "bg-ink text-white" },
   rechazada: { label: "Rechazada", cls: "bg-ink/10 text-ink-soft" },
 };
 

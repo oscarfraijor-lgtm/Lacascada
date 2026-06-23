@@ -2,6 +2,12 @@
 // sin key, modo dev: imprime el enlace en la terminal y lo devuelve para
 // mostrarlo en pantalla (así se puede probar sin cuenta de correo).
 import { BRAND } from "@/lib/schema";
+import type { BrandConfig } from "@/lib/brands";
+
+// Marca con la que se brandea el correo. Por defecto la del env (magic link, lado
+// público), pero el admin multimarca pasa ctx.brand de la marca SELECCIONADA para
+// no exponerle a la creadora el nombre/colores de OTRA marca.
+type MailBrand = Pick<BrandConfig, "name" | "club" | "cream" | "ink" | "violetDeep" | "lime">;
 
 export function mailerConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
@@ -50,19 +56,23 @@ export interface Notification {
   cta?: { url: string; label: string };
 }
 
-export async function sendNotification(to: string, n: Notification): Promise<SendResult> {
+export async function sendNotification(
+  to: string,
+  n: Notification,
+  brand: MailBrand = BRAND
+): Promise<SendResult> {
   if (!mailerConfigured()) {
-    console.log(`\n📧 [${BRAND.club}] Para ${to}: ${n.subject}\n${n.heading} — ${n.body}\n`);
+    console.log(`\n📧 [${brand.club}] Para ${to}: ${n.subject}\n${n.heading}: ${n.body}\n`);
     return { delivered: "console" };
   }
-  const from = process.env.RESEND_FROM || `${BRAND.club} <onboarding@resend.dev>`;
+  const from = process.env.RESEND_FROM || `${brand.club} <onboarding@resend.dev>`;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to: [to], subject: n.subject, html: notificationHtml(n) }),
+    body: JSON.stringify({ from, to: [to], subject: n.subject, html: notificationHtml(n, brand) }),
   });
   if (!res.ok) {
     throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -70,17 +80,17 @@ export async function sendNotification(to: string, n: Notification): Promise<Sen
   return { delivered: "email" };
 }
 
-function notificationHtml(n: Notification): string {
+function notificationHtml(n: Notification, brand: MailBrand): string {
   const cta = n.cta
-    ? `<p style="margin:24px 0"><a href="${n.cta.url}" style="background:${BRAND.lime};color:${BRAND.ink};text-decoration:none;font-weight:800;padding:13px 26px;border-radius:999px;display:inline-block">${n.cta.label}</a></p>`
+    ? `<p style="margin:24px 0"><a href="${n.cta.url}" style="background:${brand.lime};color:${brand.ink};text-decoration:none;font-weight:800;padding:13px 26px;border-radius:999px;display:inline-block">${n.cta.label}</a></p>`
     : "";
-  return `<!doctype html><html><body style="margin:0;background:${BRAND.cream};font-family:Arial,Helvetica,sans-serif;color:${BRAND.ink}">
+  return `<!doctype html><html><body style="margin:0;background:${brand.cream};font-family:Arial,Helvetica,sans-serif;color:${brand.ink}">
   <div style="max-width:480px;margin:0 auto;padding:32px 24px">
-    <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.violetDeep};font-weight:700">${BRAND.club} · ${BRAND.name}</p>
+    <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${brand.violetDeep};font-weight:700">${brand.club} · ${brand.name}</p>
     <h1 style="font-size:22px;margin:8px 0 6px">${n.heading}</h1>
-    <p style="color:${BRAND.ink};opacity:.85;line-height:1.5">${n.body}</p>
+    <p style="color:${brand.ink};opacity:.85;line-height:1.5">${n.body}</p>
     ${cta}
-    <p style="font-size:12px;color:${BRAND.ink};opacity:.55;line-height:1.5">Recibes este correo porque eres parte del ${BRAND.club}.</p>
+    <p style="font-size:12px;color:${brand.ink};opacity:.55;line-height:1.5">Recibes este correo porque eres parte del ${brand.club}.</p>
   </div></body></html>`;
 }
 
