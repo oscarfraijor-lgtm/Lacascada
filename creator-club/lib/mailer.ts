@@ -13,6 +13,19 @@ export function mailerConfigured(): boolean {
   return !!process.env.RESEND_API_KEY;
 }
 
+// Remitente del correo. MULTIMARCA con UNA sola cuenta + UN solo dominio Resend:
+//   RESEND_FROM_ADDRESS = la dirección compartida (ej. "no-reply@club.indiepro.com.mx").
+//   El NOMBRE visible se arma solo con la marca ("Color Club", "Anyeluz Club", ...),
+//   así el MISMO valor del env sirve para TODOS los deploys de marca. El dominio se
+//   verifica una vez en Resend (el plan gratis permite 1 dominio, que es lo que se
+//   necesita). `RESEND_FROM` (string completo) sigue funcionando como override total.
+function fromHeader(club: string): string {
+  const addr = process.env.RESEND_FROM_ADDRESS?.trim();
+  if (addr) return `${club} <${addr}>`;
+  if (process.env.RESEND_FROM?.trim()) return process.env.RESEND_FROM.trim();
+  return `${club} <onboarding@resend.dev>`; // sandbox (solo entrega al dueño de la cuenta)
+}
+
 export interface SendResult {
   delivered: "email" | "console";
   devLink?: string; // presente solo en modo dev (sin Resend)
@@ -24,7 +37,7 @@ export async function sendMagicLink(email: string, url: string): Promise<SendRes
     return { delivered: "console", devLink: url };
   }
 
-  const from = process.env.RESEND_FROM || `${BRAND.club} <onboarding@resend.dev>`;
+  const from = fromHeader(BRAND.club);
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -65,7 +78,7 @@ export async function sendNotification(
     console.log(`\n📧 [${brand.club}] Para ${to}: ${n.subject}\n${n.heading}: ${n.body}\n`);
     return { delivered: "console" };
   }
-  const from = process.env.RESEND_FROM || `${brand.club} <onboarding@resend.dev>`;
+  const from = fromHeader(brand.club);
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
