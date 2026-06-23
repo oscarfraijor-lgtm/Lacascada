@@ -35,11 +35,21 @@ export function profileComplete(c: MissionContext): boolean {
   return !!(c.name?.trim() && c.handle?.trim() && c.portfolio?.trim() && c.city?.trim());
 }
 
+// ¿El valor parece un @afiliado o un link de TikTok Shop? (no texto basura). Se
+// usa para no otorgar las estrellas de "Conecta tu afiliado" por cualquier cosa.
+// Lenient a propósito: acepta @usuario, usuario, usuario.con.puntos o una URL.
+export function looksLikeAffiliate(s?: string): boolean {
+  const v = (s || "").trim();
+  if (!v) return false;
+  if (/^https?:\/\/\S+$/i.test(v)) return true; // link (ej. tienda/afiliado TTS)
+  return /^@?[a-zA-Z0-9._]{2,30}$/.test(v); // @handle o handle
+}
+
 // ¿La condición "auto" de esta misión está cumplida? (misiones derivadas de datos).
 // Solo las dos misiones de onboarding conocidas; cualquier otra "auto" cae a false.
 function autoMet(mission: Mission, c: MissionContext): boolean {
   if (mission.id === "perfil") return profileComplete(c);
-  if (mission.id === "conectar-tt") return !!c.affiliateHandle?.trim();
+  if (mission.id === "conectar-tt") return looksLikeAffiliate(c.affiliateHandle);
   return false;
 }
 

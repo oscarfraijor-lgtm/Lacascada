@@ -15,13 +15,17 @@ import {
 } from "@/lib/rewards";
 import {
   type MissionUIState,
+  type MissionContext,
   missionView,
   starsFromMissions,
   completedMissionIds,
 } from "@/lib/missions";
 import { currentEmail } from "@/lib/session";
 import { getClubViewer } from "@/lib/club-viewer";
+import type { Campaign } from "@/lib/campaigns";
 import {
+  type Participation,
+  type MisionCompletion,
   participationsFor,
   listParticipations,
   listCampaigns,
@@ -31,6 +35,20 @@ import {
   listMisiones,
   starsFromApproved,
 } from "@/lib/store";
+
+// Estrellas reales de una creadora = entregas de campaña APROBADAS + misiones
+// completadas. UNA sola fórmula para que el nivel, el dashboard, el candado de
+// recompensas y el ranking nunca se contradigan. El candado de GMV de las
+// recompensas con costo es independiente (lib/rewards), así que sumar aquí las
+// estrellas de estatus NO abre ninguna fuga.
+export function combinedStars(
+  parts: Participation[],
+  campaigns: Campaign[],
+  ctx: MissionContext,
+  completions: MisionCompletion[]
+): number {
+  return starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, ctx, completions);
+}
 
 export interface MissionWithStatus extends Mission {
   state: MissionUIState;
@@ -51,7 +69,7 @@ export async function getCreator(): Promise<Creator | null> {
     listCampaigns(),
     misionesFor(session.email),
   ]);
-  const stars = starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, session, completions);
+  const stars = combinedStars(parts, campaigns, session, completions);
   const gmvMXN = session.gmvMXN ?? 0;
   return {
     id: session.id ?? "",
@@ -179,12 +197,15 @@ export async function getRewardsView(): Promise<RewardsView> {
       })),
     };
   }
-  const [parts, campaigns, canjes] = await Promise.all([
+  const [parts, campaigns, canjes, completions] = await Promise.all([
     participationsFor(session.email),
     listCampaigns(),
     canjesFor(session.email),
+    misionesFor(session.email),
   ]);
-  const stars = starsFromApproved(parts, campaigns);
+  // Mismo total que el nivel/dashboard (combinedStars): el candado de recompensas
+  // no debe contradecir el nivel mostrado. El gate de GMV (rewards) sigue aparte.
+  const stars = combinedStars(parts, campaigns, session, completions);
   const gmv = session.gmvMXN ?? 0;
   const canjeByReward = new Map(canjes.map((c) => [c.rewardId, c]));
   return {

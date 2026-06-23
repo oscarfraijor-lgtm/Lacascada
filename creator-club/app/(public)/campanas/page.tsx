@@ -189,8 +189,9 @@ function JoinedBlock({
           type="url"
           required
           defaultValue={part.link}
+          aria-label="Link de tu video"
           placeholder="https://tiktok.com/@tu/video..."
-          className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+          className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2 text-sm text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
         />
         <SubmitButton
           pendingLabel="…"

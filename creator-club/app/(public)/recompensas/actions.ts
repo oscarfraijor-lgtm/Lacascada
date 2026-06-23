@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentCreator } from "@/lib/session";
-import { participationsFor, listCampaigns, requestCanje, starsFromApproved } from "@/lib/store";
+import { participationsFor, listCampaigns, requestCanje, misionesFor } from "@/lib/store";
+import { combinedStars } from "@/lib/data";
 import { getBrand } from "@/lib/brands";
 import { rewardState } from "@/lib/rewards";
 
@@ -18,8 +19,12 @@ export async function solicitarCanje(formData: FormData) {
   const reward = getBrand().rewards.find((r) => r.id === rewardId);
   if (!reward) return;
 
-  const [parts, campaigns] = await Promise.all([participationsFor(me.email), listCampaigns()]);
-  const stars = starsFromApproved(parts, campaigns);
+  const [parts, campaigns, completions] = await Promise.all([
+    participationsFor(me.email),
+    listCampaigns(),
+    misionesFor(me.email),
+  ]);
+  const stars = combinedStars(parts, campaigns, me, completions);
   const gmv = me.gmvMXN ?? 0;
 
   // Solo se solicita lo que está desbloqueado. El estatus no se "solicita"

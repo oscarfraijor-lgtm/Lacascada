@@ -87,10 +87,10 @@ export default async function CuentaPage({
             type="text"
             defaultValue={me.affiliateHandle}
             placeholder="@tu_cuenta_afiliada o link de TikTok Shop"
-            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
           />
           <p className="mt-1 text-[11px] text-ink-soft">
-            La cuenta con la que generas ventas. Nos sirve para acreditar tu GMV y tus recompensas.
+            La cuenta con la que generas ventas. Nos sirve para acreditar tus ventas en TikTok Shop y tus recompensas.
           </p>
         </label>
 
@@ -103,7 +103,7 @@ export default async function CuentaPage({
             rows={2}
             defaultValue={me.portfolio}
             placeholder="Pega 1-3 links de videos tuyos… o escribe 'voy empezando'."
-            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
           />
         </label>
 
@@ -157,7 +157,7 @@ function Field({
         defaultValue={defaultValue}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+        className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
       />
     </label>
   );

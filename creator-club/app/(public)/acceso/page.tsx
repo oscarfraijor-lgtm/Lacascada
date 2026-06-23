@@ -90,7 +90,7 @@ export default async function AccesoPage({
                 required
                 defaultValue={email}
                 placeholder="tu@correo.com"
-                className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
+                className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
               />
             </label>
             <button

@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
-import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, starsFromApproved, type Participation } from "@/lib/store";
-import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
-import { levelForStars, nextLevel, BRAND, MISSIONS } from "@/lib/schema";
-import { starsFromMissions } from "@/lib/missions";
+import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, type Participation } from "@/lib/store";
+import { getMissions, getLeaderboard, getRewardsView, combinedStars } from "@/lib/data";
+import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
 import RewardStateChip from "@/components/RewardStateChip";
@@ -32,7 +31,7 @@ export default async function Home() {
   ]);
   const byId = new Map(campaigns.map((c) => [c.id, c]));
   // Estrellas reales = entregas aprobadas + misiones completadas (mismo cálculo que getCreator).
-  const stars = starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, session, completions);
+  const stars = combinedStars(parts, campaigns, session, completions);
   const myCampaigns = parts
     .map((p) => ({ part: p, c: byId.get(p.campaignId) }))
     .filter((x): x is { part: Participation; c: Campaign } => !!x.c);
@@ -87,11 +86,11 @@ export default async function Home() {
               Para llegar a <b className="text-lime">{next.badge} {next.name}</b>:
             </p>
             <Bar label="Estrellas" value={stars} max={next.minStars} />
-            {next.minGmvMXN > 0 && <Bar label="Ventas atribuidas (MXN)" value={gmv} max={next.minGmvMXN} />}
+            {next.minGmvMXN > 0 && <Bar label="Ventas atribuibles (MXN)" value={gmv} max={next.minGmvMXN} />}
             <p className="text-xs text-white/50">
               {gmv > 0
-                ? `Ventas atribuidas: $${gmv.toLocaleString("es-MX")} MXN${session.gmvDate ? ` · actualizado al ${session.gmvDate}` : ""}`
-                : "Tus ventas atribuidas aparecen aquí en cuanto el equipo las registre."}
+                ? `Ventas atribuibles: $${gmv.toLocaleString("es-MX")} MXN${session.gmvDate ? ` · actualizado al ${session.gmvDate}` : ""}`
+                : "Tus ventas atribuibles aparecen aquí en cuanto el equipo las registre."}
             </p>
           </div>
         ) : (

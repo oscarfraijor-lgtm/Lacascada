@@ -7,7 +7,7 @@ export default async function LeaderboardPage() {
     <div className="space-y-5">
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Ranking del club</h1>
-        <p className="text-sm text-ink-soft">Las creadoras que más brillan este mes.</p>
+        <p className="text-sm text-ink-soft">Las creadoras que más brillan en el club.</p>
       </header>
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">

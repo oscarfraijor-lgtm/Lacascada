@@ -56,19 +56,23 @@ const CD_LEVELS: Level[] = [
   { key: "embajadora", name: "Embajadora", minStars: 4000, minGmvMXN: 150000, perk: "Fee de campaña + experiencia CDMX + kit de creadora + co-creación.", badge: "👑" },
 ];
 
+// MISIONES = hitos ATEMPORALES de progresión de la creadora (su "camino"):
+// onboarding (perfil/afiliado/inducción), preparación de perfil, hitos de venta
+// (bloqueados sin GMV) y comunidad. Las ACTIVACIONES rotativas con brief/cupo/
+// producto físico o evento (Prueba 30 Noches, Unboxing, Lives, Reseña, Recámara)
+// viven como CAMPAÑAS, NO como misiones (ver CD_CAMPAIGN_SEED).
+// CONTRATO: ninguna misión comparte id ni título con una campaña. Si lo hicieran,
+// la misma acción pagaría estrellas DOS veces (lib/data.ts suma el ledger de
+// campañas + el de misiones sin cruce). catalogCollisions() lo verifica en dev.
 const CD_MISSIONS: Mission[] = [
   { id: "perfil", title: "Completa tu perfil", detail: "Cuéntanos de ti y acepta los términos del club.", stars: 50, category: "perfil", action: "auto", requiresSale: false },
   { id: "conectar-tt", title: "Conecta tu TikTok afiliado", detail: "Vincula tu cuenta al shop de Color Dreams (obligatorio para ganar).", stars: 100, category: "perfil", action: "auto", requiresSale: false },
-  { id: "induccion", title: "Ve el video de inducción", detail: "Aprende cómo funciona el club en 3 minutos.", stars: 30, category: "perfil", action: "watch", requiresSale: false },
-  { id: "primer-video", title: "Tu primer video con link", detail: "Publica un video con producto y tu link de afiliado de TTS.", stars: 150, category: "contenido", action: "submit", requiresSale: false },
-  { id: "prueba-30", title: "Prueba 30 Noches", detail: "Unboxing + armado en cámara de tu colchón Color Dreams.", stars: 250, category: "contenido", action: "submit", requiresSale: false },
-  { id: "showcase", title: "Pinned + showcase", detail: "Fija tu mejor video y agrega el producto a tu perfil de TTS.", stars: 100, category: "contenido", action: "submit", requiresSale: false },
+  { id: "induccion", title: "Conoce cómo funciona el club", detail: "Aprende cómo funciona el club en 3 minutos.", stars: 30, category: "perfil", action: "watch", requiresSale: false },
+  { id: "showcase", title: "Fija tu mejor video", detail: "Fija tu mejor video y agrega el producto a tu perfil de TikTok Shop.", stars: 100, category: "contenido", action: "submit", requiresSale: false },
   { id: "primera-venta", title: "Tu primera venta", detail: "Genera tu primera venta atribuible en TikTok Shop.", stars: 300, category: "venta", action: "sale", requiresSale: true },
-  { id: "gmv-2k", title: "Genera ventas", detail: "Tus ventas atribuibles en TikTok Shop cuentan para tu nivel y tus recompensas.", stars: 100, category: "venta", action: "sale", requiresSale: true },
+  { id: "gmv-2k", title: "Genera ventas", detail: "Tus ventas en TikTok Shop cuentan para tu nivel y tus recompensas.", stars: 100, category: "venta", action: "sale", requiresSale: true },
   { id: "5-ventas", title: "5 ventas en el mes", detail: "Bonus por cerrar 5 ventas atribuibles en el mes.", stars: 250, category: "venta", action: "sale", requiresSale: true },
-  { id: "cohost-live", title: "Co-host en Live de marca", detail: "Acompaña un Live oficial de Color Dreams.", stars: 200, category: "live", action: "submit", requiresSale: false },
-  { id: "tu-live", title: "Hostea tu Live", detail: "Transmite mostrando Color Dreams (mínimo 30 min). GMV en Live cuenta doble.", stars: 250, category: "live", action: "submit", requiresSale: false },
-  { id: "resena", title: "Reseña tras 30 noches", detail: "Comparte tu experiencia real en video.", stars: 150, category: "contenido", action: "submit", requiresSale: false },
+  { id: "tu-live", title: "Hostea tu Live", detail: "Transmite mostrando Color Dreams (mínimo 30 min). Tus ventas en Live cuentan para tu nivel y tus recompensas.", stars: 250, category: "live", action: "submit", requiresSale: false },
   { id: "referir", title: "Refiere a otra creadora", detail: "Invita a alguien que se active y venda.", stars: 200, category: "comunidad", action: "sale", requiresSale: true },
 ];
 
@@ -77,7 +81,7 @@ const CD_MISSIONS: Mission[] = [
 const CD_REWARDS: Reward[] = [
   { id: "r-status", title: "Subir de nivel + insignia", detail: "Estatus, badge y acceso a misiones premium.", cost: "Acumula estrellas", kind: "estatus", payer: "club", minStars: 0, minGmvMXN: 0 },
   { id: "r-muestra", title: "Muestra de colchón", detail: "Pruébalo 30 noches (atado a tu primera venta).", cost: "Nivel Soñadora + tu primera venta", kind: "producto", payer: "marca", minStars: 500, minGmvMXN: 0 },
-  { id: "r-boost", title: "Boost de comisión +1%", detail: "Más ganancia por cada venta vía Targeted Collab.", cost: "Nivel Soñadora + tu primera venta", kind: "boost", payer: "marca", minStars: 500, minGmvMXN: 0 },
+  { id: "r-boost", title: "Boost de comisión +1%", detail: "Ganas 1% extra de comisión por cada venta que cierres.", cost: "Nivel Soñadora + tu primera venta", kind: "boost", payer: "marca", minStars: 500, minGmvMXN: 0 },
   { id: "r-colchon", title: "Colchón propio (regalo)", detail: "Tuyo para siempre.", cost: "Nivel Insomne Pro · $60K GMV", kind: "producto", payer: "marca", minStars: 1500, minGmvMXN: 60000 },
   { id: "r-cdmx", title: "Experiencia CDMX", detail: "Noche de Sueños + sesión de fotos + kit de creadora.", cost: "Nivel Embajadora · $150K GMV", kind: "experiencia", payer: "marca", minStars: 4000, minGmvMXN: 150000 },
 ];
@@ -85,7 +89,7 @@ const CD_REWARDS: Reward[] = [
 const CD_CAMPAIGN_SEED: Campaign[] = [
   { id: "prueba-30", title: "Prueba 30 Noches", requirements: "Perfil completo + dirección de envío. No necesitas seguidores.", brand: "Color Dreams", brief: "Recibe tu colchón, haz el unboxing y arma en cámara. Documenta tus primeras noches con tu link de afiliado.", reward: "Colchón a prueba + 250 estrellas", stars: 250, deadline: "Cupo abierto", tag: "Producto", open: true },
   { id: "unboxing-express", title: "Unboxing Express", requirements: "Perfil completo + link de afiliado de TikTok Shop.", brand: "Color Dreams", brief: "Tu primer video mostrando cómo llega en caja y se infla en minutos. Pega tu link de TikTok Shop.", reward: "150 estrellas + boost de comisión", stars: 150, deadline: "Cupo abierto", tag: "Contenido", open: true },
-  { id: "hot-sale-live", title: "Hot Sale Live", requirements: "Haber publicado al menos 1 video con Color Dreams + link de afiliado.", brand: "Color Dreams", brief: "Co-host en un Live oficial durante Hot Sale. Las ventas en Live cuentan doble.", reward: "Fee de Live + 200 estrellas", stars: 200, deadline: "Próximamente", tag: "Live", open: true },
+  { id: "hot-sale-live", title: "Hot Sale Live", requirements: "Haber publicado al menos 1 video con Color Dreams + link de afiliado.", brand: "Color Dreams", brief: "Co-host en un Live oficial durante Hot Sale. Tus ventas en Live cuentan para tu nivel y tus recompensas.", reward: "Fee de Live + 200 estrellas", stars: 200, deadline: "Próximamente", tag: "Live", open: true },
   { id: "recamara-makeover", title: "Recámara Makeover", requirements: "Perfil completo + dirección de envío. No necesitas seguidores.", brand: "Color Dreams", brief: "Antes y después de tu recámara con tu Color Dreams. Estilo lifestyle, súper compartible.", reward: "200 estrellas", stars: 200, deadline: "Cupo abierto", tag: "Contenido", open: true },
   { id: "resena-real", title: "Reseña Real", requirements: "Haber completado Prueba 30 Noches.", brand: "Color Dreams", brief: "Tras 30 noches, comparte tu opinión honesta en video. La autenticidad vende.", reward: "150 estrellas", stars: 150, deadline: "Cupo abierto", tag: "Reseña", open: true },
 ];
@@ -198,6 +202,29 @@ export function getAllBrandSlugs(): string[] {
   return Object.keys(BRANDS);
 }
 
+// Contrato del catálogo: misiones (hitos) y campañas (activaciones) deben ser
+// DISJUNTAS. Si una misión comparte id o título (normalizado) con una campaña, la
+// misma acción pagaría estrellas dos veces (lib/data.ts suma los dos ledgers sin
+// cruce). Devuelve la lista de colisiones (vacía = sano).
+function normTitle(s: string): string {
+  return (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+export function catalogCollisions(missions: Mission[], campaigns: Campaign[]): string[] {
+  const campIds = new Set(campaigns.map((c) => c.id));
+  const campTitles = new Set(campaigns.map((c) => normTitle(c.title)));
+  const out: string[] = [];
+  for (const m of missions) {
+    if (campIds.has(m.id)) out.push(`id '${m.id}'`);
+    else if (campTitles.has(normTitle(m.title))) out.push(`título '${m.title}'`);
+  }
+  return out;
+}
+
 // ¿La marca define su PROPIA mecánica (no hereda la de Color Dreams)? Las
 // plantillas sin levels/missions/rewards/campaignSeed heredan copy de Color
 // Dreams; útil para avisar antes de deployar público o aprobar canjes con GMV.
@@ -230,5 +257,16 @@ export function getBrand(): BrandConfig {
       `[brands] '${slug}' no tiene mecánica propia: hereda misiones/recompensas/campañas de Color Dreams (copy de otra marca). NO deployar público sin definir levels/missions/rewards/campaignSeed.`
     );
   }
-  return getBrandConfig(slug) ?? getBrandConfig("color-dreams")!;
+  const cfg = getBrandConfig(slug) ?? getBrandConfig("color-dreams")!;
+  // Tripwire en dev: avisa si una misión y una campaña comparten id/título
+  // (doble-conteo de estrellas). En prod no corre.
+  if (process.env.NODE_ENV !== "production") {
+    const cols = catalogCollisions(cfg.missions, cfg.campaignSeed);
+    if (cols.length) {
+      console.error(
+        `[brands] '${cfg.slug}': misión y campaña comparten ${cols.join(", ")} -> la misma acción paga estrellas dos veces. Una actividad debe vivir en UN solo catálogo (misión = hito, campaña = activación).`
+      );
+    }
+  }
+  return cfg;
 }

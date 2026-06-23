@@ -32,3 +32,11 @@ body {
 .font-display {
   font-family: var(--font-rhd), system-ui, sans-serif;
 }
+
+/* Inputs a 16px: iOS Safari hace auto-zoom al enfocar campos < 16px (los de
+   entrega de link/perfil usan text-sm = 14px). Mantiene el contexto en móvil. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
