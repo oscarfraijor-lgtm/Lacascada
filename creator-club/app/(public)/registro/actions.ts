@@ -24,7 +24,7 @@ export async function registrar(formData: FormData) {
   // Consentimiento explícito (LFPDPPP); también va en el server, no solo en el HTML.
   if (!consent) redirect("/registro?error=consent");
   // El equipo entra por /operador; nadie se auto-registra como admin (evita escalado).
-  if (isAdmin(email)) redirect("/acceso");
+  if (isAdmin(email)) redirect("/operador");
 
   // Crea la cuenta si es nueva (con la prueba de consentimiento: fecha + versión).
   // NO inicia sesión: registrarse no prueba que el correo es tuyo. Se manda un

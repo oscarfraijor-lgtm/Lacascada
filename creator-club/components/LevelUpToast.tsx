@@ -7,10 +7,12 @@ import { Sparkles, X } from "lucide-react";
 // último nivel visto y solo festeja un AUMENTO real (no en la primera carga ni al
 // recargar). Sin confeti ni look "hecho por IA": una franja sobria, descartable.
 export default function LevelUpToast({
+  creatorId,
   levelIndex,
   levelName,
   badge,
 }: {
+  creatorId: string; // namespacea el "último nivel visto" por creadora (navegador compartido)
   levelIndex: number;
   levelName: string;
   badge: string;
@@ -18,14 +20,14 @@ export default function LevelUpToast({
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const KEY = "cc_seen_level";
+    const KEY = `cc_seen_level:${creatorId}`;
     const seen = Number(localStorage.getItem(KEY) ?? "-1");
     if (levelIndex > seen) {
       // Solo festeja si ya había un nivel registrado antes (subió de verdad).
       if (seen >= 0) setShow(true);
       localStorage.setItem(KEY, String(levelIndex));
     }
-  }, [levelIndex]);
+  }, [levelIndex, creatorId]);
 
   if (!show) return null;
   return (

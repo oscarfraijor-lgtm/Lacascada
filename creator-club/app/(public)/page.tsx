@@ -60,9 +60,9 @@ export default async function Home({
     <div className="space-y-6">
       {isAdminPreview && <AdminPreviewBanner />}
       {!isAdminPreview && (
-        <LevelUpToast levelIndex={levelIndex} levelName={level.name} badge={level.badge} />
+        <LevelUpToast creatorId={session.email} levelIndex={levelIndex} levelName={level.name} badge={level.badge} />
       )}
-      {bienvenida && (
+      {bienvenida && !isAdminPreview && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-lime/60 bg-lime/20 px-4 py-3 text-sm font-semibold text-ink">
           <span>
             ¡Bienvenida al club, {creatorName.split(" ")[0]}!{" "}
@@ -90,7 +90,7 @@ export default async function Home({
             <Link href="/cuenta" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/70 underline transition hover:text-lime">
               <UserCog size={12} /> Editar perfil
             </Link>
-            {profileIncomplete && (
+            {profileIncomplete && !isAdminPreview && (
               <Link
                 href="/cuenta"
                 className="mt-2 flex w-fit items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-bold text-ink"
