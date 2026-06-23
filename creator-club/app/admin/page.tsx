@@ -3,6 +3,7 @@ import { listCampaigns, listParticipations } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
+import SubmitButton from "@/components/SubmitButton";
 import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from "./actions";
 
 export default async function AdminCampanasPage() {
@@ -26,12 +27,12 @@ export default async function AdminCampanasPage() {
         </h2>
         <form action={crearCampana} className="space-y-4">
           <CampaignFields brandName={ctx.brand.name} />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Creando…"
             className="font-display rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink transition hover:brightness-95"
           >
             Crear campaña
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -73,12 +74,12 @@ export default async function AdminCampanasPage() {
               <input type="hidden" name="id" value={c.id} />
               <CampaignFields c={c} brandName={ctx.brand.name} />
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="Guardando…"
                   className="font-display flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
                 >
                   <Save size={15} /> Guardar
-                </button>
+                </SubmitButton>
               </div>
             </form>
 

@@ -1,8 +1,11 @@
-import { Check, X, RotateCcw, Lock, Star, Download, PackageCheck } from "lucide-react";
+import { Check, X, RotateCcw, Lock, Star, Download, PackageCheck, Clock } from "lucide-react";
 import { listCanjes, listCreators } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
+import SubmitButton from "@/components/SubmitButton";
+import { relativeAge } from "@/lib/time";
+import { REJECTION_REASONS } from "@/lib/rejection-reasons";
 import { rewardHasCost, canApproveCanje } from "@/lib/rewards";
 import { cambiarEstadoCanje } from "../actions";
 
@@ -41,6 +44,7 @@ export default async function AdminCanjesPage() {
         .join(" ")
         .toLowerCase(),
       status: c.status,
+      sort: { age: c.createdAt ?? "" },
       node: (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4">
           <div className="min-w-0">
@@ -49,6 +53,11 @@ export default async function AdminCanjesPage() {
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.cls}`}>
                 {meta.label}
               </span>
+              {c.status === "solicitada" && c.createdAt && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+                  <Clock size={11} /> {relativeAge(c.createdAt)}
+                </span>
+              )}
               {hasCost ? (
                 <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-deep">
                   con costo
@@ -96,15 +105,16 @@ export default async function AdminCanjesPage() {
                 <input type="hidden" name="status" value="rechazada" />
                 <input
                   name="reason"
+                  list="motivos-rechazo-canje"
                   placeholder="Motivo…"
-                  className="w-24 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
+                  className="w-28 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
                 />
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="…"
                   className="flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-ink/10"
                 >
                   <X size={14} /> Rechazar
-                </button>
+                </SubmitButton>
               </form>
             )}
             {c.status === "aprobada" && (
@@ -148,6 +158,13 @@ export default async function AdminCanjesPage() {
         GMV atribuible. Captura el GMV de la creadora en la pestaña Creadoras.
       </p>
 
+      {/* Plantillas de motivo de rechazo (se sugieren en el input "Motivo…"). */}
+      <datalist id="motivos-rechazo-canje">
+        {REJECTION_REASONS.canje.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
+
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">
           Todavía no hay solicitudes de canje.
@@ -155,11 +172,16 @@ export default async function AdminCanjesPage() {
       ) : (
         <AdminFilterList
           items={items}
+          defaultStatus="solicitada"
           statuses={[
             { value: "solicitada", label: "Solicitada (por revisar)" },
             { value: "aprobada", label: "Aprobada" },
             { value: "entregada", label: "Entregada" },
             { value: "rechazada", label: "Rechazada" },
+          ]}
+          sorts={[
+            { value: "age-asc", label: "Más antiguas primero", field: "age", dir: "asc" },
+            { value: "age-desc", label: "Más recientes primero", field: "age", dir: "desc" },
           ]}
           searchPlaceholder="Buscar por creadora, correo, handle o recompensa…"
           emptyLabel="Ningún canje coincide con tu búsqueda."
@@ -184,12 +206,12 @@ function StatusButton({
     <form action={cambiarEstadoCanje}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
+      <SubmitButton
+        pendingLabel="…"
         className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition ${className}`}
       >
         {children}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

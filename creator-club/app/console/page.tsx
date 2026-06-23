@@ -53,6 +53,26 @@ export default async function ConsolePage() {
   );
   const statsBySlug = new Map<string, ClubStats | null>(statsEntries);
 
+  // Totales combinados de TODOS los clubs gestionables: dónde está el dinero y
+  // dónde el cuello de botella, sin entrar club por club.
+  const nameBySlug = new Map(rows.map((r) => [r.slug, r.name]));
+  const liveStats = statsEntries
+    .filter((e): e is readonly [string, ClubStats] => !!e[1])
+    .map(([slug, s]) => ({ slug, name: nameBySlug.get(slug) ?? slug, ...s }));
+  const totals = liveStats.reduce(
+    (a, s) => ({
+      creators: a.creators + s.creators,
+      porRevisar: a.porRevisar + s.porRevisar,
+      canjesPendientes: a.canjesPendientes + s.canjesPendientes,
+      gmvTotal: a.gmvTotal + s.gmvTotal,
+    }),
+    { creators: 0, porRevisar: 0, canjesPendientes: 0, gmvTotal: 0 }
+  );
+  const topGmv = [...liveStats].sort((a, b) => b.gmvTotal - a.gmvTotal)[0];
+  const topWork = [...liveStats]
+    .map((s) => ({ ...s, work: s.porRevisar + s.canjesPendientes }))
+    .sort((a, b) => b.work - a.work)[0];
+
   return (
     <div className="space-y-5">
       <header>
@@ -66,6 +86,35 @@ export default async function ConsolePage() {
       <p className="text-xs font-semibold text-ink-soft">
         {gestionables} de {rows.length} clubs listos para gestionar
       </p>
+
+      {/* Franja de totales combinados de todos los clubs gestionables. */}
+      {liveStats.length > 0 && (
+        <section className="rounded-2xl border border-ink/10 bg-white p-4">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-ink-soft">
+            Todos tus clubs ({liveStats.length})
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Stat label="GMV total" value={totals.gmvTotal > 0 ? `$${totals.gmvTotal.toLocaleString("es-MX")}` : "$0"} />
+            <Stat icon={<Users size={13} />} label="Creadoras" value={totals.creators.toLocaleString("es-MX")} />
+            <Stat icon={<Inbox size={13} />} label="Por revisar" value={totals.porRevisar.toLocaleString("es-MX")} highlight={totals.porRevisar > 0} />
+            <Stat icon={<Gift size={13} />} label="Canjes pend." value={totals.canjesPendientes.toLocaleString("es-MX")} highlight={totals.canjesPendientes > 0} />
+          </div>
+          {liveStats.length > 1 && (
+            <p className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-soft">
+              {topWork && topWork.work > 0 && (
+                <span>
+                  Más trabajo hoy: <b className="text-ink">{topWork.name}</b> ({topWork.work})
+                </span>
+              )}
+              {topGmv && topGmv.gmvTotal > 0 && (
+                <span>
+                  Más GMV: <b className="text-ink">{topGmv.name}</b> (${topGmv.gmvTotal.toLocaleString("es-MX")})
+                </span>
+              )}
+            </p>
+          )}
+        </section>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         {rows.map((b) => (

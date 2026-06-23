@@ -1,8 +1,11 @@
-import { Star, Check, X, RotateCcw, ExternalLink, UserCheck, Download } from "lucide-react";
+import { Star, Check, X, RotateCcw, ExternalLink, UserCheck, Download, Clock } from "lucide-react";
 import { listParticipations, listCreators, listCampaigns } from "@/lib/store";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
+import SubmitButton from "@/components/SubmitButton";
+import { relativeAge } from "@/lib/time";
+import { REJECTION_REASONS } from "@/lib/rejection-reasons";
 import { cambiarEstadoEntrega } from "../actions";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
@@ -44,14 +47,20 @@ export default async function AdminInscripcionesPage() {
         .toLowerCase(),
       status: p.status,
       tags: enRevision ? ["revisar"] : [],
+      sort: { age: p.createdAt ?? "" },
       node: (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white p-4">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="font-semibold text-ink">{creator?.name ?? p.creatorEmail}</p>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${meta.cls}`}>
                 {meta.label}
               </span>
+              {enRevision && p.createdAt && (
+                <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+                  <Clock size={11} /> {relativeAge(p.createdAt)}
+                </span>
+              )}
             </div>
             <p className="text-xs text-ink-soft">
               {campaign?.title ?? p.campaignId}
@@ -95,15 +104,16 @@ export default async function AdminInscripcionesPage() {
                 <input type="hidden" name="status" value="rechazada" />
                 <input
                   name="reason"
+                  list="motivos-rechazo-entrega"
                   placeholder="Motivo…"
-                  className="w-24 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
+                  className="w-28 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
                 />
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="…"
                   className="flex items-center gap-1 rounded-full bg-ink/5 px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-ink/10"
                 >
                   <X size={14} /> Rechazar
-                </button>
+                </SubmitButton>
               </form>
             )}
             {p.status !== "inscrita" && (
@@ -138,6 +148,13 @@ export default async function AdminInscripcionesPage() {
         </div>
       </div>
 
+      {/* Plantillas de motivo de rechazo (se sugieren en el input "Motivo…"). */}
+      <datalist id="motivos-rechazo-entrega">
+        {REJECTION_REASONS.entrega.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
+
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">
           Todavía no hay inscripciones.
@@ -145,6 +162,7 @@ export default async function AdminInscripcionesPage() {
       ) : (
         <AdminFilterList
           items={items}
+          defaultStatus="revisar"
           statuses={[
             { value: "revisar", label: "Por revisar" },
             { value: "inscrita", label: "Pendiente" },
@@ -152,6 +170,10 @@ export default async function AdminInscripcionesPage() {
             { value: "entregada", label: "Video recibido" },
             { value: "aprobada", label: "Aprobada" },
             { value: "rechazada", label: "Rechazada" },
+          ]}
+          sorts={[
+            { value: "age-asc", label: "Más antiguas primero", field: "age", dir: "asc" },
+            { value: "age-desc", label: "Más recientes primero", field: "age", dir: "desc" },
           ]}
           searchPlaceholder="Buscar por creadora, correo, handle o campaña…"
           emptyLabel="Ninguna inscripción coincide con tu búsqueda."
@@ -176,12 +198,12 @@ function StatusButton({
     <form action={cambiarEstadoEntrega}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
+      <SubmitButton
+        pendingLabel="…"
         className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition ${className}`}
       >
         {children}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

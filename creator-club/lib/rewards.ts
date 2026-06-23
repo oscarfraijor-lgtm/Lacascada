@@ -66,9 +66,20 @@ export function rewardRequirement(r: Reward): string {
   return bits.length ? `Requiere ${bits.join(" + ")}` : "Sin requisito";
 }
 
-// Gate de servidor para aprobar un canje: una recompensa con costo exige GMV
-// atribuible suficiente. Independiente de la UI (defensa en profundidad).
+// Piso global de GMV para CUALQUIER recompensa con costo (anti-fuga). Por defecto
+// 0 (no cambia el comportamiento: una recompensa puede atarse a "tu primera venta"
+// con su propio minGmvMXN). Si se define GMV_MIN_PARA_COSTO, ninguna recompensa con
+// costo se entrega por debajo de ese GMV aunque su umbral propio sea menor. Es la
+// válvula de seguridad para que un umbral 0 no termine entregando producto con $1.
+function gmvFloorForCost(): number {
+  const n = Number(process.env.GMV_MIN_PARA_COSTO ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+// Gate de servidor para aprobar/entregar un canje: una recompensa con costo exige
+// GMV atribuible suficiente. Independiente de la UI (defensa en profundidad).
 export function canApproveCanje(r: Reward, creatorGmv: number): boolean {
   if (!rewardHasCost(r)) return true;
-  return creatorGmv > 0 && creatorGmv >= (r.minGmvMXN ?? 0);
+  const min = Math.max(r.minGmvMXN ?? 0, gmvFloorForCost());
+  return creatorGmv > 0 && creatorGmv >= min;
 }

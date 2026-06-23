@@ -5,6 +5,7 @@ import { levelForStars } from "@/lib/schema";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
+import SubmitButton from "@/components/SubmitButton";
 import { capturarGmv } from "../actions";
 
 export default async function AdminCreadorasPage() {
@@ -113,12 +114,12 @@ export default async function AdminCreadorasPage() {
               className="rounded-lg border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand focus:bg-white"
             />
           </label>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
             className="font-display flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-brand-deep"
           >
             <Save size={13} /> Guardar GMV
-          </button>
+          </SubmitButton>
           <span className="ml-auto self-center text-xs text-ink-soft">
             {gmv > 0 ? `$${gmv.toLocaleString("es-MX")} MXN${creator.gmvDate ? ` · al ${creator.gmvDate}` : ""}` : "Sin GMV registrado"}
           </span>

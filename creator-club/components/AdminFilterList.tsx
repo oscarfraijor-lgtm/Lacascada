@@ -43,6 +43,7 @@ export default function AdminFilterList({
   items,
   statuses = [],
   sorts = [],
+  defaultStatus = "",
   searchPlaceholder = "Buscar por nombre, correo o handle…",
   allStatusLabel = "Todos los estados",
   emptyLabel = "Nada coincide con tu búsqueda.",
@@ -50,12 +51,13 @@ export default function AdminFilterList({
   items: FilterItem[];
   statuses?: StatusOption[];
   sorts?: SortOption[];
+  defaultStatus?: string; // estado preseleccionado al cargar (ej. "revisar")
   searchPlaceholder?: string;
   allStatusLabel?: string;
   emptyLabel?: string;
 }) {
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(defaultStatus);
   const [sort, setSort] = useState(sorts[0]?.value ?? "");
 
   const needle = q.trim().toLowerCase();
