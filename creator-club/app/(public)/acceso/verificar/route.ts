@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
   const creator = await getCreatorByEmail(result.email);
   if (creator) {
-    return NextResponse.redirect(new URL("/?acceso=1", req.url));
+    return NextResponse.redirect(new URL("/?bienvenida=1", req.url));
   }
   // Token válido pero sin cuenta (caso raro): mandar a registro.
   return NextResponse.redirect(new URL("/registro", req.url));

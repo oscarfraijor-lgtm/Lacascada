@@ -106,8 +106,12 @@ async function ensureFields() {
     { table: "Campañas", field: number("Cupo") },
     { table: "Creadoras", field: text("Portafolio") },
     { table: "Creadoras", field: text("AfiliadoHandle") },
+    { table: "Creadoras", field: text("Direccion") },
     { table: "Creadoras", field: number("GMV_MXN") },
     { table: "Creadoras", field: text("GMV_Fecha") },
+    { table: "Creadoras", field: checkbox("Consentimiento") },
+    { table: "Creadoras", field: text("ConsentimientoFecha") },
+    { table: "Creadoras", field: text("ConsentimientoVersion") },
     { table: "Canjes", field: text("Titulo") },
     { table: "Canjes", field: text("Motivo") },
   ];

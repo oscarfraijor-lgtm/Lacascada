@@ -40,7 +40,8 @@ export async function entregarVideo(formData: FormData) {
   const me = await getCurrentCreator();
   if (!me) redirect("/registro");
   // El link debe ser una URL http(s) (no se guarda texto arbitrario / javascript:).
-  if (campaignId && isHttpUrl(link)) {
+  if (campaignId) {
+    if (!isHttpUrl(link)) redirect("/campanas?err=link");
     await submitDelivery(me.email, campaignId, link);
   }
   revalidatePath("/campanas");

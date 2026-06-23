@@ -14,7 +14,12 @@ const CAT_LABEL: Record<MissionCategory, string> = {
 };
 const ORDER: MissionCategory[] = ["perfil", "contenido", "venta", "live", "comunidad"];
 
-export default async function MisionesPage() {
+export default async function MisionesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ err?: string }>;
+}) {
+  const { err } = await searchParams;
   const { creator: me, isAdminPreview } = await getClubViewer();
   if (!me) {
     return (
@@ -39,6 +44,11 @@ export default async function MisionesPage() {
   return (
     <div className="space-y-6">
       {isAdminPreview && <AdminPreviewBanner />}
+      {err === "link" && (
+        <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
+          Pega un link completo que empiece con https:// para enviar tu video.
+        </p>
+      )}
       <header>
         <h1 className="font-display text-2xl font-extrabold text-ink">Misiones</h1>
         <p className="text-sm text-ink-soft">

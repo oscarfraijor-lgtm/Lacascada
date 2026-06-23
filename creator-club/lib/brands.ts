@@ -70,8 +70,8 @@ const CD_MISSIONS: Mission[] = [
   { id: "induccion", title: "Conoce cómo funciona el club", detail: "Aprende cómo funciona el club en 3 minutos.", stars: 30, category: "perfil", action: "watch", requiresSale: false },
   { id: "showcase", title: "Fija tu mejor video", detail: "Fija tu mejor video y agrega el producto a tu perfil de TikTok Shop.", stars: 100, category: "contenido", action: "submit", requiresSale: false },
   { id: "primera-venta", title: "Tu primera venta", detail: "Genera tu primera venta atribuible en TikTok Shop.", stars: 300, category: "venta", action: "sale", requiresSale: true },
-  { id: "gmv-2k", title: "Genera ventas", detail: "Tus ventas en TikTok Shop cuentan para tu nivel y tus recompensas.", stars: 100, category: "venta", action: "sale", requiresSale: true },
-  { id: "5-ventas", title: "5 ventas en el mes", detail: "Bonus por cerrar 5 ventas atribuibles en el mes.", stars: 250, category: "venta", action: "sale", requiresSale: true },
+  { id: "gmv-2k", title: "Sigue vendiendo", detail: "Cada venta atribuible que sumas cuenta para tu nivel y tus recompensas.", stars: 100, category: "venta", action: "sale", requiresSale: true },
+  { id: "5-ventas", title: "5 ventas en un mes", detail: "Bonus por cerrar 5 ventas atribuibles en un mismo mes.", stars: 250, category: "venta", action: "sale", requiresSale: true },
   { id: "tu-live", title: "Hostea tu Live", detail: "Transmite mostrando Color Dreams (mínimo 30 min). Tus ventas en Live cuentan para tu nivel y tus recompensas.", stars: 250, category: "live", action: "submit", requiresSale: false },
   { id: "referir", title: "Refiere a otra creadora", detail: "Invita a alguien que se active y venda.", stars: 200, category: "comunidad", action: "sale", requiresSale: true },
 ];
@@ -245,6 +245,16 @@ export function getBrandConfig(slug: string): BrandConfig | null {
     rewards: cfg.rewards ?? CD_REWARDS,
     campaignSeed: cfg.campaignSeed ?? CD_CAMPAIGN_SEED,
   };
+}
+
+// ¿La marca pública de ESTE deploy está lista para mostrarse? Color Dreams sí
+// (es la base); cualquier otra marca solo si definió su mecánica propia (si no,
+// heredaría misiones/recompensas/campañas de Color Dreams, y una creadora vería
+// "colchón / 30 Noches" en otra marca). El club público se bloquea hasta que se
+// configure. NO afecta la vista previa del admin (que sí usa el fallback a propósito).
+export function publicBrandConfigured(): boolean {
+  const slug = process.env.NEXT_PUBLIC_BRAND || "color-dreams";
+  return slug === "color-dreams" || hasOwnMechanics(slug);
 }
 
 // Marca de ESTE deploy (NEXT_PUBLIC_BRAND). Es la que ve el lado público.

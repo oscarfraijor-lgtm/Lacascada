@@ -86,7 +86,13 @@ function ActionRow({ m, readOnly }: { m: MissionWithStatus; readOnly: boolean })
     if (m.done) return null;
     const href = m.id === "conectar-tt" ? "/cuenta#afiliado" : "/cuenta";
     const label = m.id === "conectar-tt" ? "Conectar mi afiliado" : "Completar mi perfil";
-    return readOnly ? <PreviewNote /> : <Cta href={href}>{label}</Cta>;
+    if (readOnly) return <PreviewNote />;
+    return (
+      <div>
+        {m.hint && <p className="mt-2 text-xs text-ink-soft">{m.hint}</p>}
+        <Cta href={href}>{label}</Cta>
+      </div>
+    );
   }
 
   // ── Misión WATCH (inducción) ──
@@ -133,6 +139,13 @@ function ActionRow({ m, readOnly }: { m: MissionWithStatus; readOnly: boolean })
           <Send size={14} /> {m.state === "enviada" ? "Actualizar" : "Enviar"}
         </SubmitButton>
       </form>
+      <p className="text-[11px] text-ink-soft/80">
+        Al enviar autorizas el uso de tu video en redes y anuncios de la marca (
+        <Link href="/legal" target="_blank" className="underline">
+          términos
+        </Link>
+        ).
+      </p>
     </div>
   );
 }

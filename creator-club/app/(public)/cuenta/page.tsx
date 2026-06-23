@@ -112,6 +112,22 @@ export default async function CuentaPage({
           <Field name="city" label="Ciudad" defaultValue={me.city} placeholder="CDMX" />
         </div>
 
+        <label className="block">
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Dirección de envío (opcional)
+          </span>
+          <textarea
+            name="shippingAddress"
+            rows={2}
+            defaultValue={me.shippingAddress}
+            placeholder="Calle, número, colonia, ciudad, CP. Solo para campañas que te mandan producto."
+            className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
+          />
+          <p className="mt-1 text-[11px] text-ink-soft">
+            Solo la usamos para enviarte producto si participas en una campaña de gifting.
+          </p>
+        </label>
+
         {/* El email es la llave de identidad: se muestra pero no se edita. */}
         <div>
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">Correo</span>

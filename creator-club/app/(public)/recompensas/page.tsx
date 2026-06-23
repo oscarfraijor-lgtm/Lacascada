@@ -19,10 +19,19 @@ const KIND_LABEL: Record<string, string> = {
 export default async function RecompensasPage() {
   const view = await getRewardsView();
   const { isAdminPreview } = await getClubViewer();
+  const desbloqueadas = view.rewards.filter((r) => r.state === "desbloqueada").length;
 
   return (
     <div className="space-y-5">
       {isAdminPreview && <AdminPreviewBanner />}
+      {view.signedIn && desbloqueadas > 0 && (
+        <div className="flex items-center gap-2 rounded-2xl border border-lime/60 bg-lime/25 px-4 py-3 text-sm font-semibold text-ink">
+          <Gift size={16} className="text-brand-deep" />
+          {desbloqueadas === 1
+            ? "Tienes 1 recompensa lista para canjear. ¡Solicítala!"
+            : `Tienes ${desbloqueadas} recompensas listas para canjear. ¡Solicítalas!`}
+        </div>
+      )}
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-ink">Recompensas</h1>

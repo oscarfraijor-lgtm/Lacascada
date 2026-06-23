@@ -28,9 +28,9 @@ export default async function Nav() {
               key={href}
               href={href}
               aria-label={label}
-              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
+              className="flex min-h-[44px] items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
             >
-              <Icon size={16} />
+              <Icon size={18} />
               <span className="hidden md:inline">{label}</span>
             </Link>
           ))}

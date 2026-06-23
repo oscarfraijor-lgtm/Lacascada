@@ -3,12 +3,14 @@ import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-r
 import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView, combinedStars } from "@/lib/data";
-import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
+import { profileComplete } from "@/lib/missions";
+import { levelForStars, nextLevel, BRAND, LEVELS } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
 import RewardStateChip from "@/components/RewardStateChip";
 import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import MissionCard from "@/components/MissionCard";
+import LevelUpToast from "@/components/LevelUpToast";
 
 const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.round((v / max) * 100)));
 
@@ -20,9 +22,15 @@ const STATUS_CHIP: Record<string, { label: string; cls: string }> = {
   inscrita: { label: "Pendiente", cls: "border-brand/30 bg-white" },
 };
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ bienvenida?: string }>;
+}) {
+  const { bienvenida } = await searchParams;
   const { creator: session, isAdminPreview } = await getClubViewer();
   if (!session) return <Welcome />;
+  const profileIncomplete = !profileComplete(session);
 
   const [parts, campaigns, completions] = await Promise.all([
     participationsFor(session.email),
@@ -46,9 +54,28 @@ export default async function Home() {
   const leaderboard = await getLeaderboard();
   const rewardsView = await getRewardsView();
 
+  const levelIndex = LEVELS.findIndex((l) => l.key === level.key);
+
   return (
     <div className="space-y-6">
       {isAdminPreview && <AdminPreviewBanner />}
+      {!isAdminPreview && (
+        <LevelUpToast levelIndex={levelIndex} levelName={level.name} badge={level.badge} />
+      )}
+      {bienvenida && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-lime/60 bg-lime/20 px-4 py-3 text-sm font-semibold text-ink">
+          <span>
+            ¡Bienvenida al club, {creatorName.split(" ")[0]}!{" "}
+            {profileIncomplete ? "Empieza por completar tu perfil." : "Mira tus misiones para empezar a ganar."}
+          </span>
+          <Link
+            href={profileIncomplete ? "/cuenta" : "/misiones"}
+            className="inline-flex items-center gap-1 rounded-full bg-ink px-3 py-1.5 text-xs font-bold text-white transition hover:bg-ink/90"
+          >
+            {profileIncomplete ? "Completar perfil" : "Ver misiones"} <ArrowRight size={13} />
+          </Link>
+        </div>
+      )}
       {/* Hero personalizado */}
       <section className="overflow-hidden rounded-3xl bg-ink text-white">
         <div className="flex flex-wrap items-center justify-between gap-4 p-6 sm:p-8">
@@ -63,6 +90,14 @@ export default async function Home() {
             <Link href="/cuenta" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/70 underline transition hover:text-lime">
               <UserCog size={12} /> Editar perfil
             </Link>
+            {profileIncomplete && (
+              <Link
+                href="/cuenta"
+                className="mt-2 flex w-fit items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-[11px] font-bold text-ink"
+              >
+                <UserCog size={11} /> Completa tu perfil · +50 estrellas
+              </Link>
+            )}
           </div>
           <div className="text-right">
             <div className="flex items-center justify-end gap-2">
@@ -148,9 +183,15 @@ export default async function Home() {
             ))}
           </div>
         ) : (
-          <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-4 text-center text-sm text-ink-soft">
-            ¡Completaste tus misiones disponibles! Vuelve cuando publiquemos más.
-          </p>
+          <Link
+            href="/campanas"
+            className="flex items-center justify-between rounded-2xl border border-dashed border-brand/40 bg-white p-4 text-brand-deep"
+          >
+            <span className="font-semibold">
+              ¡Completaste tus misiones disponibles! Sigue ganando en las campañas activas.
+            </span>
+            <ArrowRight size={18} />
+          </Link>
         )}
       </section>
 

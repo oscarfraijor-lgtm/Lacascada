@@ -22,6 +22,7 @@ export async function actualizarCuenta(formData: FormData) {
     followers: String(formData.get("followers") || "").trim(),
     city: String(formData.get("city") || "").trim(),
     portfolio: String(formData.get("portfolio") || "").trim(),
+    shippingAddress: String(formData.get("shippingAddress") || "").trim(),
   });
 
   revalidatePath("/cuenta");

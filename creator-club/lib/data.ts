@@ -57,6 +57,7 @@ export interface MissionWithStatus extends Mission {
   lockReason?: string;
   link?: string; // link enviado (misiones de contenido)
   reason?: string; // motivo de rechazo (misiones de contenido rechazadas)
+  hint?: string; // qué falta para cumplirla (ej. campos del perfil)
 }
 
 // La creadora actual (de la sesión), con estrellas reales = entregas aprobadas +
@@ -102,8 +103,19 @@ export async function getMissions(): Promise<MissionWithStatus[]> {
       lockReason: v.locked ? "Se activa con tu primera venta atribuible en TikTok Shop." : undefined,
       link: comp?.link,
       reason: comp?.status === "rechazada" ? comp.reason : undefined,
+      hint: m.id === "perfil" && !v.done && session ? missingProfileHint(session) : undefined,
     };
   });
+}
+
+// "Te falta: portafolio, ciudad." para la misión de perfil incompleto.
+function missingProfileHint(c: MissionContext): string | undefined {
+  const missing: string[] = [];
+  if (!c.name?.trim()) missing.push("nombre");
+  if (!c.handle?.trim()) missing.push("usuario de TikTok");
+  if (!c.portfolio?.trim()) missing.push("portafolio");
+  if (!c.city?.trim()) missing.push("ciudad");
+  return missing.length ? `Te falta: ${missing.join(", ")}.` : undefined;
 }
 
 // Ranking REAL: estrellas por creadora = entregas aprobadas + misiones completadas.

@@ -142,6 +142,15 @@ export default async function FichaCreadoraPage({
             {creator.portfolio && (
               <p className="mt-1 truncate text-xs text-ink-soft">📎 {creator.portfolio}</p>
             )}
+            {creator.shippingAddress && (
+              <p className="mt-1 text-xs text-ink-soft">📦 Envío: {creator.shippingAddress}</p>
+            )}
+            {creator.consentAt && (
+              <p className="mt-1 text-[11px] text-ink-soft/70">
+                Aceptó el aviso el {fmtDate(creator.consentAt)}
+                {creator.consentVersion ? ` (v${creator.consentVersion})` : ""}
+              </p>
+            )}
           </div>
           <div className="flex shrink-0 gap-2">
             <Metric label="Estrellas" value={stars.toLocaleString("es-MX")} icon={<Star size={14} className="fill-lime text-lime" />} />

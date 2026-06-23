@@ -13,9 +13,10 @@ export default async function AccesoPage({
     email?: string;
     enviado?: string;
     dev?: string;
+    r?: string;
   }>;
 }) {
-  const { error, nuevo, ya, email, enviado, dev } = await searchParams;
+  const { error, nuevo, ya, email, enviado, dev, r } = await searchParams;
 
   return (
     <div className="mx-auto max-w-md">
@@ -33,9 +34,13 @@ export default async function AccesoPage({
         <div className="space-y-4 rounded-3xl border border-lime/60 bg-lime/15 p-6 text-center">
           <MailCheck className="mx-auto text-brand-deep" size={36} />
           <div>
-            <p className="font-display text-lg font-extrabold text-ink">Revisa tu correo</p>
+            <p className="font-display text-lg font-extrabold text-ink">
+              {r ? "¡Casi listo! Revisa tu correo" : "Revisa tu correo"}
+            </p>
             <p className="mt-1 text-sm text-ink-soft">
-              Si tu correo está registrado, te llegó un enlace para entrar. Caduca en 30 minutos.
+              {r
+                ? "Te enviamos un enlace para confirmar tu correo y entrar al club. Caduca en 30 minutos."
+                : "Si tu correo está registrado, te llegó un enlace para entrar. Caduca en 30 minutos."}
             </p>
           </div>
           {dev && (

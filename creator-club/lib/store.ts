@@ -35,8 +35,11 @@ export interface CreatorRecord {
   city?: string;
   portfolio?: string;
   affiliateHandle?: string; // @usuario o link de afiliado de TikTok Shop (a qué cuenta atribuir GMV)
+  shippingAddress?: string; // dirección de envío (solo para campañas de producto físico)
   gmvMXN?: number; // GMV atribuible capturado a mano por el equipo
   gmvDate?: string; // "actualizado al" (nunca tiempo real)
+  consentAt?: string; // ISO: cuándo aceptó el aviso de privacidad (prueba LFPDPPP)
+  consentVersion?: string; // versión del aviso que aceptó
   createdAt?: string;
 }
 
@@ -102,6 +105,8 @@ export async function createCreator(c: CreatorRecord, conn?: Conn): Promise<Crea
       Ciudad: c.city ?? "",
       Portafolio: c.portfolio ?? "",
       AfiliadoHandle: c.affiliateHandle ?? "",
+      Direccion: c.shippingAddress ?? "",
+      ...(c.consentAt ? { Consentimiento: true, ConsentimientoFecha: c.consentAt, ConsentimientoVersion: c.consentVersion ?? "" } : {}),
     }, conn);
     return { ...c, id: r.id };
   }
@@ -122,14 +127,19 @@ interface CreadoraFields {
   Ciudad?: string;
   Portafolio?: string;
   AfiliadoHandle?: string;
+  Direccion?: string;
   GMV_MXN?: number;
   GMV_Fecha?: string;
+  Consentimiento?: boolean;
+  ConsentimientoFecha?: string;
+  ConsentimientoVersion?: string;
 }
 
 // Campos editables por la creadora desde su perfil. NO incluye email (es la clave
-// de identidad) ni GMV (lo captura el equipo). El email se omite a propósito.
+// de identidad), GMV (lo captura el equipo) ni el consentimiento (se fija al
+// registrarse). El email se omite a propósito.
 export type CreatorPatch = Partial<
-  Pick<CreatorRecord, "name" | "handle" | "followers" | "city" | "portfolio" | "affiliateHandle">
+  Pick<CreatorRecord, "name" | "handle" | "followers" | "city" | "portfolio" | "affiliateHandle" | "shippingAddress">
 >;
 
 // Edita el perfil de una creadora (por id). Solo los campos presentes en el patch.
@@ -142,6 +152,7 @@ export async function updateCreator(id: string, patch: CreatorPatch, conn?: Conn
     if (patch.city !== undefined) fields.Ciudad = patch.city;
     if (patch.portfolio !== undefined) fields.Portafolio = patch.portfolio;
     if (patch.affiliateHandle !== undefined) fields.AfiliadoHandle = patch.affiliateHandle;
+    if (patch.shippingAddress !== undefined) fields.Direccion = patch.shippingAddress;
     if (Object.keys(fields).length) await airtableUpdate(TABLES.Creadoras, id, fields, conn);
     return;
   }
@@ -163,8 +174,11 @@ function creadoraToRecord(r: { id: string; fields: CreadoraFields; createdTime?:
     city: r.fields.Ciudad,
     portfolio: r.fields.Portafolio,
     affiliateHandle: r.fields.AfiliadoHandle,
+    shippingAddress: r.fields.Direccion,
     gmvMXN: r.fields.GMV_MXN,
     gmvDate: r.fields.GMV_Fecha,
+    consentAt: r.fields.ConsentimientoFecha,
+    consentVersion: r.fields.ConsentimientoVersion,
     createdAt: r.createdTime,
   };
 }

@@ -11,9 +11,9 @@ import { BRAND } from "@/lib/schema";
 export default async function CampanasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string; lleno?: string }>;
+  searchParams: Promise<{ bienvenida?: string; lleno?: string; err?: string }>;
 }) {
-  const { bienvenida, lleno } = await searchParams;
+  const { bienvenida, lleno, err } = await searchParams;
   const { creator: me, isAdminPreview } = await getClubViewer();
   const [campaigns, mine, allParts] = await Promise.all([
     listOpenCampaigns(),
@@ -36,6 +36,11 @@ export default async function CampanasPage({
       {lleno && (
         <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
           Esa campaña ya llegó a su cupo. ¡Explora las demás!
+        </p>
+      )}
+      {err === "link" && (
+        <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
+          Pega un link completo que empiece con https:// para enviar tu video.
         </p>
       )}
 
@@ -200,6 +205,13 @@ function JoinedBlock({
           <Send size={14} /> {part.status === "entregada" ? "Actualizar" : "Enviar"}
         </SubmitButton>
       </form>
+      <p className="text-[11px] text-ink-soft/80">
+        Al enviar autorizas el uso de tu video en redes y anuncios de la marca (
+        <Link href="/legal" target="_blank" className="underline">
+          términos
+        </Link>
+        ).
+      </p>
     </div>
   );
 }

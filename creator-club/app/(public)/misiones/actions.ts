@@ -18,7 +18,9 @@ export async function entregarMision(formData: FormData) {
   if (!me) redirect("/registro");
 
   const mission = MISSIONS.find((m) => m.id === missionId);
-  if (mission && mission.action === "submit" && isHttpUrl(link)) {
+  if (mission && mission.action === "submit") {
+    // Link inválido: avisar (no fallar en silencio) en vez de descartar la entrega.
+    if (!isHttpUrl(link)) redirect("/misiones?err=link");
     await submitMision(me.email, missionId, link);
   }
   revalidatePath("/misiones");
