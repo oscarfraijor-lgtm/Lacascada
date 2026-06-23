@@ -10,9 +10,11 @@ import {
   listParticipations,
   listCanjes,
   listCampaigns,
+  listMisiones,
   starsFromApproved,
 } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
+import { starsFromMissions } from "@/lib/missions";
 
 // Escapa un campo CSV (comillas, comas, saltos de línea). RFC 4180.
 // + Anti CSV-injection (CWE-1236): los campos vienen de texto libre PÚBLICO de la
@@ -87,10 +89,11 @@ export async function GET(req: Request) {
       ];
     });
   } else {
-    const [creators, parts, campaigns] = await Promise.all([
+    const [creators, parts, campaigns, misiones] = await Promise.all([
       listCreators(conn),
       listParticipations(conn),
       listCampaigns(conn),
+      listMisiones(conn),
     ]);
     const partsByEmail = new Map<string, typeof parts>();
     for (const p of parts) {
@@ -98,6 +101,13 @@ export async function GET(req: Request) {
       const arr = partsByEmail.get(k);
       if (arr) arr.push(p);
       else partsByEmail.set(k, [p]);
+    }
+    const misionesByEmail = new Map<string, typeof misiones>();
+    for (const m of misiones) {
+      const k = m.creatorEmail.toLowerCase();
+      const arr = misionesByEmail.get(k);
+      if (arr) arr.push(m);
+      else misionesByEmail.set(k, [m]);
     }
     headers = [
       "Nombre", "Handle", "Afiliado TTS", "Email", "Ciudad", "Seguidores",
@@ -107,7 +117,9 @@ export async function GET(req: Request) {
     rows = creators
       .map((c) => {
         const mine = partsByEmail.get(c.email.toLowerCase()) ?? [];
-        const stars = starsFromApproved(mine, campaigns);
+        const stars =
+          starsFromApproved(mine, campaigns) +
+          starsFromMissions(ctx.brand.missions, c, misionesByEmail.get(c.email.toLowerCase()) ?? []);
         const gmv = c.gmvMXN ?? 0;
         const level = levelForStars(stars, gmv, ctx.brand.levels);
         return {

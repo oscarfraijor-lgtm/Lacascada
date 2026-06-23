@@ -1,15 +1,17 @@
 import Link from "next/link";
 import {
-  ArrowLeft, Star, Megaphone, Gift, History, ExternalLink, Mail, Sparkles,
+  ArrowLeft, Star, Megaphone, Target, Gift, History, ExternalLink, Mail, Sparkles,
 } from "lucide-react";
 import {
   getCreatorByEmail,
   participationsFor,
   canjesFor,
   listCampaigns,
+  misionesFor,
   starsFromApproved,
 } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
+import { missionView, starsFromMissions } from "@/lib/missions";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 
@@ -32,6 +34,15 @@ const CANJE_META: Record<string, { label: string; cls: string }> = {
   aprobada: { label: "Aprobada", cls: "bg-lime text-ink" },
   entregada: { label: "Entregada", cls: "bg-ink text-white" },
   rechazada: { label: "Rechazada", cls: "bg-ink/10 text-ink-soft" },
+};
+const MISION_STATE_LABEL: Record<string, string> = {
+  pendiente: "Pendiente",
+  completada: "Completada",
+  enviada: "En revisión",
+  aprobada: "Aprobada",
+  rechazada: "Rechazada",
+  disponible: "Lista (por venta)",
+  bloqueada: "Bloqueada (sin venta)",
 };
 
 export default async function FichaCreadoraPage({
@@ -63,26 +74,39 @@ export default async function FichaCreadoraPage({
     );
   }
 
-  const [parts, canjes, campaigns] = await Promise.all([
+  const [parts, canjes, campaigns, misiones] = await Promise.all([
     participationsFor(email, conn),
     canjesFor(email, conn),
     listCampaigns(conn),
+    misionesFor(email, conn),
   ]);
   const campaignById = new Map(campaigns.map((c) => [c.id, c]));
-  const stars = starsFromApproved(parts, campaigns);
+  const stars = starsFromApproved(parts, campaigns) + starsFromMissions(ctx.brand.missions, creator, misiones);
   const gmv = creator.gmvMXN ?? 0;
   const level = levelForStars(stars, gmv, ctx.brand.levels);
 
-  // Ledger: una línea por campaña aprobada (dedupe), de la más reciente a la más vieja.
+  // Misiones de la creadora con su estado (catálogo de la marca + registros).
+  const misionById = new Map(misiones.map((m) => [m.missionId, m]));
+  const misionRows = ctx.brand.missions
+    .map((m) => ({ mission: m, view: missionView(m, creator, misionById.get(m.id)), comp: misionById.get(m.id) }))
+    // Solo las que tienen avance real (registro o condición cumplida); el resto es ruido.
+    .filter((r) => r.comp || r.view.done);
+
+  // Ledger: campañas aprobadas + misiones que otorgaron estrellas (dedupe), reciente->viejo.
   const seen = new Set<string>();
-  const ledger = parts
-    .filter((p) => p.status === "aprobada" && !seen.has(p.campaignId) && seen.add(p.campaignId))
-    .map((p) => ({
-      title: campaignById.get(p.campaignId)?.title ?? p.campaignId,
-      stars: campaignById.get(p.campaignId)?.stars ?? 0,
-      date: p.createdAt,
-    }))
-    .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  const ledger = [
+    ...parts
+      .filter((p) => p.status === "aprobada" && !seen.has(p.campaignId) && seen.add(p.campaignId))
+      .map((p) => ({
+        title: campaignById.get(p.campaignId)?.title ?? p.campaignId,
+        stars: campaignById.get(p.campaignId)?.stars ?? 0,
+        date: p.createdAt,
+        source: "campana" as const,
+      })),
+    ...ctx.brand.missions
+      .filter((m) => missionView(m, creator, misionById.get(m.id)).done)
+      .map((m) => ({ title: m.title, stars: m.stars, date: misionById.get(m.id)?.createdAt, source: "mision" as const })),
+  ].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 
   const partsSorted = [...parts].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
   const canjesSorted = [...canjes].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
@@ -197,6 +221,30 @@ export default async function FichaCreadoraPage({
         </section>
       </div>
 
+      {/* Misiones */}
+      <section>
+        <h2 className="font-display mb-2 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-brand-deep">
+          <Target size={15} /> Misiones ({misionRows.length})
+        </h2>
+        {misionRows.length === 0 ? (
+          <Empty>Aún no avanza ninguna misión.</Empty>
+        ) : (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {misionRows.map(({ mission, view }) => (
+              <li key={mission.id} className="flex items-center justify-between gap-2 rounded-2xl border border-ink/10 bg-white p-3.5">
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-ink">{mission.title}</p>
+                  <p className="text-xs text-ink-soft">{MISION_STATE_LABEL[view.state] ?? view.state}</p>
+                </div>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${view.done ? "bg-lime text-ink" : "bg-cream-deep text-ink-soft"}`}>
+                  {view.done ? `+${mission.stars}` : "—"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* Ledger de estrellas */}
       <section>
         <h2 className="font-display mb-2 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wider text-brand-deep">
@@ -218,7 +266,10 @@ export default async function FichaCreadoraPage({
                   </span>
                   <div>
                     <p className="text-sm font-semibold text-ink">{e.title}</p>
-                    <p className="text-xs text-ink-soft">Entrega aprobada · {fmtDate(e.date)}</p>
+                    <p className="text-xs text-ink-soft">
+                      {e.source === "mision" ? "Misión completada" : "Entrega aprobada"}
+                      {e.date ? ` · ${fmtDate(e.date)}` : ""}
+                    </p>
                   </div>
                 </div>
                 <span className="font-display shrink-0 text-sm font-extrabold text-brand-deep">

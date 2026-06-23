@@ -1,13 +1,13 @@
 import { Building2, ArrowRight, ExternalLink, Lock, AlertTriangle, Dot, Users, Inbox, Gift } from "lucide-react";
 import { managedBrands, getSelectedBrandSlug, resolveConn } from "@/lib/brand-admin";
-import { listCreators, listParticipations, listCanjes } from "@/lib/store";
+import { listCreators, listParticipations, listCanjes, listMisiones } from "@/lib/store";
 import { entrarMarca } from "./actions";
 
 const RANK: Record<string, number> = { gestionable: 0, externa: 1, pendiente: 2 };
 
 interface ClubStats {
   creators: number;
-  porRevisar: number; // inscripciones inscrita + entregada
+  porRevisar: number; // inscripciones inscrita/entregada + misiones enviadas
   canjesPendientes: number; // canjes solicitada
   gmvTotal: number;
 }
@@ -17,14 +17,17 @@ interface ClubStats {
 async function clubStats(slug: string): Promise<ClubStats | null> {
   try {
     const conn = resolveConn(slug) ?? undefined;
-    const [creators, parts, canjes] = await Promise.all([
+    const [creators, parts, canjes, misiones] = await Promise.all([
       listCreators(conn),
       listParticipations(conn),
       listCanjes(conn),
+      listMisiones(conn),
     ]);
     return {
       creators: creators.length,
-      porRevisar: parts.filter((p) => p.status === "inscrita" || p.status === "entregada").length,
+      porRevisar:
+        parts.filter((p) => p.status === "inscrita" || p.status === "entregada").length +
+        misiones.filter((m) => m.status === "enviada").length,
       canjesPendientes: canjes.filter((c) => c.status === "solicitada").length,
       gmvTotal: creators.reduce((s, c) => s + (c.gmvMXN ?? 0), 0),
     };

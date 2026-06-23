@@ -17,10 +17,14 @@ import {
   getCreatorByEmail,
   setCanjeStatus,
   listParticipations,
+  getMisionById,
+  setMisionStatus,
   PARTICIPATION_STATUS,
   CANJE_STATUS,
+  MISION_STATUS,
   type ParticipationStatus,
   type CanjeStatus,
+  type MisionStatus,
 } from "@/lib/store";
 import type { CampaignInput } from "@/lib/campaigns";
 import { canApproveCanje } from "@/lib/rewards";
@@ -270,6 +274,61 @@ export async function cambiarEstadoCanje(formData: FormData) {
         "/recompensas"
       );
     }
+  }
+}
+
+// Misiones de CONTENIDO: aprobar/rechazar lo que envió la creadora (espejo de
+// las entregas de campaña). Solo aplica a misiones "submit": las de estatus
+// (perfil/afiliado/inducción) no se revisan aquí, y las de venta se acreditan
+// desde el GMV (anti-fuga). Aprobar NO tiene gate de GMV: la misión otorga solo
+// estrellas de estatus (costo $0); el equipo valida que el contenido sea real.
+export async function cambiarEstadoMision(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const conn = ctx.conn ?? undefined;
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "") as MisionStatus;
+  const reason = String(formData.get("reason") || "").trim();
+  if (!id || !MISION_STATUS.includes(status)) return;
+
+  // Solo se revisan misiones de contenido. Bloquea forja sobre misiones de
+  // estatus (watch/auto) que romperían su estado, y las transiciones inválidas.
+  const mision = await getMisionById(id, conn);
+  if (!mision) return;
+  const mission = ctx.brand.missions.find((m) => m.id === mision.missionId);
+  if (!mission || mission.action !== "submit") return;
+  if (status !== "enviada" && status !== "aprobada" && status !== "rechazada") return;
+
+  await setMisionStatus(id, status, status === "rechazada" ? reason : undefined, conn);
+  revalidatePath("/admin/misiones");
+  revalidatePath("/misiones");
+  revalidatePath("/");
+
+  // Aviso por correo a la creadora (tolerante) en las transiciones que le importan.
+  const title = mission.title;
+  if (status === "aprobada") {
+    const stars = mission.stars;
+    await notifyCreator(
+      ctx,
+      mision.creatorEmail,
+      `Aprobamos tu misión: ${title}`,
+      `¡Misión aprobada! ${title}`,
+      stars > 0
+        ? `Sumaste ${stars} estrellas. Revisa tu progreso en tu club.`
+        : "Tu misión quedó aprobada. Revisa tu progreso en tu club.",
+      "/"
+    );
+  } else if (status === "rechazada") {
+    await notifyCreator(
+      ctx,
+      mision.creatorEmail,
+      `Tu misión ${title} necesita ajustes`,
+      `Revisemos tu misión ${title}`,
+      reason
+        ? `Motivo: ${reason}. Corrige y vuelve a enviar tu video.`
+        : "Necesita un ajuste. Corrige y vuelve a enviar tu video.",
+      "/misiones"
+    );
   }
 }
 

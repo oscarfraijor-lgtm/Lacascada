@@ -13,6 +13,12 @@ import {
   rewardMissing,
   rewardRequirement,
 } from "@/lib/rewards";
+import {
+  type MissionUIState,
+  missionView,
+  starsFromMissions,
+  completedMissionIds,
+} from "@/lib/missions";
 import { currentEmail } from "@/lib/session";
 import { getClubViewer } from "@/lib/club-viewer";
 import {
@@ -21,25 +27,31 @@ import {
   listCampaigns,
   listCreators,
   canjesFor,
+  misionesFor,
+  listMisiones,
   starsFromApproved,
 } from "@/lib/store";
 
 export interface MissionWithStatus extends Mission {
+  state: MissionUIState;
   done: boolean;
   locked: boolean; // misión de venta sin GMV atribuible aún
   lockReason?: string;
+  link?: string; // link enviado (misiones de contenido)
+  reason?: string; // motivo de rechazo (misiones de contenido rechazadas)
 }
 
-// La creadora actual (de la sesión), con estrellas reales derivadas de sus
-// entregas aprobadas. null si no hay sesión.
+// La creadora actual (de la sesión), con estrellas reales = entregas aprobadas +
+// misiones completadas. null si no hay sesión.
 export async function getCreator(): Promise<Creator | null> {
   const { creator: session } = await getClubViewer();
   if (!session) return null;
-  const [parts, campaigns] = await Promise.all([
+  const [parts, campaigns, completions] = await Promise.all([
     participationsFor(session.email),
     listCampaigns(),
+    misionesFor(session.email),
   ]);
-  const stars = starsFromApproved(parts, campaigns);
+  const stars = starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, session, completions);
   const gmvMXN = session.gmvMXN ?? 0;
   return {
     id: session.id ?? "",
@@ -49,38 +61,40 @@ export async function getCreator(): Promise<Creator | null> {
     stars,
     gmvMXN,
     level: levelForStars(stars, gmvMXN).key,
-    completedMissionIds: [], // el tracking real de misiones llega en una fase posterior
+    completedMissionIds: completedMissionIds(MISSIONS, session, completions),
   };
 }
 
-export async function getMissions(creator: Creator): Promise<MissionWithStatus[]> {
-  const gmv = creator.gmvMXN ?? 0;
-  // Candado honesto por GMV: las misiones de venta solo se activan cuando hay
-  // venta atribuible (anti-fuga). No fingimos "completada" sin tracking real.
-  // La misión "Conecta tu TikTok afiliado" se da por cumplida cuando la creadora
-  // registra su @afiliado / link de TikTok Shop en su perfil (no otorga estrellas:
-  // las estrellas solo salen de entregas aprobadas, esto es solo estado visual).
-  const connectedAffiliate = !!creator.affiliateHandle?.trim();
+// Misiones con su estado real para la creadora actual (de la sesión). Combina
+// datos derivados (perfil/afiliado), registros persistidos (inducción/contenido)
+// y el candado por GMV (venta). Si no hay sesión, devuelve todo "pendiente".
+export async function getMissions(): Promise<MissionWithStatus[]> {
+  const { creator: session } = await getClubViewer();
+  const completions = session ? await misionesFor(session.email) : [];
+  const byId = new Map(completions.map((c) => [c.missionId, c]));
+  const ctx = session ?? {};
   return MISSIONS.map((m) => {
-    const locked = m.requiresSale && gmv <= 0;
-    const done =
-      creator.completedMissionIds.includes(m.id) ||
-      (m.id === "conectar-tt" && connectedAffiliate);
+    const comp = byId.get(m.id);
+    const v = missionView(m, ctx, comp);
     return {
       ...m,
-      done,
-      locked,
-      lockReason: locked ? "Se activa con tu primera venta atribuible en TikTok Shop." : undefined,
+      state: v.state,
+      done: v.done,
+      locked: v.locked,
+      lockReason: v.locked ? "Se activa con tu primera venta atribuible en TikTok Shop." : undefined,
+      link: comp?.link,
+      reason: comp?.status === "rechazada" ? comp.reason : undefined,
     };
   });
 }
 
-// Ranking REAL: estrellas aprobadas por creadora (antes era 100% inventado).
+// Ranking REAL: estrellas por creadora = entregas aprobadas + misiones completadas.
 export async function getLeaderboard(): Promise<LeaderboardRow[]> {
-  const [creators, parts, campaigns, meEmail] = await Promise.all([
+  const [creators, parts, campaigns, misiones, meEmail] = await Promise.all([
     listCreators(),
     listParticipations(),
     listCampaigns(),
+    listMisiones(),
     currentEmail(),
   ]);
   const partsByEmail = new Map<string, typeof parts>();
@@ -90,16 +104,26 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
     if (arr) arr.push(p);
     else partsByEmail.set(k, [p]);
   }
+  const misionesByEmail = new Map<string, typeof misiones>();
+  for (const m of misiones) {
+    const k = m.creatorEmail.toLowerCase();
+    const arr = misionesByEmail.get(k);
+    if (arr) arr.push(m);
+    else misionesByEmail.set(k, [m]);
+  }
   const me = meEmail?.toLowerCase();
   return creators
     .map((c) => {
       const isMe = !!me && c.email.toLowerCase() === me;
+      const key = c.email.toLowerCase();
       return {
         // Privacidad: en el ranking público solo va el nombre completo + handle de
         // una misma; a las demás se les muestra nombre corto y sin handle (LFPDPPP).
         name: isMe ? c.name : shortName(c.name),
         handle: isMe ? c.handle || "" : "",
-        stars: starsFromApproved(partsByEmail.get(c.email.toLowerCase()) ?? [], campaigns),
+        stars:
+          starsFromApproved(partsByEmail.get(key) ?? [], campaigns) +
+          starsFromMissions(MISSIONS, c, misionesByEmail.get(key) ?? []),
         isMe,
       };
     })
@@ -184,35 +208,55 @@ export async function getRewardsView(): Promise<RewardsView> {
 }
 
 // Historial de estrellas (ledger): recibo línea por línea de cada estrella
-// otorgada. Versión mínima: itera las entregas APROBADAS (datos que ya existen).
+// otorgada. Combina entregas de campaña APROBADAS + misiones completadas.
 export interface LedgerEntry {
-  campaignId: string;
+  id: string; // llave única de la línea
   title: string;
   stars: number;
-  date?: string; // fecha del registro de la participación (createdAt)
+  date?: string; // createdAt del registro (las misiones "auto" no tienen fecha)
+  source: "campana" | "mision";
 }
 
 export async function getStarLedger(): Promise<LedgerEntry[]> {
   const { creator: session } = await getClubViewer();
   if (!session) return [];
-  const [parts, campaigns] = await Promise.all([
+  const [parts, campaigns, completions] = await Promise.all([
     participationsFor(session.email),
     listCampaigns(),
+    misionesFor(session.email),
   ]);
   const byId = new Map(campaigns.map((c) => [c.id, c]));
-  // Una línea por campaña (dedupe por si hubiera 2 aprobadas de la misma).
-  const seen = new Set<string>();
   const rows: LedgerEntry[] = [];
+
+  // Campañas: una línea por campaña aprobada (dedupe por si hubiera 2 de la misma).
+  const seen = new Set<string>();
   for (const p of parts) {
     if (p.status !== "aprobada" || seen.has(p.campaignId)) continue;
     seen.add(p.campaignId);
     const c = byId.get(p.campaignId);
     rows.push({
-      campaignId: p.campaignId,
+      id: `campana-${p.campaignId}`,
       title: c?.title ?? p.campaignId,
       stars: c?.stars ?? 0,
       date: p.createdAt,
+      source: "campana",
     });
   }
+
+  // Misiones: una línea por misión que otorgó estrellas (auto cumplida, inducción
+  // vista o contenido aprobado). Las de venta no aparecen (no otorgan aquí).
+  const compById = new Map(completions.map((c) => [c.missionId, c]));
+  for (const m of MISSIONS) {
+    const comp = compById.get(m.id);
+    if (!missionView(m, session, comp).done) continue;
+    rows.push({
+      id: `mision-${m.id}`,
+      title: m.title,
+      stars: m.stars,
+      date: comp?.createdAt,
+      source: "mision",
+    });
+  }
+
   return rows.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }

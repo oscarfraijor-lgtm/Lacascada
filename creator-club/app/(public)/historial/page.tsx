@@ -72,14 +72,17 @@ export default async function HistorialPage() {
       ) : (
         <ol className="divide-y divide-ink/5 overflow-hidden rounded-2xl border border-ink/10 bg-white">
           {ledger.map((e, i) => (
-            <li key={`${e.campaignId}-${i}`} className="flex items-center justify-between gap-3 px-4 py-3.5">
+            <li key={`${e.id}-${i}`} className="flex items-center justify-between gap-3 px-4 py-3.5">
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lime text-ink">
                   <Star size={16} className="fill-ink" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-ink">{e.title}</p>
-                  <p className="text-xs text-ink-soft">Entrega aprobada · {fmtDate(e.date)}</p>
+                  <p className="text-xs text-ink-soft">
+                    {e.source === "mision" ? "Misión completada" : "Entrega aprobada"}
+                    {e.date ? ` · ${fmtDate(e.date)}` : ""}
+                  </p>
                 </div>
               </div>
               <span className="font-display shrink-0 text-sm font-extrabold text-brand-deep">

@@ -65,6 +65,7 @@ interface DB {
   participations: Participation[];
   campaigns?: Campaign[];
   canjes?: Canje[];
+  misiones?: MisionCompletion[];
 }
 
 async function readDB(): Promise<DB> {
@@ -75,9 +76,10 @@ async function readDB(): Promise<DB> {
       participations: db.participations ?? [],
       campaigns: db.campaigns,
       canjes: db.canjes ?? [],
+      misiones: db.misiones ?? [],
     };
   } catch {
-    return { creators: [], participations: [], canjes: [] };
+    return { creators: [], participations: [], canjes: [], misiones: [] };
   }
 }
 async function writeDB(db: DB): Promise<void> {
@@ -452,6 +454,154 @@ export async function setCanjeStatus(id: string, status: CanjeStatus, reason?: s
   if (c) {
     c.status = status;
     c.reason = motivo || undefined;
+    await writeDB(db);
+  }
+}
+
+// ── Misiones (tracking real de misiones) ─────────────────────────────────
+// Una misión completable de verdad. Espejo de Entregas/Canjes. Estados:
+//   completada -> misión de estatus terminada (watch: inducción vista). Otorga
+//                 estrellas de inmediato (costo $0). Las "auto" (perfil/afiliado)
+//                 NO persisten aquí: se derivan de los datos de la creadora.
+//   enviada    -> misión de contenido: la creadora pegó su link, espera revisión.
+//   aprobada   -> el equipo aprobó la entrega de la misión (otorga estrellas).
+//   rechazada  -> el equipo la rechazó con motivo (puede corregir y reenviar).
+// Las misiones de VENTA (requiresSale) NO viven aquí: se acreditan desde el GMV
+// real capturado por el equipo (anti-fuga). No se auto-completan nunca.
+export const MISION_STATUS = ["enviada", "aprobada", "rechazada", "completada"] as const;
+export type MisionStatus = (typeof MISION_STATUS)[number];
+
+export interface MisionCompletion {
+  id?: string;
+  creatorEmail: string;
+  missionId: string;
+  status: string; // MisionStatus
+  link?: string; // payload (URL del video) para misiones de contenido
+  reason?: string; // motivo de rechazo (visible para la creadora)
+  createdAt?: string;
+}
+
+interface MisionFields {
+  Email: string;
+  Mision: string;
+  Estado: string;
+  Link?: string;
+  Motivo?: string;
+}
+
+function misionToRecord(r: { id: string; fields: MisionFields; createdTime?: string }): MisionCompletion {
+  return {
+    id: r.id,
+    creatorEmail: r.fields.Email,
+    missionId: r.fields.Mision,
+    status: r.fields.Estado,
+    link: r.fields.Link,
+    reason: r.fields.Motivo,
+    createdAt: r.createdTime,
+  };
+}
+
+export async function misionesFor(email: string, conn?: Conn): Promise<MisionCompletion[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<MisionFields>(TABLES.Misiones, {
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
+    }, conn);
+    return recs.map(misionToRecord);
+  }
+  return (await readDB()).misiones?.filter((x) => x.creatorEmail === email) ?? [];
+}
+
+// Todas las misiones registradas (para el panel de admin).
+export async function listMisiones(conn?: Conn): Promise<MisionCompletion[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<MisionFields>(TABLES.Misiones, {}, conn);
+    return recs.map(misionToRecord);
+  }
+  return (await readDB()).misiones ?? [];
+}
+
+export async function getMisionById(id: string, conn?: Conn): Promise<MisionCompletion | undefined> {
+  return (await listMisiones(conn)).find((m) => m.id === id);
+}
+
+// Helper interno: registro de una misión de una creadora (Airtable o archivo).
+async function findMision(email: string, missionId: string, conn?: Conn): Promise<MisionCompletion | null> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<MisionFields>(TABLES.Misiones, {
+      filterByFormula: `AND(LOWER({Email})='${escFormula(email.toLowerCase())}',{Mision}='${escFormula(missionId)}')`,
+    }, conn);
+    return recs[0] ? misionToRecord(recs[0]) : null;
+  }
+  const db = await readDB();
+  return db.misiones?.find((x) => x.creatorEmail === email && x.missionId === missionId) ?? null;
+}
+
+// La creadora pega/actualiza el link de su misión de contenido -> "enviada".
+// No degrada una misión ya APROBADA (no re-abre estrellas concedidas). Devuelve
+// true si registró algo.
+export async function submitMision(email: string, missionId: string, link: string, conn?: Conn): Promise<boolean> {
+  if (airtableConfigured(conn)) {
+    const existing = await findMision(email, missionId, conn);
+    if (existing?.status === "aprobada") return false;
+    if (existing?.id) {
+      await airtableUpdate(TABLES.Misiones, existing.id, { Link: link, Estado: "enviada", Motivo: "" }, conn);
+    } else {
+      await airtableCreate(TABLES.Misiones, { Email: email, Mision: missionId, Estado: "enviada", Link: link }, conn);
+    }
+    return true;
+  }
+  const db = await readDB();
+  db.misiones = db.misiones ?? [];
+  const m = db.misiones.find((x) => x.creatorEmail === email && x.missionId === missionId);
+  if (m?.status === "aprobada") return false;
+  if (m) {
+    m.link = link;
+    m.status = "enviada";
+    m.reason = undefined;
+  } else {
+    db.misiones.push({ id: "loc_" + randomUUID(), creatorEmail: email, missionId, status: "enviada", link, createdAt: new Date().toISOString() });
+  }
+  await writeDB(db);
+  return true;
+}
+
+// Marca una misión de estatus como "completada" (ej. inducción vista). Idempotente:
+// no re-crea ni degrada un registro existente. Otorga estrellas (costo $0).
+export async function markMisionDone(email: string, missionId: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const existing = await findMision(email, missionId, conn);
+    if (existing) {
+      if (existing.status !== "completada") {
+        await airtableUpdate(TABLES.Misiones, existing.id!, { Estado: "completada", Motivo: "" }, conn);
+      }
+      return;
+    }
+    await airtableCreate(TABLES.Misiones, { Email: email, Mision: missionId, Estado: "completada" }, conn);
+    return;
+  }
+  const db = await readDB();
+  db.misiones = db.misiones ?? [];
+  const m = db.misiones.find((x) => x.creatorEmail === email && x.missionId === missionId);
+  if (m) {
+    m.status = "completada";
+    m.reason = undefined;
+  } else {
+    db.misiones.push({ id: "loc_" + randomUUID(), creatorEmail: email, missionId, status: "completada", createdAt: new Date().toISOString() });
+  }
+  await writeDB(db);
+}
+
+export async function setMisionStatus(id: string, status: MisionStatus, reason?: string, conn?: Conn): Promise<void> {
+  const motivo = status === "rechazada" ? (reason ?? "") : "";
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Misiones, id, { Estado: status, Motivo: motivo }, conn);
+    return;
+  }
+  const db = await readDB();
+  const m = (db.misiones ?? []).find((x) => x.id === id);
+  if (m) {
+    m.status = status;
+    m.reason = motivo || undefined;
     await writeDB(db);
   }
 }

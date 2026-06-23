@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Megaphone, Inbox, Gift, Users, ShieldCheck, ChevronLeft, ExternalLink } from "lucide-react";
+import { Megaphone, Inbox, Target, Gift, Users, ShieldCheck, ChevronLeft, ExternalLink } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { getAdminContext } from "@/lib/brand-admin";
@@ -9,6 +9,7 @@ import { brandThemeVars, OPERATOR_THEME } from "@/lib/theme";
 const TABS = [
   { href: "/admin", label: "Campañas", icon: Megaphone },
   { href: "/admin/inscripciones", label: "Inscripciones", icon: Inbox },
+  { href: "/admin/misiones", label: "Misiones", icon: Target },
   { href: "/admin/canjes", label: "Canjes", icon: Gift },
   { href: "/admin/creadoras", label: "Creadoras", icon: Users },
 ];

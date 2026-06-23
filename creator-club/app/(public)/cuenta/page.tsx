@@ -78,7 +78,7 @@ export default async function CuentaPage({
         <Field name="name" label="Nombre completo" defaultValue={me.name} placeholder="Tu nombre" required />
         <Field name="handle" label="Usuario de TikTok" defaultValue={me.handle} placeholder="@tucuenta" />
 
-        <label className="block">
+        <label id="afiliado" className="block scroll-mt-24">
           <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Afiliado de TikTok Shop
           </span>

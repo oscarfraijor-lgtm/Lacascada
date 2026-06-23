@@ -15,4 +15,10 @@ export const REJECTION_REASONS = {
     "Esta recompensa está agotada por ahora.",
     "Falta completar un requisito del programa.",
   ],
+  mision: [
+    "Falta tu link de afiliado visible en el video.",
+    "El video no muestra el producto con claridad.",
+    "No cumple lo que pide la misión.",
+    "El link no abre o es incorrecto, vuelve a subirlo.",
+  ],
 } as const;

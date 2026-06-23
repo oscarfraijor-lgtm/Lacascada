@@ -18,12 +18,27 @@ export interface Level {
 
 export type MissionCategory = "perfil" | "contenido" | "venta" | "live" | "comunidad";
 
+// Cómo se COMPLETA una misión (decide qué renderiza la card y cómo se otorgan
+// las estrellas). Regla maestra anti-fuga intacta: solo el equipo o una venta real
+// acreditan lo que tiene valor; el estatus es gratis.
+//   auto   -> se deriva de datos que ya existen (perfil completo, @afiliado
+//             conectado). Estatus, costo $0: otorga estrellas en automático.
+//   watch  -> ver la inducción y marcarla vista. Estatus, costo $0: otorga
+//             estrellas al marcarla (registro explícito persistido).
+//   submit -> pegar el link de un video. Queda "enviada" y el EQUIPO la aprueba
+//             en /admin antes de otorgar estrellas (espejo de las entregas).
+//   sale   -> requiere venta atribuible (GMV). NUNCA se auto-completa: la acredita
+//             el equipo desde el GMV real. Sin GMV queda bloqueada (anti-fuga).
+export type MissionAction = "auto" | "watch" | "submit" | "sale";
+
 export interface Mission {
   id: string;
   title: string;
   detail: string;
   stars: number;
   category: MissionCategory;
+  // Cómo se completa (ver MissionAction). Las de venta llevan además requiresSale.
+  action: MissionAction;
   // requiresSale: la misión solo da estrellas con venta atribuible en TTS
   requiresSale: boolean;
   repeatable?: boolean;

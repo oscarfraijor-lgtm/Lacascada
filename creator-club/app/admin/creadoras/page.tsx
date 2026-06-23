@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Star, Save, Download, ChevronRight } from "lucide-react";
-import { listCreators, listParticipations, listCampaigns, starsFromApproved } from "@/lib/store";
+import { listCreators, listParticipations, listCampaigns, listMisiones, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
+import { starsFromMissions } from "@/lib/missions";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
@@ -12,10 +13,11 @@ export default async function AdminCreadorasPage() {
   const ctx = await getAdminContext();
   if (!ctx.configured) return <AdminBrandPending brand={ctx.brand.name} slug={ctx.slug} />;
   const conn = ctx.conn ?? undefined;
-  const [creators, parts, campaigns] = await Promise.all([
+  const [creators, parts, campaigns, misiones] = await Promise.all([
     listCreators(conn),
     listParticipations(conn),
     listCampaigns(conn),
+    listMisiones(conn),
   ]);
   const today = new Date().toISOString().slice(0, 10);
 
@@ -26,11 +28,20 @@ export default async function AdminCreadorasPage() {
     if (arr) arr.push(p);
     else partsByEmail.set(k, [p]);
   }
+  const misionesByEmail = new Map<string, typeof misiones>();
+  for (const m of misiones) {
+    const k = m.creatorEmail.toLowerCase();
+    const arr = misionesByEmail.get(k);
+    if (arr) arr.push(m);
+    else misionesByEmail.set(k, [m]);
+  }
 
   const rows = creators
     .map((c) => {
       const mine = partsByEmail.get(c.email.toLowerCase()) ?? [];
-      const stars = starsFromApproved(mine, campaigns);
+      const stars =
+        starsFromApproved(mine, campaigns) +
+        starsFromMissions(ctx.brand.missions, c, misionesByEmail.get(c.email.toLowerCase()) ?? []);
       const gmv = c.gmvMXN ?? 0;
       return {
         creator: c,

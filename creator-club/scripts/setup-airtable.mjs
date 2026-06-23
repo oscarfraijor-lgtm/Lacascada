@@ -58,6 +58,11 @@ const TABLES = [
     description: "Solicitudes de canje de recompensa (creadora pide, equipo aprueba)",
     fields: [text("Email"), text("Recompensa"), text("Titulo"), text("Estado"), text("Motivo")],
   },
+  {
+    name: "Misiones",
+    description: "Tracking de misiones: inducción vista, video enviado/aprobado (equipo valida)",
+    fields: [text("Email"), text("Mision"), text("Estado"), text("Link"), text("Motivo")],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva

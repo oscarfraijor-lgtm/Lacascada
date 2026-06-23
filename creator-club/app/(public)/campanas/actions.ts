@@ -4,16 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { addParticipation, submitDelivery, getCampaignById, listParticipations } from "@/lib/store";
 import { getCurrentCreator } from "@/lib/session";
-
-// ¿Es un link http(s) válido? (rechaza javascript:, relativos, basura).
-function isHttpUrl(s: string): boolean {
-  try {
-    const u = new URL(s);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
+import { isHttpUrl } from "@/lib/url";
 
 export async function participar(formData: FormData) {
   const campaignId = String(formData.get("campaignId") || "");

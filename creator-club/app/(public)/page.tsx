@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
-import { participationsFor, listCampaigns, listOpenCampaigns, starsFromApproved, type Participation } from "@/lib/store";
+import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, starsFromApproved, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView } from "@/lib/data";
-import { levelForStars, nextLevel, BRAND } from "@/lib/schema";
-import type { Creator } from "@/lib/types";
+import { levelForStars, nextLevel, BRAND, MISSIONS } from "@/lib/schema";
+import { starsFromMissions } from "@/lib/missions";
 import type { Campaign } from "@/lib/campaigns";
 import TrustBar from "@/components/TrustBar";
 import RewardStateChip from "@/components/RewardStateChip";
 import AdminPreviewBanner from "@/components/AdminPreviewBanner";
+import MissionCard from "@/components/MissionCard";
 
 const pct = (v: number, max: number) => (max <= 0 ? 100 : Math.min(100, Math.round((v / max) * 100)));
 
@@ -24,28 +25,25 @@ export default async function Home() {
   const { creator: session, isAdminPreview } = await getClubViewer();
   if (!session) return <Welcome />;
 
-  const [parts, campaigns] = await Promise.all([participationsFor(session.email), listCampaigns()]);
+  const [parts, campaigns, completions] = await Promise.all([
+    participationsFor(session.email),
+    listCampaigns(),
+    misionesFor(session.email),
+  ]);
   const byId = new Map(campaigns.map((c) => [c.id, c]));
-  const stars = starsFromApproved(parts, campaigns);
+  // Estrellas reales = entregas aprobadas + misiones completadas (mismo cálculo que getCreator).
+  const stars = starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, session, completions);
   const myCampaigns = parts
     .map((p) => ({ part: p, c: byId.get(p.campaignId) }))
     .filter((x): x is { part: Participation; c: Campaign } => !!x.c);
 
   const gmv = session.gmvMXN ?? 0;
-  const creator: Creator = {
-    id: session.id ?? "",
-    name: session.name,
-    handle: session.handle || "",
-    affiliateHandle: session.affiliateHandle,
-    stars,
-    gmvMXN: gmv,
-    level: levelForStars(stars, gmv).key,
-    completedMissionIds: [], // tracking real de misiones: fase posterior
-  };
+  const creatorName = session.name;
+  const creatorHandle = session.handle || "";
 
   const level = levelForStars(stars, gmv);
   const next = nextLevel(level.key);
-  const missions = (await getMissions(creator)).filter((m) => !m.done).slice(0, 4);
+  const missions = (await getMissions()).filter((m) => !m.done).slice(0, 4);
   const leaderboard = await getLeaderboard();
   const rewardsView = await getRewardsView();
 
@@ -60,9 +58,9 @@ export default async function Home() {
               {level.badge} {level.name}
             </p>
             <h1 className="font-display mt-1 text-2xl font-extrabold sm:text-3xl">
-              Hola, {creator.name.split(" ")[0]}
+              Hola, {creatorName.split(" ")[0]}
             </h1>
-            {creator.handle && <p className="text-sm text-white/70">{creator.handle}</p>}
+            {creatorHandle && <p className="text-sm text-white/70">{creatorHandle}</p>}
             <Link href="/cuenta" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/70 underline transition hover:text-lime">
               <UserCog size={12} /> Editar perfil
             </Link>
@@ -144,17 +142,17 @@ export default async function Home() {
             Ver todas <ChevronRight size={16} />
           </Link>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {missions.map((m) => (
-            <div key={m.id} className="flex items-center justify-between rounded-2xl border border-ink/10 bg-white p-4">
-              <div className="pr-3">
-                <p className="font-semibold text-ink">{m.title}</p>
-                <p className="text-xs text-ink-soft">{m.detail}</p>
-              </div>
-              <StarChip n={m.stars} />
-            </div>
-          ))}
-        </div>
+        {missions.length ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {missions.map((m) => (
+              <MissionCard key={m.id} mission={m} readOnly={isAdminPreview} />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-4 text-center text-sm text-ink-soft">
+            ¡Completaste tus misiones disponibles! Vuelve cuando publiquemos más.
+          </p>
+        )}
       </section>
 
       <div className="grid gap-6 sm:grid-cols-2">
