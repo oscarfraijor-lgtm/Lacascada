@@ -111,10 +111,13 @@ export default async function AccesoPage({
               </Link>
             </p>
           </form>
-          <p className="mt-4 text-center text-[11px] text-ink-soft/70">
-            ¿Del equipo Indie Pro?{" "}
-            <Link href="/operador" className="font-semibold underline">
-              Entra a la consola
+          {/* Acceso del equipo: discreto y SIN exponer a la agencia a las creadoras. */}
+          <p className="mt-8 text-center">
+            <Link
+              href="/operador"
+              className="text-[11px] text-ink-soft/40 underline-offset-2 transition hover:text-ink-soft hover:underline"
+            >
+              Consola admin
             </Link>
           </p>
         </>
