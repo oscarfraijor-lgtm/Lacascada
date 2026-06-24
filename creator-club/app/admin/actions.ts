@@ -74,8 +74,17 @@ async function notifyCreator(
   try {
     let url: string | undefined;
     if (ctaPath) {
-      if (ctx.isEnvBrand) url = `${await baseUrl()}${ctaPath}`;
-      else if (ctx.brand.deployUrl) url = `${ctx.brand.deployUrl}${ctaPath}`;
+      // El club de la creadora vive en el dominio propio de la marca (deployUrl). Se
+      // prefiere sobre el host actual porque el equipo puede operar desde el apex
+      // neutral (getcreatorclub.com), cuyo CTA no debe llevar a la creadora. Para la
+      // marca del env solo en PROD (en local/preview usa el host actual, así el QA de
+      // correos no salta a producción). Otras marcas siempre con su deployUrl.
+      const isProd = process.env.VERCEL_ENV === "production";
+      if (ctx.isEnvBrand) {
+        url = isProd && ctx.brand.deployUrl ? `${ctx.brand.deployUrl}${ctaPath}` : `${await baseUrl()}${ctaPath}`;
+      } else if (ctx.brand.deployUrl) {
+        url = `${ctx.brand.deployUrl}${ctaPath}`;
+      }
     }
     const cta = url ? { url, label: "Abrir mi club" } : undefined;
     await sendNotification(to, { subject, heading, body, cta }, ctx.brand);

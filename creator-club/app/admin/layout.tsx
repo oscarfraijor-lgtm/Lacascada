@@ -18,7 +18,9 @@ const TABS = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const email = await currentEmail();
-  if (!email) redirect("/acceso");
+  // El equipo entra por la puerta NEUTRAL (/operador), no por el login de creadora
+  // (/acceso, que va branded con la marca) — importa en el apex neutral.
+  if (!email) redirect("/operador");
   if (!isAdmin(email)) {
     return (
       <div style={OPERATOR_THEME} className="min-h-screen bg-cream text-ink">
@@ -38,9 +40,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Admin de la marca SELECCIONADA: se pinta con SU branding.
   const ctx = await getAdminContext();
-  // El club público de esta marca: el "/" de este deploy (marca del env) o su
-  // propio deploy si lo tiene. Para que el equipo lo vea como las creadoras.
-  const clubUrl = ctx.isEnvBrand ? "/" : ctx.brand.deployUrl;
+  // El club público de esta marca. Para la marca del env usar su dominio propio
+  // (deployUrl) SOLO en producción (donde el equipo opera desde el apex neutral y
+  // "/" rebotaría a /operador); en local/preview usar "/" del mismo deploy para no
+  // saltar a producción al hacer QA. Las otras marcas siempre usan su deployUrl.
+  const isProd = process.env.VERCEL_ENV === "production";
+  const clubUrl = ctx.isEnvBrand
+    ? (isProd ? (ctx.brand.deployUrl ?? "/") : "/")
+    : ctx.brand.deployUrl;
 
   return (
     <div style={brandThemeVars(ctx.brand)} className="min-h-screen bg-cream text-ink">

@@ -147,6 +147,10 @@ const BRANDS: Record<string, RawBrand> = {
     inkSoft: "#4A4570",
     lime: "#C7EC4D",
     tierSystem: MX_TIERS, // Color Dreams es marca de México
+    // Dominio público propio (subdominio de marca). Lo usan el admin ("Ver el club")
+    // y los correos a creadoras para apuntar SIEMPRE al club de la marca, no al host
+    // donde el equipo esté operando (ej. el apex neutral getcreatorclub.com).
+    deployUrl: "https://colordreams.getcreatorclub.com",
     levels: CD_LEVELS,
     missions: CD_MISSIONS,
     rewards: CD_REWARDS,
