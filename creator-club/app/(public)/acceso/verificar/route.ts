@@ -3,6 +3,7 @@ import { verifyAccessToken } from "@/lib/token";
 import { setCreatorCookie } from "@/lib/session";
 import { getCreatorByEmail } from "@/lib/store";
 import { isAdmin } from "@/lib/roles";
+import { isBrandAccount } from "@/lib/brand-accounts";
 
 // Abre el magic link: valida el token, setea la cookie de sesión y redirige.
 export async function GET(req: Request) {
@@ -17,6 +18,10 @@ export async function GET(req: Request) {
   // Operadores entran por la consola (nivel superior), no a un club concreto.
   if (isAdmin(result.email)) {
     return NextResponse.redirect(new URL("/console", req.url));
+  }
+  // Cuentas de marca (cliente) entran a su panel de solo lectura.
+  if (isBrandAccount(result.email)) {
+    return NextResponse.redirect(new URL("/marca", req.url));
   }
   const creator = await getCreatorByEmail(result.email);
   if (creator) {
