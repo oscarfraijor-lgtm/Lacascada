@@ -25,13 +25,18 @@ import {
   updateReward,
   setRewardActive,
   deleteReward,
+  getActivacionById,
+  setActivacionStatus,
   PARTICIPATION_STATUS,
   CANJE_STATUS,
   MISION_STATUS,
+  ACTIVACION_STATUS,
   type ParticipationStatus,
   type CanjeStatus,
   type MisionStatus,
+  type ActivacionStatus,
 } from "@/lib/store";
+import { getActivacionMeta } from "@/lib/activaciones";
 import type { CampaignInput } from "@/lib/campaigns";
 import type { RewardInput, RewardKind } from "@/lib/types";
 import { canApproveCanje } from "@/lib/rewards";
@@ -352,6 +357,53 @@ export async function cambiarEstadoMision(formData: FormData) {
         : "Necesita un ajuste. Corrige y vuelve a enviar tu video.",
       "/misiones"
     );
+  }
+}
+
+// Activaciones de Live (Flash Sales / Giveaways): el equipo OTORGA (la prende en
+// TikTok Shop) o rechaza la solicitud de la creadora. No hay gate de GMV (es una
+// activación de la marca sobre el Live de la creadora, no una recompensa con costo
+// para ella); el equipo decide con el contexto de su nivel/GMV visible en la lista.
+export async function cambiarEstadoActivacion(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const conn = ctx.conn ?? undefined;
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "") as ActivacionStatus;
+  const reason = String(formData.get("reason") || "").trim();
+  if (!id || !ACTIVACION_STATUS.includes(status)) return;
+
+  await setActivacionStatus(id, status, status === "rechazada" ? reason : undefined, conn);
+  revalidatePath("/admin/activaciones");
+  revalidatePath("/activaciones");
+
+  // Aviso por correo (tolerante) en las transiciones que le importan a la creadora.
+  if (status === "otorgada" || status === "rechazada") {
+    const act = await getActivacionById(id, conn);
+    if (act) {
+      const label = getActivacionMeta(act.tipo)?.label ?? act.tipo;
+      if (status === "otorgada") {
+        await notifyCreator(
+          ctx,
+          act.creatorEmail,
+          `Activamos tu ${label}`,
+          `¡Tu ${label} está listo!`,
+          `El equipo activó tu ${label} en TikTok Shop. Abre la guía paso a paso en tu club y úsalo en tu Live.`,
+          "/activaciones"
+        );
+      } else {
+        await notifyCreator(
+          ctx,
+          act.creatorEmail,
+          `Sobre tu solicitud de ${label}`,
+          `Revisemos tu ${label}`,
+          reason
+            ? `Motivo: ${reason}. Escríbenos si tienes dudas.`
+            : "No procedió esta vez. Escríbenos si tienes dudas.",
+          "/activaciones"
+        );
+      }
+    }
   }
 }
 

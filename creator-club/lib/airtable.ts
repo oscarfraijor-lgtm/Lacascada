@@ -15,6 +15,7 @@ export const TABLES = {
   Ledger: "Ledger_Puntos",
   Recompensas: "Recompensas",
   Canjes: "Canjes",
+  Activaciones: "Activaciones",
   Niveles: "Niveles",
 } as const;
 

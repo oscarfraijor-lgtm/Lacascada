@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Megaphone, Target, Trophy, Gift, LogOut, ShieldCheck, UserCog } from "lucide-react";
+import { Home, Megaphone, Target, Trophy, Gift, Zap, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { BRAND } from "@/lib/schema";
 import { getCurrentCreator, currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
@@ -8,6 +8,7 @@ import { cerrarSesion } from "@/lib/auth-actions";
 const LINKS = [
   { href: "/", label: "Inicio", icon: Home },
   { href: "/campanas", label: "Campañas", icon: Megaphone },
+  { href: "/activaciones", label: "Activaciones", icon: Zap },
   { href: "/misiones", label: "Misiones", icon: Target },
   { href: "/leaderboard", label: "Ranking", icon: Trophy },
   { href: "/recompensas", label: "Recompensas", icon: Gift },

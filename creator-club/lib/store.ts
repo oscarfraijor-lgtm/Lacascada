@@ -72,6 +72,7 @@ interface DB {
   canjes?: Canje[];
   misiones?: MisionCompletion[];
   rewards?: Reward[];
+  activaciones?: Activacion[];
 }
 
 async function readDB(): Promise<DB> {
@@ -84,9 +85,10 @@ async function readDB(): Promise<DB> {
       canjes: db.canjes ?? [],
       misiones: db.misiones ?? [],
       rewards: db.rewards,
+      activaciones: db.activaciones ?? [],
     };
   } catch {
-    return { creators: [], participations: [], canjes: [], misiones: [] };
+    return { creators: [], participations: [], canjes: [], misiones: [], activaciones: [] };
   }
 }
 async function writeDB(db: DB): Promise<void> {
@@ -472,6 +474,125 @@ export async function setCanjeStatus(id: string, status: CanjeStatus, reason?: s
   if (c) {
     c.status = status;
     c.reason = motivo || undefined;
+    await writeDB(db);
+  }
+}
+
+// ── Activaciones de Live (Flash Sales / Giveaways) ────────────────────────
+// La creadora SOLICITA una activación para su Live; el equipo la OTORGA en TikTok
+// Shop. Espejo de Canjes pero más simple: NO hay gate de GMV (es una activación de
+// la marca SOBRE el Live de la creadora, no una recompensa con costo para ella; el
+// equipo decide otorgar con el contexto de su nivel/GMV visible en /admin).
+export const ACTIVACION_STATUS = ["solicitada", "otorgada", "rechazada"] as const;
+export type ActivacionStatus = (typeof ACTIVACION_STATUS)[number];
+
+export interface Activacion {
+  id?: string;
+  creatorEmail: string;
+  tipo: string; // ActivacionTipo: "flash_sale" | "giveaway"
+  usuario: string; // usuario de TikTok / del Live que dejó la creadora
+  status: string; // ActivacionStatus
+  reason?: string; // motivo de rechazo (visible para la creadora)
+  createdAt?: string;
+}
+
+interface ActivacionFields {
+  Email: string;
+  Tipo: string;
+  Usuario?: string;
+  Estado: string;
+  Motivo?: string;
+}
+
+function activacionToRecord(r: { id: string; fields: ActivacionFields; createdTime?: string }): Activacion {
+  return {
+    id: r.id,
+    creatorEmail: r.fields.Email,
+    tipo: r.fields.Tipo,
+    usuario: r.fields.Usuario ?? "",
+    status: r.fields.Estado,
+    reason: r.fields.Motivo,
+    createdAt: r.createdTime,
+  };
+}
+
+// Solicitar una activación. Dedup: una sola solicitud ABIERTA (solicitada) por
+// tipo y creadora, para no spamear al equipo. Una vez otorgada/rechazada puede
+// volver a pedir (su siguiente Live).
+export async function addActivacion(a: Activacion, conn?: Conn): Promise<Activacion> {
+  if (airtableConfigured(conn)) {
+    const existing = await fetchAll<ActivacionFields>(TABLES.Activaciones, {
+      filterByFormula: `AND(LOWER({Email})='${escFormula(a.creatorEmail.toLowerCase())}',{Tipo}='${escFormula(a.tipo)}',{Estado}='solicitada')`,
+    }, conn);
+    if (existing[0]) {
+      // Ya tiene una pendiente de ese tipo. Si reenvía con el usuario CORREGIDO
+      // (distinto y no vacío), actualízalo: ese campo es el que usa el equipo para
+      // saber en qué cuenta de TikTok prender la activación.
+      const cur = activacionToRecord(existing[0]);
+      if (a.usuario && a.usuario !== cur.usuario) {
+        await airtableUpdate(TABLES.Activaciones, existing[0].id, { Usuario: a.usuario }, conn);
+        return { ...cur, usuario: a.usuario };
+      }
+      return cur;
+    }
+    const r = await airtableCreate(TABLES.Activaciones, {
+      Email: a.creatorEmail,
+      Tipo: a.tipo,
+      Usuario: a.usuario,
+      Estado: "solicitada",
+    }, conn);
+    return { ...a, id: r.id, status: "solicitada" };
+  }
+  const db = await readDB();
+  db.activaciones = db.activaciones ?? [];
+  const dup = db.activaciones.find((x) => x.creatorEmail === a.creatorEmail && x.tipo === a.tipo && x.status === "solicitada");
+  if (dup) {
+    // Mismo caso en archivo local: actualiza el usuario corregido antes de devolver.
+    if (a.usuario && a.usuario !== dup.usuario) {
+      dup.usuario = a.usuario;
+      await writeDB(db);
+    }
+    return dup;
+  }
+  const rec: Activacion = { ...a, id: "loc_" + randomUUID(), status: "solicitada", createdAt: new Date().toISOString() };
+  db.activaciones.push(rec);
+  await writeDB(db);
+  return rec;
+}
+
+export async function activacionesFor(email: string, conn?: Conn): Promise<Activacion[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<ActivacionFields>(TABLES.Activaciones, {
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
+    }, conn);
+    return recs.map(activacionToRecord);
+  }
+  return (await readDB()).activaciones?.filter((x) => x.creatorEmail === email) ?? [];
+}
+
+export async function listActivaciones(conn?: Conn): Promise<Activacion[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<ActivacionFields>(TABLES.Activaciones, {}, conn);
+    return recs.map(activacionToRecord);
+  }
+  return (await readDB()).activaciones ?? [];
+}
+
+export async function getActivacionById(id: string, conn?: Conn): Promise<Activacion | undefined> {
+  return (await listActivaciones(conn)).find((a) => a.id === id);
+}
+
+export async function setActivacionStatus(id: string, status: ActivacionStatus, reason?: string, conn?: Conn): Promise<void> {
+  const motivo = status === "rechazada" ? (reason ?? "") : "";
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Activaciones, id, { Estado: status, Motivo: motivo }, conn);
+    return;
+  }
+  const db = await readDB();
+  const a = (db.activaciones ?? []).find((x) => x.id === id);
+  if (a) {
+    a.status = status;
+    a.reason = motivo || undefined;
     await writeDB(db);
   }
 }

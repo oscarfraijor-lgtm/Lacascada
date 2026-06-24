@@ -68,6 +68,11 @@ const TABLES = [
     description: "Catálogo de premios (el equipo los prende/apaga y edita en /admin)",
     fields: [text("Id"), text("Titulo"), multiline("Detalle"), text("Costo"), text("Kind"), text("Payer"), number("MinStars"), number("MinGmvMXN"), checkbox("Activa")],
   },
+  {
+    name: "Activaciones",
+    description: "Solicitudes de activación de Live (Flash Sale / Giveaway). La creadora pide, el equipo otorga en TTS",
+    fields: [text("Email"), text("Tipo"), text("Usuario"), text("Estado"), text("Motivo")],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
