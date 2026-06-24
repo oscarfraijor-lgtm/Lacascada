@@ -31,14 +31,18 @@ import {
   deleteProduct,
   getActivacionById,
   setActivacionStatus,
+  getMuestraById,
+  setMuestraStatus,
   PARTICIPATION_STATUS,
   CANJE_STATUS,
   MISION_STATUS,
   ACTIVACION_STATUS,
+  MUESTRA_STATUS,
   type ParticipationStatus,
   type CanjeStatus,
   type MisionStatus,
   type ActivacionStatus,
+  type MuestraStatus,
 } from "@/lib/store";
 import { getActivacionMeta } from "@/lib/activaciones";
 import type { CampaignInput } from "@/lib/campaigns";
@@ -415,6 +419,63 @@ export async function cambiarEstadoActivacion(formData: FormData) {
             ? `Motivo: ${reason}. Escríbenos si tienes dudas.`
             : "No procedió esta vez. Escríbenos si tienes dudas.",
           "/activaciones"
+        );
+      }
+    }
+  }
+}
+
+// Muestras (Sample Requests): el equipo APRUEBA y ENVÍA (o rechaza) la muestra que
+// pidió la creadora. NO hay gate de GMV (es una inversión de la marca para generar
+// contenido, no una recompensa con costo); el equipo decide con el contexto de la
+// creadora (afiliado/nivel/GMV/perfil visible en la lista). La aprobación manual es
+// el candado anti-fuga.
+export async function cambiarEstadoMuestra(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const conn = ctx.conn ?? undefined;
+  const id = String(formData.get("id") || "");
+  const status = String(formData.get("status") || "") as MuestraStatus;
+  const reason = String(formData.get("reason") || "").trim();
+  if (!id || !MUESTRA_STATUS.includes(status)) return;
+
+  await setMuestraStatus(id, status, status === "rechazada" ? reason : undefined, conn);
+  revalidatePath("/admin/muestras");
+  revalidatePath("/muestras");
+
+  // Aviso por correo (tolerante) en las transiciones que le importan a la creadora.
+  if (status === "aprobada" || status === "enviada" || status === "rechazada") {
+    const m = await getMuestraById(id, conn);
+    if (m) {
+      const name = m.productName || "tu muestra";
+      if (status === "aprobada") {
+        await notifyCreator(
+          ctx,
+          m.creatorEmail,
+          `Aprobamos tu muestra: ${name}`,
+          `¡Muestra aprobada! ${name}`,
+          "Estamos preparando tu envío. Te avisamos cuando salga.",
+          "/muestras"
+        );
+      } else if (status === "enviada") {
+        await notifyCreator(
+          ctx,
+          m.creatorEmail,
+          `Enviamos tu muestra: ${name}`,
+          `¡Tu muestra va en camino! ${name}`,
+          "Ya enviamos tu muestra. Cuando llegue, graba tu mejor video con tu link de afiliado.",
+          "/muestras"
+        );
+      } else {
+        await notifyCreator(
+          ctx,
+          m.creatorEmail,
+          `Sobre tu solicitud de ${name}`,
+          `Revisemos tu solicitud de ${name}`,
+          reason
+            ? `Motivo: ${reason}. Escríbenos si tienes dudas.`
+            : "No procedió esta vez. Escríbenos si tienes dudas.",
+          "/muestras"
         );
       }
     }

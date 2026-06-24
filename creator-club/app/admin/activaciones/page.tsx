@@ -89,6 +89,7 @@ export default async function AdminActivacionesPage() {
                 <input
                   name="reason"
                   list="motivos-rechazo-activacion"
+                  aria-label="Motivo de rechazo"
                   placeholder="Motivo…"
                   className="w-28 rounded-full border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-xs text-ink outline-none placeholder:text-ink/40 focus:border-brand focus:bg-white"
                 />

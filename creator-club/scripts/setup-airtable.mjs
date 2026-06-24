@@ -85,6 +85,14 @@ const TABLES = [
       text("Campana"), text("Fuente"), checkbox("Activa"),
     ],
   },
+  {
+    name: "Muestras",
+    description: "Sample Requests: la creadora pide producto para crear contenido. El equipo aprueba y envía. Sin gate de GMV (inversión de marca)",
+    fields: [
+      text("Email"), text("Producto"), text("ProductoNombre"),
+      multiline("Direccion"), multiline("Nota"), text("Estado"), text("Motivo"),
+    ],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
@@ -182,6 +190,14 @@ async function ensureFields() {
     { table: "Productos", field: text("Campana") },
     { table: "Productos", field: text("Fuente") },
     { table: "Productos", field: checkbox("Activa") },
+    // Muestras: asegura columnas si la tabla ya existía sin alguna.
+    { table: "Muestras", field: text("Email") },
+    { table: "Muestras", field: text("Producto") },
+    { table: "Muestras", field: text("ProductoNombre") },
+    { table: "Muestras", field: multiline("Direccion") },
+    { table: "Muestras", field: multiline("Nota") },
+    { table: "Muestras", field: text("Estado") },
+    { table: "Muestras", field: text("Motivo") },
   ];
   for (const w of want) {
     const t = tables.find((x) => x.name === w.table);

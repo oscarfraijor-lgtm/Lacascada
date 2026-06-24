@@ -75,6 +75,7 @@ interface DB {
   rewards?: Reward[];
   activaciones?: Activacion[];
   products?: Product[];
+  muestras?: Muestra[];
 }
 
 async function readDB(): Promise<DB> {
@@ -89,9 +90,10 @@ async function readDB(): Promise<DB> {
       rewards: db.rewards,
       activaciones: db.activaciones ?? [],
       products: db.products,
+      muestras: db.muestras ?? [],
     };
   } catch {
-    return { creators: [], participations: [], canjes: [], misiones: [], activaciones: [] };
+    return { creators: [], participations: [], canjes: [], misiones: [], activaciones: [], muestras: [] };
   }
 }
 async function writeDB(db: DB): Promise<void> {
@@ -596,6 +598,141 @@ export async function setActivacionStatus(id: string, status: ActivacionStatus, 
   if (a) {
     a.status = status;
     a.reason = motivo || undefined;
+    await writeDB(db);
+  }
+}
+
+// ── Muestras (Sample Requests: la creadora pide producto para crear contenido) ──
+// La creadora SOLICITA una muestra de un producto del catálogo dejando su dirección
+// de envío; el equipo la APRUEBA y la ENVÍA (o rechaza). Es una INVERSIÓN de la
+// marca para generar contenido, NO un premio por venta: por eso NO tiene gate de GMV
+// (como las activaciones); el equipo decide con el contexto de la creadora (afiliado
+// conectado, nivel, GMV, perfil) visible en /admin. La aprobación manual del equipo
+// ES el candado anti-fuga. Espejo de Activaciones + Canjes (estado "enviada" terminal).
+//   solicitada -> la creadora la pidió (esperando que el equipo decida)
+//   aprobada   -> el equipo la aprobó (preparando el envío)
+//   enviada    -> el equipo ya la mandó (estado terminal)
+//   rechazada  -> el equipo la rechazó con motivo (puede volver a pedir)
+export const MUESTRA_STATUS = ["solicitada", "aprobada", "enviada", "rechazada"] as const;
+export type MuestraStatus = (typeof MUESTRA_STATUS)[number];
+
+export interface Muestra {
+  id?: string;
+  creatorEmail: string;
+  productId: string;
+  productName: string; // snapshot para el panel y el historial
+  address: string; // dirección de envío que dejó la creadora
+  note?: string; // nota opcional (para qué/dónde la usará)
+  status: string; // MuestraStatus
+  reason?: string; // motivo de rechazo (visible para la creadora)
+  createdAt?: string;
+}
+
+interface MuestraFields {
+  Email: string;
+  Producto?: string;
+  ProductoNombre?: string;
+  Direccion?: string;
+  Nota?: string;
+  Estado: string;
+  Motivo?: string;
+}
+
+function muestraToRecord(r: { id: string; fields: MuestraFields; createdTime?: string }): Muestra {
+  return {
+    id: r.id,
+    creatorEmail: r.fields.Email,
+    productId: r.fields.Producto ?? "",
+    productName: r.fields.ProductoNombre ?? "",
+    address: r.fields.Direccion ?? "",
+    note: r.fields.Nota || undefined,
+    status: r.fields.Estado,
+    reason: r.fields.Motivo,
+    createdAt: r.createdTime,
+  };
+}
+
+const MUESTRA_OPEN = ["solicitada", "aprobada", "enviada"];
+
+// Solicitar una muestra. Dedup: una sola solicitud ABIERTA (solicitada/aprobada/
+// enviada) por creadora y producto. Un rechazo permite volver a pedir sobre el mismo
+// registro (con la dirección/nota corregidas), sin acumular muestras muertas.
+export async function addMuestra(m: Muestra, conn?: Conn): Promise<Muestra> {
+  if (airtableConfigured(conn)) {
+    const existing = await fetchAll<MuestraFields>(TABLES.Muestras, {
+      filterByFormula: `AND(LOWER({Email})='${escFormula(m.creatorEmail.toLowerCase())}',{Producto}='${escFormula(m.productId)}')`,
+    }, conn);
+    const open = existing.find((r) => MUESTRA_OPEN.includes(r.fields.Estado));
+    if (open) return muestraToRecord(open);
+    const rejected = existing.find((r) => r.fields.Estado === "rechazada");
+    if (rejected) {
+      await airtableUpdate(TABLES.Muestras, rejected.id, { Estado: "solicitada", Motivo: "", Direccion: m.address, Nota: m.note ?? "", ProductoNombre: m.productName }, conn);
+      return { ...muestraToRecord(rejected), status: "solicitada", reason: undefined, address: m.address, note: m.note, productName: m.productName };
+    }
+    const r = await airtableCreate(TABLES.Muestras, {
+      Email: m.creatorEmail,
+      Producto: m.productId,
+      ProductoNombre: m.productName,
+      Direccion: m.address,
+      Nota: m.note ?? "",
+      Estado: "solicitada",
+    }, conn);
+    return { ...m, id: r.id, status: "solicitada" };
+  }
+  const db = await readDB();
+  db.muestras = db.muestras ?? [];
+  const existing = db.muestras.filter((x) => x.creatorEmail === m.creatorEmail && x.productId === m.productId);
+  const open = existing.find((x) => MUESTRA_OPEN.includes(x.status));
+  if (open) return open;
+  const rejected = existing.find((x) => x.status === "rechazada");
+  if (rejected) {
+    rejected.status = "solicitada";
+    rejected.reason = undefined;
+    rejected.address = m.address;
+    rejected.note = m.note;
+    rejected.productName = m.productName;
+    await writeDB(db);
+    return rejected;
+  }
+  const rec: Muestra = { ...m, id: "loc_" + randomUUID(), status: "solicitada", createdAt: new Date().toISOString() };
+  db.muestras.push(rec);
+  await writeDB(db);
+  return rec;
+}
+
+export async function muestrasFor(email: string, conn?: Conn): Promise<Muestra[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<MuestraFields>(TABLES.Muestras, {
+      filterByFormula: `LOWER({Email})='${escFormula(email.toLowerCase())}'`,
+    }, conn);
+    return recs.map(muestraToRecord);
+  }
+  return (await readDB()).muestras?.filter((x) => x.creatorEmail === email) ?? [];
+}
+
+export async function listMuestras(conn?: Conn): Promise<Muestra[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<MuestraFields>(TABLES.Muestras, {}, conn);
+    return recs.map(muestraToRecord);
+  }
+  return (await readDB()).muestras ?? [];
+}
+
+export async function getMuestraById(id: string, conn?: Conn): Promise<Muestra | undefined> {
+  return (await listMuestras(conn)).find((m) => m.id === id);
+}
+
+export async function setMuestraStatus(id: string, status: MuestraStatus, reason?: string, conn?: Conn): Promise<void> {
+  const motivo = status === "rechazada" ? (reason ?? "") : "";
+  if (airtableConfigured(conn)) {
+    await airtableUpdate(TABLES.Muestras, id, { Estado: status, Motivo: motivo }, conn);
+    return;
+  }
+  const db = await readDB();
+  const m = (db.muestras ?? []).find((x) => x.id === id);
+  if (m) {
+    m.status = status;
+    m.reason = motivo || undefined;
     await writeDB(db);
   }
 }

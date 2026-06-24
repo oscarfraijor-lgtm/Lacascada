@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  Package, Check, X, Sparkles, ExternalLink, Download, ImageIcon, Megaphone, Link2, Tag,
+  Package, PackageOpen, Check, X, Sparkles, ExternalLink, Download, ImageIcon, Megaphone, Link2, Tag,
 } from "lucide-react";
 import { listActiveProducts, listCampaigns } from "@/lib/store";
 import { type Product, splitLines, parseDeepLinks, productImages } from "@/lib/products";
@@ -85,16 +85,24 @@ function ProductCard({ p, campaign }: { p: Product; campaign?: Campaign }) {
             </p>
           )}
           {p.benefits && <p className="mt-2 text-sm text-ink-soft">{p.benefits}</p>}
-          {p.link && (
-            <a
-              href={p.link}
-              target="_blank"
-              rel="noreferrer"
-              className="font-display mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {p.link && (
+              <a
+                href={p.link}
+                target="_blank"
+                rel="noreferrer"
+                className="font-display inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
+              >
+                Abrir producto / mi link <ExternalLink size={15} />
+              </a>
+            )}
+            <Link
+              href={`/muestras?producto=${encodeURIComponent(p.id)}`}
+              className="font-display inline-flex w-fit items-center gap-1.5 rounded-full border border-ink/15 px-4 py-2 text-sm font-extrabold text-ink transition hover:border-brand hover:text-brand"
             >
-              Abrir producto / mi link <ExternalLink size={15} />
-            </a>
-          )}
+              <PackageOpen size={15} /> Pedir muestra
+            </Link>
+          </div>
         </div>
       </div>
 

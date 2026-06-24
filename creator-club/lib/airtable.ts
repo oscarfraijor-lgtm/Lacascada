@@ -17,6 +17,7 @@ export const TABLES = {
   Canjes: "Canjes",
   Activaciones: "Activaciones",
   Productos: "Productos",
+  Muestras: "Muestras",
   Niveles: "Niveles",
 } as const;
 
