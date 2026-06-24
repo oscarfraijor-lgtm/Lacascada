@@ -25,6 +25,7 @@ import {
   slugify,
 } from "@/lib/campaigns";
 import type { Reward, RewardInput, RewardKind } from "@/lib/types";
+import type { Product, ProductInput, ProductSource } from "@/lib/products";
 import { BRAND } from "@/lib/schema";
 import { parseTiers, serializeTiers } from "@/lib/tiers";
 
@@ -73,6 +74,7 @@ interface DB {
   misiones?: MisionCompletion[];
   rewards?: Reward[];
   activaciones?: Activacion[];
+  products?: Product[];
 }
 
 async function readDB(): Promise<DB> {
@@ -86,6 +88,7 @@ async function readDB(): Promise<DB> {
       misiones: db.misiones ?? [],
       rewards: db.rewards,
       activaciones: db.activaciones ?? [],
+      products: db.products,
     };
   } catch {
     return { creators: [], participations: [], canjes: [], misiones: [], activaciones: [] };
@@ -992,5 +995,146 @@ export async function deleteReward(id: string, conn?: Conn): Promise<void> {
   }
   const db = await readDB();
   db.rewards = (db.rewards ?? BRAND.rewards.map((r) => ({ ...r }))).filter((x) => x.id !== id);
+  await writeDB(db);
+}
+
+// ── Productos (fichas / briefs + assets; el equipo los edita en /admin) ────
+// Espejo de Recompensas: viven en Airtable (tabla Productos) y se editan desde
+// /admin. SOLO INFORMATIVO: no tocan recompensas/canjes/GMV (anti-fuga intacto).
+// CRUVA-pluggable: el campo Fuente (source) queda "manual" hasta que el sync de
+// CRUVA llene/actualice estos mismos campos (lib/products.syncProductsFromCruva).
+interface ProductoFields {
+  Id?: string;
+  Nombre?: string;
+  Precio?: string;
+  Specs?: string;
+  Beneficios?: string;
+  Hooks?: string;
+  Dos?: string;
+  Donts?: string;
+  Link?: string;
+  Imagen?: string;
+  Galeria?: string;
+  Copy?: string;
+  DeepLinks?: string;
+  Campana?: string;
+  Fuente?: string;
+  Activa?: boolean;
+}
+
+function coerceSource(s?: string): ProductSource {
+  return s === "cruva" ? "cruva" : "manual";
+}
+
+function productToAirtableFields(p: Partial<ProductInput>): Record<string, unknown> {
+  const f: Record<string, unknown> = {};
+  if (p.id !== undefined) f.Id = p.id;
+  if (p.name !== undefined) f.Nombre = p.name;
+  if (p.price !== undefined) f.Precio = p.price;
+  if (p.specs !== undefined) f.Specs = p.specs;
+  if (p.benefits !== undefined) f.Beneficios = p.benefits;
+  if (p.hooks !== undefined) f.Hooks = p.hooks;
+  if (p.dos !== undefined) f.Dos = p.dos;
+  if (p.donts !== undefined) f.Donts = p.donts;
+  if (p.link !== undefined) f.Link = p.link;
+  if (p.image !== undefined) f.Imagen = p.image;
+  if (p.gallery !== undefined) f.Galeria = p.gallery;
+  if (p.copy !== undefined) f.Copy = p.copy;
+  if (p.deeplinks !== undefined) f.DeepLinks = p.deeplinks;
+  if (p.campaignId !== undefined) f.Campana = p.campaignId ?? "";
+  if (p.source !== undefined) f.Fuente = p.source;
+  if (p.active !== undefined) f.Activa = p.active;
+  return f;
+}
+
+function productFromAirtable(rec: { id: string; fields: ProductoFields }): Product {
+  const f = rec.fields;
+  return {
+    recordId: rec.id,
+    id: f.Id || slugify(f.Nombre ?? rec.id),
+    name: f.Nombre ?? "(sin nombre)",
+    price: f.Precio ?? "",
+    specs: f.Specs ?? "",
+    benefits: f.Beneficios ?? "",
+    hooks: f.Hooks ?? "",
+    dos: f.Dos ?? "",
+    donts: f.Donts ?? "",
+    link: f.Link ?? "",
+    image: f.Imagen ?? "",
+    gallery: f.Galeria ?? "",
+    copy: f.Copy ?? "",
+    deeplinks: f.DeepLinks ?? "",
+    campaignId: f.Campana || undefined,
+    source: coerceSource(f.Fuente),
+    active: f.Activa !== false,
+  };
+}
+
+export async function listProducts(conn?: Conn): Promise<Product[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<ProductoFields>(TABLES.Productos, {}, conn);
+    return recs.map(productFromAirtable);
+  }
+  // Archivo local: sembrar desde el seed de la marca la primera vez.
+  const db = await readDB();
+  if (!db.products) {
+    db.products = BRAND.products.map((p) => ({ ...p, active: p.active !== false }));
+    await writeDB(db);
+  }
+  return db.products;
+}
+
+// Solo los productos ACTIVOS (lo que ve la creadora en /productos).
+export async function listActiveProducts(conn?: Conn): Promise<Product[]> {
+  return (await listProducts(conn)).filter((p) => p.active !== false);
+}
+
+export async function getProductById(id: string, conn?: Conn): Promise<Product | undefined> {
+  return (await listProducts(conn)).find((p) => p.id === id);
+}
+
+export async function createProduct(input: ProductInput, conn?: Conn): Promise<Product> {
+  const all = await listProducts(conn);
+  const id = await uniqueSlug(input.name, all);
+  const product: Product = { ...input, id, active: input.active ?? true };
+  if (airtableConfigured(conn)) {
+    const r = await airtableCreate(TABLES.Productos, productToAirtableFields({ ...input, id }), conn);
+    return { ...product, recordId: r.id };
+  }
+  const db = await readDB();
+  db.products = db.products ?? all.map((p) => ({ ...p }));
+  db.products.push(product);
+  await writeDB(db);
+  return product;
+}
+
+export async function updateProduct(id: string, patch: Partial<ProductInput>, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getProductById(id, conn);
+    if (!current?.recordId) throw new Error(`Producto ${id} no encontrado`);
+    await airtableUpdate(TABLES.Productos, current.recordId, productToAirtableFields(patch), conn);
+    return;
+  }
+  const db = await readDB();
+  db.products = db.products ?? BRAND.products.map((p) => ({ ...p }));
+  const p = db.products.find((x) => x.id === id);
+  if (p) {
+    Object.assign(p, patch);
+    await writeDB(db);
+  }
+}
+
+export async function setProductActive(id: string, active: boolean, conn?: Conn): Promise<void> {
+  await updateProduct(id, { active }, conn);
+}
+
+export async function deleteProduct(id: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getProductById(id, conn);
+    if (current?.recordId) await airtableDelete(TABLES.Productos, current.recordId, conn);
+    return;
+  }
+  const db = await readDB();
+  db.products = (db.products ?? BRAND.products.map((p) => ({ ...p }))).filter((x) => x.id !== id);
   await writeDB(db);
 }

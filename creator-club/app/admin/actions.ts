@@ -25,6 +25,10 @@ import {
   updateReward,
   setRewardActive,
   deleteReward,
+  createProduct,
+  updateProduct,
+  setProductActive,
+  deleteProduct,
   getActivacionById,
   setActivacionStatus,
   PARTICIPATION_STATUS,
@@ -38,6 +42,7 @@ import {
 } from "@/lib/store";
 import { getActivacionMeta } from "@/lib/activaciones";
 import type { CampaignInput } from "@/lib/campaigns";
+import type { ProductInput } from "@/lib/products";
 import type { RewardInput, RewardKind } from "@/lib/types";
 import { canApproveCanje } from "@/lib/rewards";
 import type { TierSystem } from "@/lib/tiers";
@@ -497,4 +502,73 @@ export async function eliminarRecompensa(formData: FormData) {
   if (canjes.some((c) => c.rewardId === id)) return;
   await deleteReward(id, ctx.conn ?? undefined);
   revalidateRewards();
+}
+
+// ── Productos (fichas / briefs + assets; el equipo los edita en /admin) ────
+// SOLO INFORMATIVO: editar productos NO toca recompensas/canjes/GMV (anti-fuga).
+// source="manual" por default; CRUVA lo marca "cruva" cuando enchufe el sync.
+function revalidateProducts(): void {
+  revalidatePath("/admin/productos");
+  revalidatePath("/productos");
+}
+
+function parseProductForm(formData: FormData): Omit<ProductInput, "id"> {
+  const sourceRaw = String(formData.get("source") || "manual");
+  const activeRaw = String(formData.get("active") || "");
+  return {
+    name: String(formData.get("name") || "").trim(),
+    price: String(formData.get("price") || "").trim(),
+    specs: String(formData.get("specs") || "").trim(),
+    benefits: String(formData.get("benefits") || "").trim(),
+    hooks: String(formData.get("hooks") || "").trim(),
+    dos: String(formData.get("dos") || "").trim(),
+    donts: String(formData.get("donts") || "").trim(),
+    link: String(formData.get("link") || "").trim(),
+    image: String(formData.get("image") || "").trim(),
+    gallery: String(formData.get("gallery") || "").trim(),
+    copy: String(formData.get("copy") || "").trim(),
+    deeplinks: String(formData.get("deeplinks") || "").trim(),
+    campaignId: String(formData.get("campaignId") || "").trim() || undefined,
+    source: sourceRaw === "cruva" ? "cruva" : "manual",
+    active: activeRaw === "on" || activeRaw === "true",
+  };
+}
+
+export async function crearProducto(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const input = parseProductForm(formData);
+  if (!input.name) return;
+  await createProduct({ id: "", ...input }, ctx.conn ?? undefined);
+  revalidateProducts();
+}
+
+export async function editarProducto(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await updateProduct(id, parseProductForm(formData), ctx.conn ?? undefined);
+  revalidateProducts();
+}
+
+export async function alternarProducto(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  const active = String(formData.get("active") || "") === "true";
+  if (!id) return;
+  await setProductActive(id, active, ctx.conn ?? undefined);
+  revalidateProducts();
+}
+
+export async function eliminarProducto(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  // Un producto es solo informativo: no tiene registros dependientes (las campañas
+  // lo referencian de forma suave por campaignId). Se puede borrar sin huérfanos.
+  await deleteProduct(id, ctx.conn ?? undefined);
+  revalidateProducts();
 }

@@ -9,6 +9,7 @@
 import type { Level, Mission } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
 import type { Reward } from "@/lib/types";
+import type { Product } from "@/lib/products";
 import { type TierSystem, MX_TIERS, USA_TIERS } from "@/lib/tiers";
 
 // Identidad + colores + legal (obligatorio por marca)
@@ -44,6 +45,7 @@ interface BrandMechanics {
   missions?: Mission[];
   rewards?: Reward[];
   campaignSeed?: Campaign[];
+  products?: Product[];
 }
 
 // Metadatos del panel multimarca (opcionales).
@@ -104,6 +106,49 @@ const CD_CAMPAIGN_SEED: Campaign[] = [
   { id: "promo-flash", title: "Promo Flash con tu Link", requirements: "Link de afiliado de TikTok Shop activo.", brand: "Color Dreams", brief: "En días de promoción, sube un video corto invitando a comprar con tu link de afiliado. Sin envío de producto: puro contenido que mueve ventas.", reward: "100 estrellas + tu comisión por venta", stars: 100, deadline: "Por temporada", tag: "Afiliado", open: false },
 ];
 
+// PRODUCTOS de Color Dreams (ficha + assets descargables). PLANTILLA DE ARRANQUE:
+// el equipo edita en /admin con precio, specs, fotos y link reales (Oscar los
+// provee). El copy son HECHOS de categoría (bed-in-a-box: llega en caja, se infla
+// en minutos) + buenas prácticas de contenido, NO claims inventados. Precio/imagen/
+// link vacíos hasta que se carguen (la UI muestra placeholder). source="manual"
+// (CRUVA se enchufa después sin rehacer nada). Modelos reales del brandkit.
+const CD_PRODUCTS: Product[] = [
+  {
+    id: "classic-foam",
+    name: "Classic Foam",
+    price: "",
+    specs: "Colchón de espuma. Disponible en Individual, Matrimonial, Queen y King. Llega comprimido en caja.",
+    benefits: "Llega enrollado en una caja y se infla en minutos. Lo pruebas en casa. Soporte firme y fresco para dormir mejor.",
+    hooks: "Llega en una caja y se arma solito en minutos\nEl unboxing más satisfying de tu feed\nDe la caja a tu cama en 5 minutos\nLo probé 30 noches y esto pasó",
+    dos: "Graba el unboxing completo (abrir la caja y verlo inflarse)\nMuestra el tamaño real comparándolo con tu recámara\nPega tu link de afiliado y fija el producto en tu perfil",
+    donts: "No prometas resultados médicos ni cures dolencias\nNo inventes precios ni promociones que el equipo no confirmó\nNo uses música o clips de terceros con copyright",
+    link: "",
+    image: "",
+    gallery: "",
+    copy: "Cambié mi colchón por un Color Dreams Classic Foam y no puedo creer lo bien que duermo. Llega en una caja, se infla en minutos y lo pruebas en casa. Te dejo mi link para que lo consigas. #ColorDreams #BedInABox #TikTokShop",
+    deeplinks: "",
+    source: "manual",
+    active: true,
+  },
+  {
+    id: "snow-plus",
+    name: "Snow Plus",
+    price: "",
+    specs: "Colchón con tecnología de frescura. Disponible en Individual, Matrimonial, Queen y King. Llega comprimido en caja.",
+    benefits: "Mantiene una sensación fresca toda la noche. Llega en caja y se infla en minutos. Lo pruebas en casa.",
+    hooks: "Para las que duermen con calor: el colchón que se mantiene fresco\nDe la caja a tu cama en minutos\nEl colchón que no te deja sudar\nMi rutina de noche con Color Dreams",
+    dos: "Enseña la sensación fresca como tu ángulo principal\nGraba tu rutina de noche real y acogedora\nAgrega el producto a tu perfil de TikTok Shop",
+    donts: "No prometas resultados médicos\nNo inventes precios ni descuentos sin confirmar con el equipo\nNo uses contenido con copyright",
+    link: "",
+    image: "",
+    gallery: "",
+    copy: "Si duermes con calor, el Color Dreams Snow Plus es para ti. Se mantiene fresco toda la noche, llega en una caja y se infla en minutos. Mi link está aquí para que lo pruebes. #ColorDreams #TikTokShop",
+    deeplinks: "",
+    source: "manual",
+    active: true,
+  },
+];
+
 // ── Registro de marcas ──────────────────────────────────────────────────────
 type RawBrand = BrandIdentity & BrandMechanics & BrandMeta;
 
@@ -155,6 +200,7 @@ const BRANDS: Record<string, RawBrand> = {
     missions: CD_MISSIONS,
     rewards: CD_REWARDS,
     campaignSeed: CD_CAMPAIGN_SEED,
+    products: CD_PRODUCTS,
   },
 
   // ── PLANTILLA: copia y ajusta para una marca nueva ──
@@ -262,6 +308,7 @@ export function getBrandConfig(slug: string): BrandConfig | null {
     missions: cfg.missions ?? CD_MISSIONS,
     rewards: cfg.rewards ?? CD_REWARDS,
     campaignSeed: cfg.campaignSeed ?? CD_CAMPAIGN_SEED,
+    products: cfg.products ?? CD_PRODUCTS,
   };
 }
 

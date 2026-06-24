@@ -73,6 +73,18 @@ const TABLES = [
     description: "Solicitudes de activación de Live (Flash Sale / Giveaway). La creadora pide, el equipo otorga en TTS",
     fields: [text("Email"), text("Tipo"), text("Usuario"), text("Estado"), text("Motivo")],
   },
+  {
+    name: "Productos",
+    description: "Catálogo de productos (ficha + assets). Solo informativo. El equipo los edita en /admin. CRUVA-pluggable (Fuente)",
+    fields: [
+      text("Id"), text("Nombre"), text("Precio"),
+      multiline("Specs"), multiline("Beneficios"), multiline("Hooks"),
+      multiline("Dos"), multiline("Donts"),
+      text("Link"), text("Imagen"), multiline("Galeria"),
+      multiline("Copy"), multiline("DeepLinks"),
+      text("Campana"), text("Fuente"), checkbox("Activa"),
+    ],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
@@ -104,6 +116,17 @@ const REWARDS_SEED_BY_BRAND = {
   ],
 };
 const REWARD_SEED = REWARDS_SEED_BY_BRAND[BRAND_SLUG] || [];
+
+// Seed de productos (espejo de lib/brands.ts -> products). PLANTILLA de arranque:
+// el equipo edita precio/specs/fotos/link reales en /admin. Precio/Imagen/Link
+// vacíos a propósito (Oscar los carga). Fuente=manual (CRUVA se enchufa después).
+const PRODUCTS_SEED_BY_BRAND = {
+  "color-dreams": [
+    { Id: "classic-foam", Nombre: "Classic Foam", Precio: "", Specs: "Colchón de espuma. Disponible en Individual, Matrimonial, Queen y King. Llega comprimido en caja.", Beneficios: "Llega enrollado en una caja y se infla en minutos. Lo pruebas en casa. Soporte firme y fresco para dormir mejor.", Hooks: "Llega en una caja y se arma solito en minutos\nEl unboxing más satisfying de tu feed\nDe la caja a tu cama en 5 minutos\nLo probé 30 noches y esto pasó", Dos: "Graba el unboxing completo (abrir la caja y verlo inflarse)\nMuestra el tamaño real comparándolo con tu recámara\nPega tu link de afiliado y fija el producto en tu perfil", Donts: "No prometas resultados médicos ni cures dolencias\nNo inventes precios ni promociones que el equipo no confirmó\nNo uses música o clips de terceros con copyright", Link: "", Imagen: "", Galeria: "", Copy: "Cambié mi colchón por un Color Dreams Classic Foam y no puedo creer lo bien que duermo. Llega en una caja, se infla en minutos y lo pruebas en casa. Te dejo mi link para que lo consigas. #ColorDreams #BedInABox #TikTokShop", DeepLinks: "", Campana: "", Fuente: "manual", Activa: true },
+    { Id: "snow-plus", Nombre: "Snow Plus", Precio: "", Specs: "Colchón con tecnología de frescura. Disponible en Individual, Matrimonial, Queen y King. Llega comprimido en caja.", Beneficios: "Mantiene una sensación fresca toda la noche. Llega en caja y se infla en minutos. Lo pruebas en casa.", Hooks: "Para las que duermen con calor: el colchón que se mantiene fresco\nDe la caja a tu cama en minutos\nEl colchón que no te deja sudar\nMi rutina de noche con Color Dreams", Dos: "Enseña la sensación fresca como tu ángulo principal\nGraba tu rutina de noche real y acogedora\nAgrega el producto a tu perfil de TikTok Shop", Donts: "No prometas resultados médicos\nNo inventes precios ni descuentos sin confirmar con el equipo\nNo uses contenido con copyright", Link: "", Imagen: "", Galeria: "", Copy: "Si duermes con calor, el Color Dreams Snow Plus es para ti. Se mantiene fresco toda la noche, llega en una caja y se infla en minutos. Mi link está aquí para que lo pruebes. #ColorDreams #TikTokShop", DeepLinks: "", Campana: "", Fuente: "manual", Activa: true },
+  ],
+};
+const PRODUCT_SEED = PRODUCTS_SEED_BY_BRAND[BRAND_SLUG] || [];
 
 // 1) Crear tablas (idempotente)
 for (const t of TABLES) {
@@ -142,6 +165,23 @@ async function ensureFields() {
     { table: "Creadoras", field: text("ConsentimientoVersion") },
     { table: "Canjes", field: text("Titulo") },
     { table: "Canjes", field: text("Motivo") },
+    // Productos: asegura columnas si la tabla ya existía sin alguna.
+    { table: "Productos", field: text("Id") },
+    { table: "Productos", field: text("Nombre") },
+    { table: "Productos", field: text("Precio") },
+    { table: "Productos", field: multiline("Specs") },
+    { table: "Productos", field: multiline("Beneficios") },
+    { table: "Productos", field: multiline("Hooks") },
+    { table: "Productos", field: multiline("Dos") },
+    { table: "Productos", field: multiline("Donts") },
+    { table: "Productos", field: text("Link") },
+    { table: "Productos", field: text("Imagen") },
+    { table: "Productos", field: multiline("Galeria") },
+    { table: "Productos", field: multiline("Copy") },
+    { table: "Productos", field: multiline("DeepLinks") },
+    { table: "Productos", field: text("Campana") },
+    { table: "Productos", field: text("Fuente") },
+    { table: "Productos", field: checkbox("Activa") },
   ];
   for (const w of want) {
     const t = tables.find((x) => x.name === w.table);
@@ -222,6 +262,38 @@ if (missingRewards.length === 0) {
     const j = await res.json().catch(() => ({}));
     if (res.ok) console.log(`✓ Premios sembrados: ${batch.map((b) => b.fields.Id).join(", ")}`);
     else console.log(`✗ Seed premios: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
+  }
+}
+
+// 4) Sembrar productos (solo los que falten, por Id)
+async function fetchExistingProductIds() {
+  const ids = new Set();
+  let offset;
+  do {
+    const url = new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent("Productos")}`);
+    url.searchParams.set("pageSize", "100");
+    if (offset) url.searchParams.set("offset", offset);
+    const res = await fetch(url, { headers });
+    if (!res.ok) { console.log(`✗ No se pudieron leer productos: ${res.status}`); return ids; }
+    const j = await res.json();
+    for (const r of j.records ?? []) if (r.fields?.Id) ids.add(r.fields.Id);
+    offset = j.offset;
+  } while (offset);
+  return ids;
+}
+const existingProducts = await fetchExistingProductIds();
+const missingProducts = PRODUCT_SEED.filter((p) => !existingProducts.has(p.Id));
+if (missingProducts.length === 0) {
+  console.log("• Productos: seed ya presente, nada que sembrar");
+} else {
+  for (let i = 0; i < missingProducts.length; i += 10) {
+    const batch = missingProducts.slice(i, i + 10).map((fields) => ({ fields }));
+    const res = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent("Productos")}`, {
+      method: "POST", headers, body: JSON.stringify({ records: batch, typecast: true }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok) console.log(`✓ Productos sembrados: ${batch.map((b) => b.fields.Id).join(", ")}`);
+    else console.log(`✗ Seed productos: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
   }
 }
 

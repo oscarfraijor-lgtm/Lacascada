@@ -16,6 +16,7 @@ export const TABLES = {
   Recompensas: "Recompensas",
   Canjes: "Canjes",
   Activaciones: "Activaciones",
+  Productos: "Productos",
   Niveles: "Niveles",
 } as const;
 
