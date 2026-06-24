@@ -2,8 +2,10 @@ import { Star, Plus, Power, Trash2, Save } from "lucide-react";
 import { listCampaigns, listParticipations } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { getAdminContext } from "@/lib/brand-admin";
+import type { TierSystem } from "@/lib/tiers";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import TierScopeField from "@/components/TierScopeField";
 import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from "./actions";
 
 export default async function AdminCampanasPage() {
@@ -26,7 +28,7 @@ export default async function AdminCampanasPage() {
           <Plus size={18} className="text-brand-deep" /> Nueva campaña
         </h2>
         <form action={crearCampana} className="space-y-4">
-          <CampaignFields brandName={ctx.brand.name} />
+          <CampaignFields brandName={ctx.brand.name} tierSystem={ctx.brand.tierSystem} />
           <SubmitButton
             pendingLabel="Creando…"
             className="font-display rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink transition hover:brightness-95"
@@ -72,7 +74,7 @@ export default async function AdminCampanasPage() {
 
             <form action={editarCampana} className="space-y-4">
               <input type="hidden" name="id" value={c.id} />
-              <CampaignFields c={c} brandName={ctx.brand.name} />
+              <CampaignFields c={c} brandName={ctx.brand.name} tierSystem={ctx.brand.tierSystem} />
               <div className="flex flex-wrap items-center gap-2">
                 <SubmitButton
                   pendingLabel="Guardando…"
@@ -118,7 +120,7 @@ export default async function AdminCampanasPage() {
 }
 
 // Campos compartidos entre crear y editar. Sin `c` = formulario vacío.
-function CampaignFields({ c, brandName }: { c?: Campaign; brandName: string }) {
+function CampaignFields({ c, brandName, tierSystem }: { c?: Campaign; brandName: string; tierSystem: TierSystem }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -146,6 +148,7 @@ function CampaignFields({ c, brandName }: { c?: Campaign; brandName: string }) {
           className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/30 focus:border-brand focus:bg-white"
         />
       </label>
+      <TierScopeField system={tierSystem} selected={c?.tiers ?? []} />
       <label className="flex items-center gap-2 text-sm font-semibold text-ink">
         <input type="checkbox" name="open" defaultChecked={c ? c.open : true} className="h-4 w-4 accent-brand" />
         Activa (visible en el portal)

@@ -14,6 +14,9 @@ export interface Campaign {
   tag: string;
   requirements?: string; // "Para calificar": criterios visibles antes de participar
   cupo?: number; // máximo de inscripciones; 0 o ausente = sin límite
+  // Scope por CATEGORÍA de creadora (nivel/badge de TikTok, lib/tiers). Vacío/ausente
+  // = abierta a todas. Si trae llaves ("l2","l3"), solo esas categorías la ven/participan.
+  tiers?: string[];
   open: boolean;
   recordId?: string; // id de registro en Airtable (solo presente al leer de Airtable)
 }

@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentCreator } from "@/lib/session";
 import { participationsFor, listCampaigns, requestCanje, misionesFor, getRewardById } from "@/lib/store";
-import { combinedStars } from "@/lib/data";
+import { combinedStars, creatorTier } from "@/lib/data";
 import { rewardState } from "@/lib/rewards";
+import { tierInScope } from "@/lib/tiers";
 
 // La creadora solicita un canje. Se valida SERVER-SIDE que la recompensa exista
 // y esté desbloqueada (estrellas + GMV); el botón solo aparece si toca, pero la
@@ -17,6 +18,11 @@ export async function solicitarCanje(formData: FormData) {
 
   const reward = await getRewardById(rewardId);
   if (!reward || reward.active === false) return;
+
+  // Scope por CATEGORÍA: un premio exclusivo solo lo solicita su categoría. Fail-closed
+  // (la UI ya lo oculta; esto cubre el POST directo). Segundo candado en /admin al aprobar.
+  const tier = creatorTier(me.gmvMXN ?? 0);
+  if (!tierInScope(reward.tiers, tier.key)) return;
 
   const [parts, campaigns, completions] = await Promise.all([
     participationsFor(me.email),

@@ -33,6 +33,9 @@ export interface Reward {
   // (kind != "estatus") exigen además GMV atribuible > 0 (anti-fuga).
   minStars?: number;
   minGmvMXN?: number;
+  // Scope por CATEGORÍA de creadora (nivel/badge de TikTok, lib/tiers). Vacío/ausente
+  // = abierto a todas. Si trae llaves ("l2","l3"), solo esas categorías lo ven/canjean.
+  tiers?: string[];
   active?: boolean; // el equipo prende/apaga el premio en /admin (default true)
   recordId?: string; // id del registro en Airtable (solo al leer de Airtable)
 }

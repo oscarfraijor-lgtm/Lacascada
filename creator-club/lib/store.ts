@@ -26,6 +26,7 @@ import {
 } from "@/lib/campaigns";
 import type { Reward, RewardInput, RewardKind } from "@/lib/types";
 import { BRAND } from "@/lib/schema";
+import { parseTiers, serializeTiers } from "@/lib/tiers";
 
 export interface CreatorRecord {
   id?: string;
@@ -636,6 +637,7 @@ function campaignToAirtableFields(c: Partial<CampaignInput> & { id?: string }): 
   if (c.tag !== undefined) f.Tag = c.tag;
   if (c.requirements !== undefined) f.Requisitos = c.requirements;
   if (c.cupo !== undefined) f.Cupo = c.cupo;
+  if (c.tiers !== undefined) f.Niveles = serializeTiers(c.tiers);
   if (c.open !== undefined) f.Activa = c.open;
   return f;
 }
@@ -651,6 +653,7 @@ interface CampanaFields {
   Tag?: string;
   Requisitos?: string;
   Cupo?: number;
+  Niveles?: string;
   Activa?: boolean;
 }
 
@@ -669,6 +672,7 @@ export async function listCampaigns(conn?: Conn): Promise<Campaign[]> {
       tag: r.fields.Tag ?? "",
       requirements: r.fields.Requisitos ?? "",
       cupo: r.fields.Cupo != null ? Number(r.fields.Cupo) : undefined,
+      tiers: parseTiers(r.fields.Niveles),
       open: !!r.fields.Activa,
     }));
   }
@@ -758,6 +762,7 @@ interface RecompensaFields {
   Payer?: string;
   MinStars?: number;
   MinGmvMXN?: number;
+  Niveles?: string;
   Activa?: boolean;
 }
 
@@ -778,6 +783,7 @@ function rewardToAirtableFields(r: Partial<RewardInput>): Record<string, unknown
   if (r.payer !== undefined) f.Payer = r.payer;
   if (r.minStars !== undefined) f.MinStars = r.minStars;
   if (r.minGmvMXN !== undefined) f.MinGmvMXN = r.minGmvMXN;
+  if (r.tiers !== undefined) f.Niveles = serializeTiers(r.tiers);
   if (r.active !== undefined) f.Activa = r.active;
   return f;
 }
@@ -794,6 +800,7 @@ function rewardFromAirtable(rec: { id: string; fields: RecompensaFields }): Rewa
     payer: f.Payer === "club" ? "club" : "marca",
     minStars: f.MinStars != null ? Number(f.MinStars) : 0,
     minGmvMXN: f.MinGmvMXN != null ? Number(f.MinGmvMXN) : 0,
+    tiers: parseTiers(f.Niveles),
     active: f.Activa !== false,
   };
 }

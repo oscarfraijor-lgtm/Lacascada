@@ -2,8 +2,10 @@ import { Star, Plus, Power, Trash2, Save, ShieldCheck } from "lucide-react";
 import { listRewards, listCanjes } from "@/lib/store";
 import type { Reward } from "@/lib/types";
 import { getAdminContext } from "@/lib/brand-admin";
+import type { TierSystem } from "@/lib/tiers";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import TierScopeField from "@/components/TierScopeField";
 import { crearRecompensa, editarRecompensa, alternarRecompensa, eliminarRecompensa } from "../actions";
 
 const KIND_OPTS: { value: Reward["kind"]; label: string }[] = [
@@ -38,7 +40,7 @@ export default async function AdminRecompensasPage() {
           <Plus size={18} className="text-brand-deep" /> Nuevo premio
         </h2>
         <form action={crearRecompensa} className="space-y-4">
-          <RewardFields />
+          <RewardFields tierSystem={ctx.brand.tierSystem} />
           <SubmitButton
             pendingLabel="Creando…"
             className="font-display rounded-full bg-lime px-5 py-2.5 text-sm font-extrabold text-ink transition hover:brightness-95"
@@ -77,7 +79,7 @@ export default async function AdminRecompensasPage() {
 
             <form action={editarRecompensa} className="space-y-4">
               <input type="hidden" name="id" value={r.id} />
-              <RewardFields r={r} />
+              <RewardFields r={r} tierSystem={ctx.brand.tierSystem} />
               <SubmitButton
                 pendingLabel="Guardando…"
                 className="font-display flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-extrabold text-white transition hover:bg-brand-deep"
@@ -120,7 +122,7 @@ export default async function AdminRecompensasPage() {
   );
 }
 
-function RewardFields({ r }: { r?: Reward }) {
+function RewardFields({ r, tierSystem }: { r?: Reward; tierSystem: TierSystem }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -162,6 +164,7 @@ function RewardFields({ r }: { r?: Reward }) {
           className="w-full rounded-xl border border-ink/15 bg-cream/40 px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink/50 focus:border-brand focus:bg-white"
         />
       </label>
+      <TierScopeField system={tierSystem} selected={r?.tiers ?? []} />
       <label className="flex items-center gap-2 text-sm font-semibold text-ink">
         <input type="checkbox" name="active" defaultChecked={r ? r.active !== false : true} className="h-4 w-4 accent-brand" />
         Activo (visible para las creadoras)

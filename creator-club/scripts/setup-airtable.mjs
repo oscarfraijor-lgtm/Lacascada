@@ -125,6 +125,8 @@ async function ensureFields() {
     { table: "Entregas", field: text("Motivo") },
     { table: "Campañas", field: text("Requisitos") },
     { table: "Campañas", field: number("Cupo") },
+    { table: "Campañas", field: text("Niveles") }, // scope por categoría (CSV de llaves: "l2,l3")
+    { table: "Recompensas", field: text("Niveles") }, // scope por categoría (CSV de llaves)
     { table: "Creadoras", field: text("Portafolio") },
     { table: "Creadoras", field: text("AfiliadoHandle") },
     { table: "Creadoras", field: text("Direccion") },

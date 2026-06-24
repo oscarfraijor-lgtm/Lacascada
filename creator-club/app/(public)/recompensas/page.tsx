@@ -99,6 +99,11 @@ function RewardCard({ r, signedIn }: { r: RewardView; signedIn: boolean }) {
           <span className="rounded-full bg-cream-deep px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
             Paga: {r.payer === "marca" ? BRAND.name : "Club"}
           </span>
+          {r.tierScope && (
+            <span className="flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-lime">
+              <Lock size={10} /> Solo {r.tierScope}
+            </span>
+          )}
         </div>
         {signedIn && <RewardStateChip state={r.state} />}
       </div>

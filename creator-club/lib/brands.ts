@@ -9,6 +9,7 @@
 import type { Level, Mission } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
 import type { Reward } from "@/lib/types";
+import { type TierSystem, MX_TIERS, USA_TIERS } from "@/lib/tiers";
 
 // Identidad + colores + legal (obligatorio por marca)
 interface BrandIdentity {
@@ -23,6 +24,10 @@ interface BrandIdentity {
   // Video de inducción del club (embed: YouTube/Vimeo/TikTok o un .mp4). Opcional:
   // si falta, /induccion muestra la guía escrita "Cómo funciona el club" igual.
   inductionVideoUrl?: string;
+  // Sistema de CATEGORÍAS de creadora (nivel/badge de TikTok) del mercado de la
+  // marca. Opcional: si falta, hereda MX (la marca de referencia es de México).
+  // USA usa gemas (USA_TIERS); MX usa niveles numerados (MX_TIERS). Ver lib/tiers.
+  tierSystem?: TierSystem;
   // paleta
   cream: string;
   creamDeep: string;
@@ -46,7 +51,7 @@ interface BrandMeta {
   deployUrl?: string; // URL del deploy propio de la marca (para "abrir" desde el admin)
 }
 
-export type BrandConfig = BrandIdentity & Required<BrandMechanics> & BrandMeta;
+export type BrandConfig = BrandIdentity & Required<BrandMechanics> & BrandMeta & { tierSystem: TierSystem };
 
 // ── Color Dreams (marca de referencia; también es el fallback de mecánica) ──
 const CD_LEVELS: Level[] = [
@@ -141,6 +146,7 @@ const BRANDS: Record<string, RawBrand> = {
     ink: "#2A2553",
     inkSoft: "#4A4570",
     lime: "#C7EC4D",
+    tierSystem: MX_TIERS, // Color Dreams es marca de México
     levels: CD_LEVELS,
     missions: CD_MISSIONS,
     rewards: CD_REWARDS,
@@ -179,6 +185,7 @@ const BRANDS: Record<string, RawBrand> = {
     club: "Anyeluz Club",
     tagline: "Crea y brilla.",
     category: "belleza y skincare",
+    tierSystem: USA_TIERS, // Anyeluz opera en USA (badges de gema en USD)
     ...STUB_OPERATOR,
     ...STUB_PALETTE,
   },
@@ -188,6 +195,7 @@ const BRANDS: Record<string, RawBrand> = {
     club: "Origen Club",
     tagline: "Crea y conecta.",
     category: "bienestar botánico",
+    tierSystem: USA_TIERS, // Origen Botánico opera en USA (badges de gema en USD)
     ...STUB_OPERATOR,
     ...STUB_PALETTE,
   },
@@ -245,6 +253,7 @@ export function getBrandConfig(slug: string): BrandConfig | null {
   if (!cfg) return null;
   return {
     ...cfg,
+    tierSystem: cfg.tierSystem ?? MX_TIERS,
     levels: cfg.levels ?? CD_LEVELS,
     missions: cfg.missions ?? CD_MISSIONS,
     rewards: cfg.rewards ?? CD_REWARDS,

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Star, ChevronRight, ArrowRight, History, Gift, UserCog } from "lucide-react";
+import { Star, ChevronRight, ArrowRight, History, Gift, UserCog, Medal } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, type Participation } from "@/lib/store";
-import { getMissions, getLeaderboard, getRewardsView, combinedStars } from "@/lib/data";
+import { getMissions, getLeaderboard, getRewardsView, combinedStars, creatorTier } from "@/lib/data";
 import { profileComplete } from "@/lib/missions";
 import { levelForStars, nextLevel, BRAND, LEVELS } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
@@ -48,6 +48,9 @@ export default async function Home({
   const creatorName = session.name;
   const creatorHandle = session.handle || "";
 
+  // Categoría de creadora (nivel/badge de TikTok según ventas del mes). Es el eje de
+  // competencia de campañas/premios exclusivos; distinto del nivel "cute" del club.
+  const tier = creatorTier(gmv);
   const level = levelForStars(stars, gmv);
   const next = nextLevel(level.key);
   const missions = (await getMissions()).filter((m) => !m.done).slice(0, 4);
@@ -87,8 +90,14 @@ export default async function Home({
               Hola, {creatorName.split(" ")[0]}
             </h1>
             {creatorHandle && <p className="text-sm text-white/70">{creatorHandle}</p>}
-            <Link href="/cuenta" className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/70 underline transition hover:text-lime">
-              <UserCog size={12} /> Editar perfil
+            <div
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90"
+              title="Tu nivel de creadora en TikTok, según tus ventas del mes. Algunas campañas y premios compiten solo dentro de tu categoría."
+            >
+              <Medal size={12} className="text-lime" /> {BRAND.tierSystem.label} {tier.name} · tu categoría
+            </div>
+            <Link href="/cuenta" className="mt-1 block w-fit text-xs font-semibold text-white/70 underline transition hover:text-lime">
+              <span className="inline-flex items-center gap-1"><UserCog size={12} /> Editar perfil</span>
             </Link>
             {profileIncomplete && !isAdminPreview && (
               <Link

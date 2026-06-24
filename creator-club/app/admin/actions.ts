@@ -35,6 +35,7 @@ import {
 import type { CampaignInput } from "@/lib/campaigns";
 import type { RewardInput, RewardKind } from "@/lib/types";
 import { canApproveCanje } from "@/lib/rewards";
+import type { TierSystem } from "@/lib/tiers";
 import { sendNotification } from "@/lib/mailer";
 import { getAdminContext, type AdminContext } from "@/lib/brand-admin";
 
@@ -93,7 +94,15 @@ function revalidateCampaigns(): void {
   revalidatePath("/");
 }
 
-function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignInput {
+// Lee el scope por categoría del form (checkboxes name="tiers") y lo sanea contra
+// las llaves válidas del sistema de la marca (evita basura en el CSV). Vacío =
+// abierta a todas.
+function parseTierScope(formData: FormData, system: TierSystem): string[] {
+  const valid = new Set(system.tiers.map((t) => t.key));
+  return formData.getAll("tiers").map(String).filter((k) => valid.has(k));
+}
+
+function parseCampaignForm(formData: FormData, defaultBrand: string, system: TierSystem): CampaignInput {
   const openRaw = String(formData.get("open") || "");
   return {
     title: String(formData.get("title") || "").trim(),
@@ -104,6 +113,7 @@ function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignIn
     deadline: String(formData.get("deadline") || "").trim() || "Cupo abierto",
     requirements: String(formData.get("requirements") || "").trim(),
     cupo: Math.max(0, Math.round(Number(formData.get("cupo") || 0)) || 0),
+    tiers: parseTierScope(formData, system),
     brief: String(formData.get("brief") || "").trim(),
     open: openRaw === "on" || openRaw === "true",
   };
@@ -112,7 +122,7 @@ function parseCampaignForm(formData: FormData, defaultBrand: string): CampaignIn
 export async function crearCampana(formData: FormData) {
   const ctx = await adminCtx();
   if (!ctx.configured) return;
-  const input = parseCampaignForm(formData, ctx.brand.name);
+  const input = parseCampaignForm(formData, ctx.brand.name, ctx.brand.tierSystem);
   if (!input.title) return;
   await createCampaign(input, ctx.conn ?? undefined);
   revalidateCampaigns();
@@ -123,7 +133,7 @@ export async function editarCampana(formData: FormData) {
   if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   if (!id) return;
-  await updateCampaign(id, parseCampaignForm(formData, ctx.brand.name), ctx.conn ?? undefined);
+  await updateCampaign(id, parseCampaignForm(formData, ctx.brand.name, ctx.brand.tierSystem), ctx.conn ?? undefined);
   revalidateCampaigns();
 }
 
@@ -240,6 +250,12 @@ export async function cambiarEstadoCanje(formData: FormData) {
     // => no procede (no-op, sin 500). La UI ya esconde el botón; esto cubre el
     // POST directo y los canjes huérfanos.
     if (!reward || !canApproveCanje(reward, gmv)) return;
+    // NOTA: el scope por CATEGORÍA se valida al SOLICITAR el canje (recompensas/
+    // actions.solicitarCanje), igual que participar valida el nivel al inscribirse.
+    // Al aprobar/entregar NO se re-valida el nivel: un canje legítimo (pedido estando
+    // en categoría) se honra aunque el GMV de la creadora cambie de mes y mueva su
+    // nivel (espejo de cambiarEstadoEntrega, que tampoco regatea el nivel al aprobar).
+    // El candado anti-fuga por GMV (canApproveCanje) sí sigue SIEMPRE.
   }
 
   await setCanjeStatus(id, status, status === "rechazada" ? reason : undefined, conn);
@@ -365,7 +381,7 @@ function revalidateRewards(): void {
   revalidatePath("/");
 }
 
-function parseRewardForm(formData: FormData): Omit<RewardInput, "id"> {
+function parseRewardForm(formData: FormData, system: TierSystem): Omit<RewardInput, "id"> {
   const kindRaw = String(formData.get("kind") || "producto");
   const activeRaw = String(formData.get("active") || "");
   return {
@@ -376,6 +392,7 @@ function parseRewardForm(formData: FormData): Omit<RewardInput, "id"> {
     payer: String(formData.get("payer") || "marca") === "club" ? "club" : "marca",
     minStars: Math.max(0, Math.round(Number(formData.get("minStars") || 0)) || 0),
     minGmvMXN: Math.max(0, Math.round(Number(formData.get("minGmvMXN") || 0)) || 0),
+    tiers: parseTierScope(formData, system),
     active: activeRaw === "on" || activeRaw === "true",
   };
 }
@@ -383,7 +400,7 @@ function parseRewardForm(formData: FormData): Omit<RewardInput, "id"> {
 export async function crearRecompensa(formData: FormData) {
   const ctx = await adminCtx();
   if (!ctx.configured) return;
-  const input = parseRewardForm(formData);
+  const input = parseRewardForm(formData, ctx.brand.tierSystem);
   if (!input.title) return;
   await createReward({ id: "", ...input }, ctx.conn ?? undefined);
   revalidateRewards();
@@ -394,7 +411,7 @@ export async function editarRecompensa(formData: FormData) {
   if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
   if (!id) return;
-  await updateReward(id, parseRewardForm(formData), ctx.conn ?? undefined);
+  await updateReward(id, parseRewardForm(formData, ctx.brand.tierSystem), ctx.conn ?? undefined);
   revalidateRewards();
 }
 

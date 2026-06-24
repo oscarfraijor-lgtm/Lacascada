@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users, Eye } from "lucide-react";
+import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users, Eye, Lock } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listOpenCampaigns, listParticipations, type Participation } from "@/lib/store";
 import SubmitButton from "@/components/SubmitButton";
@@ -7,13 +7,15 @@ import { participar, entregarVideo } from "./actions";
 import TrustBar from "@/components/TrustBar";
 import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 import { BRAND } from "@/lib/schema";
+import { creatorTier } from "@/lib/data";
+import { tierInScope, tierName } from "@/lib/tiers";
 
 export default async function CampanasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ bienvenida?: string; lleno?: string; err?: string }>;
+  searchParams: Promise<{ bienvenida?: string; lleno?: string; err?: string; nocat?: string }>;
 }) {
-  const { bienvenida, lleno, err } = await searchParams;
+  const { bienvenida, lleno, err, nocat } = await searchParams;
   const { creator: me, isAdminPreview } = await getClubViewer();
   const [campaigns, mine, allParts] = await Promise.all([
     listOpenCampaigns(),
@@ -24,6 +26,12 @@ export default async function CampanasPage({
   // Conteo de inscripciones por campaña (para el cupo).
   const countByCampaign = new Map<string, number>();
   for (const p of allParts) countByCampaign.set(p.campaignId, (countByCampaign.get(p.campaignId) ?? 0) + 1);
+
+  // CATEGORÍA del viewer (nivel/badge de TikTok según su GMV del mes). TODAS las
+  // campañas se muestran (las de otros niveles son aspiracionales); pero solo se
+  // PARTICIPA en las de la categoría propia (o abiertas). El gate es por nivel exacto.
+  const myTier = me ? creatorTier(me.gmvMXN ?? 0) : null;
+  const viewerTierKey = myTier?.key ?? null;
 
   return (
     <div className="space-y-6">
@@ -36,6 +44,11 @@ export default async function CampanasPage({
       {lleno && (
         <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
           Esa campaña ya llegó a su cupo. ¡Explora las demás!
+        </p>
+      )}
+      {nocat && (
+        <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
+          Esa campaña es exclusiva para otra categoría de creadora. ¡Tienes otras disponibles para tu nivel!
         </p>
       )}
       {err === "link" && (
@@ -75,13 +88,27 @@ export default async function CampanasPage({
           const hasCupo = !!c.cupo && c.cupo > 0;
           const taken = countByCampaign.get(c.id) ?? 0;
           const full = hasCupo && taken >= (c.cupo ?? 0);
+          const exclusive = !!c.tiers && c.tiers.length > 0;
+          // Creadora logueada fuera del nivel de una campaña exclusiva (y no inscrita
+          // ya): la ve, pero no puede participar. Gate por nivel exacto.
+          const tierLockedForMe = !!me && !part && !tierInScope(c.tiers, viewerTierKey);
           return (
             <div key={c.id} className="flex flex-col rounded-3xl border border-ink/10 bg-white p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-deep">
-                  {c.tag}
-                </span>
-                <span className="flex items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-sm font-bold text-ink">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-deep">
+                    {c.tag}
+                  </span>
+                  {exclusive && (
+                    <span
+                      className="flex items-center gap-1 rounded-full bg-ink px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-lime"
+                      title={`Compite solo entre creadoras nivel ${c.tiers!.map((k) => tierName(BRAND.tierSystem, k)).join(", ")}`}
+                    >
+                      <Lock size={10} /> Exclusiva · {c.tiers!.map((k) => tierName(BRAND.tierSystem, k)).join(", ")}
+                    </span>
+                  )}
+                </div>
+                <span className="flex shrink-0 items-center gap-1 rounded-full bg-lime px-2.5 py-1 text-sm font-bold text-ink">
                   <Star size={13} className="fill-ink" /> {c.stars}
                 </span>
               </div>
@@ -113,6 +140,8 @@ export default async function CampanasPage({
                   <span className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-extrabold text-ink-soft">
                     <Eye size={15} /> Vista de admin
                   </span>
+                ) : tierLockedForMe ? (
+                  <LockedTierBlock tiers={c.tiers ?? []} myTierName={myTier?.name} />
                 ) : full ? (
                   <span className="font-display flex w-full items-center justify-center gap-1.5 rounded-full bg-ink/5 py-2.5 text-sm font-extrabold text-ink-soft">
                     <Users size={15} /> Cupo lleno
@@ -137,6 +166,24 @@ export default async function CampanasPage({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// Campaña exclusiva de OTRO nivel: visible (aspiracional) pero no participable.
+// Mensaje neutral (sirve igual para una creadora más chica o más grande que el nivel).
+function LockedTierBlock({ tiers, myTierName }: { tiers: string[]; myTierName?: string }) {
+  const names = tiers.map((k) => tierName(BRAND.tierSystem, k)).join(", ");
+  return (
+    <div className="rounded-2xl bg-ink/[0.04] px-3 py-2.5 text-center">
+      <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-ink-soft">
+        <Lock size={14} /> Exclusiva para {names}
+      </p>
+      {myTierName && (
+        <p className="mt-0.5 text-[11px] text-ink-soft">
+          Tu categoría es {myTierName}. Compite en las campañas de tu nivel.
+        </p>
+      )}
     </div>
   );
 }

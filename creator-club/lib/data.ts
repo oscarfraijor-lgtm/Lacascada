@@ -3,7 +3,8 @@
 // del programa); su candado (Disponible/Desbloqueada/Bloqueada) se calcula con
 // las estrellas + el GMV reales de la creadora.
 import type { Creator, LeaderboardRow, Reward } from "@/lib/types";
-import { MISSIONS, type Mission, levelForStars } from "@/lib/schema";
+import { MISSIONS, BRAND, type Mission, levelForStars } from "@/lib/schema";
+import { type MarketTier, tierForGmv, tierInScope, tierName } from "@/lib/tiers";
 import {
   type RewardStatusKey,
   rewardHasCost,
@@ -48,6 +49,14 @@ export function combinedStars(
   completions: MisionCompletion[]
 ): number {
   return starsFromApproved(parts, campaigns) + starsFromMissions(MISSIONS, ctx, completions);
+}
+
+// CATEGORÍA de la creadora (nivel/badge de TikTok) según su GMV del mes, con el
+// sistema del mercado de la marca activa (lib/brands -> tierSystem). Es el eje que
+// segmenta campañas/premios/ranking exclusivos. Distinto del nivel "cute" del club
+// (que se gana con estrellas y desbloquea recompensas).
+export function creatorTier(gmvMXN: number): MarketTier {
+  return tierForGmv(gmvMXN, BRAND.tierSystem);
 }
 
 export interface MissionWithStatus extends Mission {
@@ -119,14 +128,20 @@ function missingProfileHint(c: MissionContext): string | undefined {
 }
 
 // Ranking REAL: estrellas por creadora = entregas aprobadas + misiones completadas.
-export async function getLeaderboard(): Promise<LeaderboardRow[]> {
-  const [creators, parts, campaigns, misiones, meEmail] = await Promise.all([
+// opts.tierKey: segmenta el ranking por CATEGORÍA de creadora (compiten por tamaño).
+// Sin tierKey = ranking global (comportamiento por default, sin cambios).
+export async function getLeaderboard(opts?: { tierKey?: string }): Promise<LeaderboardRow[]> {
+  const [creatorsAll, parts, campaigns, misiones, meEmail] = await Promise.all([
     listCreators(),
     listParticipations(),
     listCampaigns(),
     listMisiones(),
     currentEmail(),
   ]);
+  // Si se pide un bracket, solo las creadoras de esa categoría (derivada del GMV).
+  const creators = opts?.tierKey
+    ? creatorsAll.filter((c) => creatorTier(c.gmvMXN ?? 0).key === opts.tierKey)
+    : creatorsAll;
   const partsByEmail = new Map<string, typeof parts>();
   for (const p of parts) {
     const k = p.creatorEmail.toLowerCase();
@@ -179,7 +194,15 @@ export interface RewardView extends Reward {
   state: RewardStatusKey;
   missing: string; // qué falta para desbloquear / "Lista para canjear"
   requirement: string; // requisito legible siempre
+  tierScope?: string; // nombres de los niveles si es exclusivo (ej. "Level 3"); undefined = abierto
   reason?: string; // motivo de rechazo del canje (si aplica)
+}
+
+// Nombres legibles de los niveles a los que un premio/campaña es exclusivo
+// (undefined = abierto a todas). Ej. ["l3"] -> "Level 3".
+function tierScopeLabel(tiers?: string[]): string | undefined {
+  if (!tiers || tiers.length === 0) return undefined;
+  return tiers.map((k) => tierName(BRAND.tierSystem, k)).join(", ");
 }
 
 export interface RewardsView {
@@ -194,7 +217,9 @@ export async function getRewardsView(): Promise<RewardsView> {
   const rewards = await listActiveRewards();
   const { creator: session } = await getClubViewer();
   if (!session) {
-    // Catálogo para visitantes: solo el requisito, sin estado personal.
+    // Catálogo para visitantes: todas las recompensas (incl. las exclusivas, como
+    // aspiración), solo el requisito, sin estado personal. La categoría marca el
+    // premio pero no lo oculta.
     return {
       signedIn: false,
       stars: 0,
@@ -206,6 +231,7 @@ export async function getRewardsView(): Promise<RewardsView> {
         state: "bloqueada",
         missing: rewardRequirement(r),
         requirement: rewardRequirement(r),
+        tierScope: tierScopeLabel(r.tiers),
       })),
     };
   }
@@ -220,6 +246,10 @@ export async function getRewardsView(): Promise<RewardsView> {
   const stars = combinedStars(parts, campaigns, session, completions);
   const gmv = session.gmvMXN ?? 0;
   const canjeByReward = new Map(canjes.map((c) => [c.rewardId, c]));
+  // TODAS las recompensas son visibles (aspiracional). Las exclusivas de OTRA
+  // categoría se muestran bloqueadas con "Exclusiva para X" y NO se pueden canjear
+  // (gate por nivel exacto). Si ya hay un canje vigente, se respeta su estado.
+  const tierKey = creatorTier(gmv).key;
   return {
     signedIn: true,
     stars,
@@ -227,13 +257,17 @@ export async function getRewardsView(): Promise<RewardsView> {
     gmvDate: session.gmvDate,
     rewards: rewards.map((r) => {
       const canje = canjeByReward.get(r.id);
+      const tierLabel = tierScopeLabel(r.tiers);
+      // Fuera de su categoría y sin canje vigente: visible pero no canjeable.
+      const tierLocked = !tierInScope(r.tiers, tierKey) && !canje;
       return {
         ...r,
         hasCost: rewardHasCost(r),
-        unlocked: rewardUnlocked(r, stars, gmv),
-        state: rewardState(r, stars, gmv, canje?.status),
-        missing: rewardMissing(r, stars, gmv),
+        unlocked: tierLocked ? false : rewardUnlocked(r, stars, gmv),
+        state: tierLocked ? "bloqueada" : rewardState(r, stars, gmv, canje?.status),
+        missing: tierLocked ? `Exclusiva para ${tierLabel}` : rewardMissing(r, stars, gmv),
         requirement: rewardRequirement(r),
+        tierScope: tierLabel,
         reason: canje?.reason,
       };
     }),

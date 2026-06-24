@@ -3,6 +3,7 @@ import { Star, Save, Download, ChevronRight } from "lucide-react";
 import { listCreators, listParticipations, listCampaigns, listMisiones, starsFromApproved } from "@/lib/store";
 import { levelForStars } from "@/lib/schema";
 import { starsFromMissions } from "@/lib/missions";
+import { tierForGmv } from "@/lib/tiers";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import AdminFilterList, { type FilterItem } from "@/components/AdminFilterList";
@@ -48,16 +49,18 @@ export default async function AdminCreadorasPage() {
         stars,
         gmv,
         level: levelForStars(stars, gmv, ctx.brand.levels),
+        tier: tierForGmv(gmv, ctx.brand.tierSystem),
         aprobadas: mine.filter((p) => p.status === "aprobada").length,
         total: mine.length,
       };
     })
     .sort((a, b) => b.stars - a.stars);
 
+  const tierLabel = ctx.brand.tierSystem.label;
   const levelOptions = ctx.brand.levels.map((l) => ({ value: l.key, label: `${l.badge} ${l.name}` }));
-  const items: FilterItem[] = rows.map(({ creator, stars, gmv, level, aprobadas, total }) => ({
+  const items: FilterItem[] = rows.map(({ creator, stars, gmv, level, tier, aprobadas, total }) => ({
     key: creator.id ?? creator.email,
-    search: [creator.name, creator.handle, creator.email, creator.affiliateHandle, creator.city]
+    search: [creator.name, creator.handle, creator.email, creator.affiliateHandle, creator.city, `${tierLabel} ${tier.name}`]
       .filter(Boolean)
       .join(" ")
       .toLowerCase(),
@@ -76,6 +79,12 @@ export default async function AdminCreadorasPage() {
               </Link>
               <span className="ml-1 text-xs font-semibold text-ink-soft">
                 {level.badge} {level.name}
+              </span>
+              <span
+                className="ml-1.5 inline-flex items-center rounded-full bg-ink/[0.06] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink-soft"
+                title="Categoría de TikTok (nivel/badge) según su GMV del mes. Eje de las campañas/premios exclusivos."
+              >
+                {tierLabel} {tier.name}
               </span>
             </p>
             <p className="truncate text-xs text-ink-soft">
