@@ -25,6 +25,14 @@ interface BrandIdentity {
   // Video de inducción del club (embed: YouTube/Vimeo/TikTok o un .mp4). Opcional:
   // si falta, /induccion muestra la guía escrita "Cómo funciona el club" igual.
   inductionVideoUrl?: string;
+  // Contenido de COMUNIDAD (opcional): historia de marca + bienvenida emocional.
+  // story se muestra en /conocenos; welcome* en el dashboard de la creadora. Si
+  // faltan, se usa un texto base derivado de la identidad. La marca/equipo los
+  // personaliza (hoy en código; admin-editable es una mejora futura).
+  story?: string; // "Conócenos / Sobre nosotros" (multilínea, un párrafo por línea)
+  welcomeTitle?: string; // título del saludo de bienvenida en el dashboard
+  welcomeMessage?: string; // mensaje cálido de la marca a la creadora
+  welcomeVideoUrl?: string; // embed opcional (YouTube/Vimeo/TikTok) o .mp4 de bienvenida
   // Sistema de CATEGORÍAS de creadora (nivel/badge de TikTok) del mercado de la
   // marca. Opcional: si falta, hereda MX (la marca de referencia es de México).
   // USA usa gemas (USA_TIERS); MX usa niveles numerados (MX_TIERS). Ver lib/tiers.
@@ -184,6 +192,17 @@ const BRANDS: Record<string, RawBrand> = {
     // TODO Oscar: pega el embed real del video de inducción de Color Dreams
     // (YouTube/Vimeo/TikTok). Sin él, /induccion usa la guía escrita.
     // inductionVideoUrl: "https://www.youtube.com/embed/XXXXXXXXXXX",
+    // PLANTILLA editable (Oscar/marca afinan la voz real): hechos verificados de
+    // categoría (colchón bed-in-a-box de México, llega en caja, se prueba en casa).
+    story:
+      "Color Dreams es la marca mexicana de colchones bed-in-a-box: llegan comprimidos en una caja y se inflan en minutos.\n" +
+      "Creemos que descansar bien no debería ser complicado ni carísimo. Por eso puedes probar tu colchón en casa, sin filas ni vendedores.\n" +
+      "El Color Club es nuestra comunidad de creadoras: mujeres reales que cuentan su experiencia, crean contenido y crecen con nosotros. Aquí no necesitas miles de seguidores, necesitas ganas de crear.",
+    welcomeTitle: "¡Bienvenida al Color Club!",
+    welcomeMessage:
+      "Qué gusto tenerte. Aquí eres parte del equipo de Color Dreams: te damos las herramientas, los productos y las campañas para que crees tu mejor contenido y crezcas con nosotros. Cualquier duda, escríbenos. ¡Vamos a soñar en grande!",
+    // TODO Oscar: pega un embed de bienvenida (video o nota de voz) de Color Dreams.
+    // welcomeVideoUrl: "https://www.youtube.com/embed/XXXXXXXXXXX",
     cream: "#EFEDDF",
     creamDeep: "#E4E1CF",
     violet: "#7979EC",

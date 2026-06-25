@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, ChevronRight, ArrowRight, History, Gift, UserCog, Medal } from "lucide-react";
+import { Star, ChevronRight, ArrowRight, History, Gift, UserCog, Medal, Heart } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listCampaigns, listOpenCampaigns, misionesFor, type Participation } from "@/lib/store";
 import { getMissions, getLeaderboard, getRewardsView, combinedStars, creatorTier } from "@/lib/data";
@@ -145,6 +145,40 @@ export default async function Home({
           </div>
         )}
       </section>
+
+      {/* Bienvenida de la marca (mensaje cálido + video opcional) */}
+      {!isAdminPreview && BRAND.welcomeMessage && (
+        <section className="rounded-3xl border border-brand/20 bg-white p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand/10 text-brand-deep">
+              <Heart size={18} />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-display text-base font-extrabold text-ink">
+                {BRAND.welcomeTitle ?? `Bienvenida al ${BRAND.club}`}
+              </h2>
+              <p className="mt-1 text-sm text-ink-soft">{BRAND.welcomeMessage}</p>
+              {BRAND.welcomeVideoUrl && (
+                <div className="mt-3 aspect-video w-full max-w-md overflow-hidden rounded-2xl border border-ink/10">
+                  <iframe
+                    src={BRAND.welcomeVideoUrl}
+                    title={`Bienvenida de ${BRAND.name}`}
+                    className="h-full w-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              <Link
+                href="/conocenos"
+                className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-brand-deep transition hover:gap-1.5"
+              >
+                Conócenos <ArrowRight size={14} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Mis campañas */}
       <section>
@@ -293,6 +327,10 @@ async function Welcome() {
           ¿Ya eres parte?{" "}
           <Link href="/acceso" className="font-semibold text-lime underline">
             Entra con tu correo
+          </Link>
+          {" · "}
+          <Link href="/conocenos" className="font-semibold text-lime underline">
+            Conócenos
           </Link>
         </p>
       </section>

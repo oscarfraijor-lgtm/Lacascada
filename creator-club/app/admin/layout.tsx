@@ -6,22 +6,39 @@ import { isAdmin } from "@/lib/roles";
 import { getAdminContext } from "@/lib/brand-admin";
 import { brandThemeVars, OPERATOR_THEME } from "@/lib/theme";
 
-const TABS = [
-  { href: "/admin", label: "Campañas", icon: Megaphone },
-  { href: "/admin/productos", label: "Productos", icon: Package },
-  { href: "/admin/inscripciones", label: "Inscripciones", icon: Inbox },
-  { href: "/admin/misiones", label: "Misiones", icon: Target },
-  { href: "/admin/recompensas", label: "Premios", icon: Award },
-  { href: "/admin/canjes", label: "Canjes", icon: Gift },
-  { href: "/admin/activaciones", label: "Activaciones", icon: Zap },
-  { href: "/admin/muestras", label: "Muestras", icon: PackageOpen },
-  { href: "/admin/creadoras", label: "Creadoras", icon: Users },
+// Menú agrupado (propuesta de Paulina): lo que OFRECES (catálogos), lo que
+// APRUEBAS (bandejas) y la COMUNIDAD. Nota: "Misiones" vive en "Por revisar"
+// porque /admin/misiones es la bandeja de aprobación de contenido (las misiones
+// se definen en código, no se configuran aquí).
+const TAB_GROUPS = [
+  {
+    label: "Configurar",
+    tabs: [
+      { href: "/admin", label: "Campañas", icon: Megaphone },
+      { href: "/admin/productos", label: "Productos", icon: Package },
+      { href: "/admin/recompensas", label: "Premios", icon: Award },
+    ],
+  },
+  {
+    label: "Por revisar",
+    tabs: [
+      { href: "/admin/inscripciones", label: "Inscripciones", icon: Inbox },
+      { href: "/admin/misiones", label: "Misiones", icon: Target },
+      { href: "/admin/canjes", label: "Canjes", icon: Gift },
+      { href: "/admin/activaciones", label: "Activaciones", icon: Zap },
+      { href: "/admin/muestras", label: "Muestras", icon: PackageOpen },
+    ],
+  },
+  {
+    label: "Comunidad",
+    tabs: [{ href: "/admin/creadoras", label: "Creadoras", icon: Users }],
+  },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const email = await currentEmail();
   // El equipo entra por la puerta NEUTRAL (/operador), no por el login de creadora
-  // (/acceso, que va branded con la marca) — importa en el apex neutral.
+  // (/acceso, que va branded con la marca); importa en el apex neutral.
   if (!email) redirect("/operador");
   if (!isAdmin(email)) {
     return (
@@ -92,15 +109,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <h1 className="font-display mt-0.5 text-2xl font-extrabold text-ink">{ctx.brand.club}</h1>
         </header>
 
-        <nav className="flex flex-wrap gap-1 rounded-2xl border border-ink/10 bg-white p-1">
-          {TABS.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
-            >
-              <Icon size={16} /> {label}
-            </Link>
+        <nav className="space-y-1.5 rounded-2xl border border-ink/10 bg-white p-2">
+          {TAB_GROUPS.map((group) => (
+            <div key={group.label} className="flex flex-wrap items-center gap-1">
+              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-ink-soft/70">
+                {group.label}
+              </span>
+              {group.tabs.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
+                >
+                  <Icon size={16} /> {label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
 
