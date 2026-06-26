@@ -5,9 +5,11 @@ import { BRAND } from "@/lib/schema";
 
 export default async function AyudaPage() {
   const items = await listActiveFaq();
+  // El mensaje prellenado incluye la MARCA (no solo el club) para que el equipo, que
+  // gestiona varias marcas con el mismo WhatsApp, sepa de inmediato de quién viene.
   const wa = whatsappLink(
     BRAND.supportWhatsapp,
-    `Hola${BRAND.supportName ? ` ${BRAND.supportName.split(",")[0]}` : ""}, soy creadora del ${BRAND.club} y tengo una duda: `
+    `Hola${BRAND.supportName ? ` ${BRAND.supportName.split(",")[0]}` : ""}, soy creadora de ${BRAND.name} (${BRAND.club}) y tengo una duda: `
   );
   const supportName = BRAND.supportName ?? "tu Affiliate Manager";
 
