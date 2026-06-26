@@ -29,6 +29,14 @@ import {
   updateProduct,
   setProductActive,
   deleteProduct,
+  createCalendarEvent,
+  updateCalendarEvent,
+  setCalendarEventActive,
+  deleteCalendarEvent,
+  createFaq,
+  updateFaq,
+  setFaqActive,
+  deleteFaq,
   getActivacionById,
   setActivacionStatus,
   getMuestraById,
@@ -47,6 +55,8 @@ import {
 import { getActivacionMeta } from "@/lib/activaciones";
 import type { CampaignInput } from "@/lib/campaigns";
 import type { ProductInput } from "@/lib/products";
+import type { CalendarEventInput, EventPriority, EventKind } from "@/lib/calendar";
+import type { FaqInput } from "@/lib/faq";
 import type { RewardInput, RewardKind } from "@/lib/types";
 import { canApproveCanje } from "@/lib/rewards";
 import type { TierSystem } from "@/lib/tiers";
@@ -632,4 +642,120 @@ export async function eliminarProducto(formData: FormData) {
   // lo referencian de forma suave por campaignId). Se puede borrar sin huérfanos.
   await deleteProduct(id, ctx.conn ?? undefined);
   revalidateProducts();
+}
+
+// ── Calendario de fechas (el equipo lo edita en /admin) ────────────────────
+const EVENT_PRIORITIES: EventPriority[] = ["SS", "S", "A"];
+
+function revalidateCalendar(): void {
+  revalidatePath("/admin/calendario");
+  revalidatePath("/calendario");
+}
+
+function parseCalendarForm(formData: FormData): Omit<CalendarEventInput, "id"> {
+  const priorityRaw = String(formData.get("priority") || "S");
+  const kind: EventKind = String(formData.get("kind") || "plataforma") === "marca" ? "marca" : "plataforma";
+  const activeRaw = String(formData.get("active") || "");
+  // Una campaña de MARCA es "todo el año" por definición: se fija a monthOrder 0 para
+  // no caer en un trimestre con un período mensual ("Mayo" bajo "Todo el año").
+  const monthOrder = kind === "marca" ? 0 : Math.min(12, Math.max(0, Math.round(Number(formData.get("monthOrder") || 0)) || 0));
+  return {
+    name: String(formData.get("name") || "").trim(),
+    period: String(formData.get("period") || "").trim(),
+    monthOrder,
+    priority: (EVENT_PRIORITIES as string[]).includes(priorityRaw) ? (priorityRaw as EventPriority) : "S",
+    kind,
+    tip: String(formData.get("tip") || "").trim(),
+    active: activeRaw === "on" || activeRaw === "true",
+  };
+}
+
+export async function crearEvento(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const input = parseCalendarForm(formData);
+  if (!input.name) return;
+  await createCalendarEvent({ id: "", ...input }, ctx.conn ?? undefined);
+  revalidateCalendar();
+}
+
+export async function editarEvento(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await updateCalendarEvent(id, parseCalendarForm(formData), ctx.conn ?? undefined);
+  revalidateCalendar();
+}
+
+export async function alternarEvento(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  const active = String(formData.get("active") || "") === "true";
+  if (!id) return;
+  await setCalendarEventActive(id, active, ctx.conn ?? undefined);
+  revalidateCalendar();
+}
+
+export async function eliminarEvento(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await deleteCalendarEvent(id, ctx.conn ?? undefined);
+  revalidateCalendar();
+}
+
+// ── FAQ / Centro de ayuda (el equipo lo edita en /admin) ──────────────────
+function revalidateFaq(): void {
+  revalidatePath("/admin/faq");
+  revalidatePath("/ayuda");
+}
+
+function parseFaqForm(formData: FormData): Omit<FaqInput, "id"> {
+  const activeRaw = String(formData.get("active") || "");
+  return {
+    question: String(formData.get("question") || "").trim(),
+    answer: String(formData.get("answer") || "").trim(),
+    tag: String(formData.get("tag") || "").trim(),
+    active: activeRaw === "on" || activeRaw === "true",
+  };
+}
+
+export async function crearFaq(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const input = parseFaqForm(formData);
+  if (!input.question) return;
+  await createFaq({ id: "", ...input }, ctx.conn ?? undefined);
+  revalidateFaq();
+}
+
+export async function editarFaq(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await updateFaq(id, parseFaqForm(formData), ctx.conn ?? undefined);
+  revalidateFaq();
+}
+
+export async function alternarFaq(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  const active = String(formData.get("active") || "") === "true";
+  if (!id) return;
+  await setFaqActive(id, active, ctx.conn ?? undefined);
+  revalidateFaq();
+}
+
+export async function eliminarFaq(formData: FormData) {
+  const ctx = await adminCtx();
+  if (!ctx.configured) return;
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  await deleteFaq(id, ctx.conn ?? undefined);
+  revalidateFaq();
 }

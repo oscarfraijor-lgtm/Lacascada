@@ -10,6 +10,8 @@ import type { Level, Mission } from "@/lib/schema";
 import type { Campaign } from "@/lib/campaigns";
 import type { Reward } from "@/lib/types";
 import type { Product } from "@/lib/products";
+import type { CalendarEvent } from "@/lib/calendar";
+import type { FaqItem } from "@/lib/faq";
 import { type TierSystem, MX_TIERS, USA_TIERS } from "@/lib/tiers";
 
 // Identidad + colores + legal (obligatorio por marca)
@@ -33,6 +35,10 @@ interface BrandIdentity {
   welcomeTitle?: string; // título del saludo de bienvenida en el dashboard
   welcomeMessage?: string; // mensaje cálido de la marca a la creadora
   welcomeVideoUrl?: string; // embed opcional (YouTube/Vimeo/TikTok) o .mp4 de bienvenida
+  // Soporte: WhatsApp del equipo (Paulina) para dudas de producto. Si falta, el
+  // botón de WhatsApp en /ayuda se oculta. Solo dígitos con lada país (ej. 521...).
+  supportWhatsapp?: string; // número de WhatsApp del equipo (E.164 sin +, ej. "5216641234567")
+  supportName?: string; // a quién le escriben ("Paulina, tu Affiliate Manager")
   // Sistema de CATEGORÍAS de creadora (nivel/badge de TikTok) del mercado de la
   // marca. Opcional: si falta, hereda MX (la marca de referencia es de México).
   // USA usa gemas (USA_TIERS); MX usa niveles numerados (MX_TIERS). Ver lib/tiers.
@@ -54,6 +60,8 @@ interface BrandMechanics {
   rewards?: Reward[];
   campaignSeed?: Campaign[];
   products?: Product[];
+  calendar?: CalendarEvent[];
+  faq?: FaqItem[];
 }
 
 // Metadatos del panel multimarca (opcionales).
@@ -157,6 +165,43 @@ const CD_PRODUCTS: Product[] = [
   },
 ];
 
+// CALENDARIO TikTok Shop México 2026 (calendario oficial de campañas que dio Oscar).
+// Prioridad SS > S > A. monthOrder 0 = campaña de marca (todo el año). Los "tip" son
+// ideas de contenido genéricas y editables. El equipo prende/apaga y edita en /admin.
+// Para marcas de USA, su base lleva el calendario de USA (Oscar lo provee al lanzar).
+const CD_CALENDAR: CalendarEvent[] = [
+  { id: "dia-reyes", name: "Día de Reyes", period: "Enero", monthOrder: 1, priority: "S", kind: "plataforma", tip: "Contenido de inicio de año y descanso para arrancar parejo.", active: true },
+  { id: "san-valentin", name: "Día de San Valentín", period: "Febrero", monthOrder: 2, priority: "S", kind: "plataforma", tip: "Regálate (o regalen) descanso: ángulo pareja / autocuidado.", active: true },
+  { id: "dia-nino", name: "Día del Niño", period: "Abril", monthOrder: 4, priority: "S", kind: "plataforma", tip: "Descanso en familia, recámara de los peques.", active: true },
+  { id: "hot-sale", name: "Hot Sale", period: "Mayo", monthOrder: 5, priority: "SS", kind: "plataforma", tip: "La venta más grande del primer semestre. Prepara tu mejor video con tu link.", active: true },
+  { id: "dia-madres", name: "Día de las Madres", period: "Mayo", monthOrder: 5, priority: "S", kind: "plataforma", tip: "Regálale buen descanso a mamá: testimonio emotivo.", active: true },
+  { id: "dia-padres", name: "Día del Padre", period: "Junio", monthOrder: 6, priority: "S", kind: "plataforma", tip: "Descanso para papá: ángulo regalo práctico.", active: true },
+  { id: "ofertas-verano", name: "Ofertas de Verano", period: "Julio", monthOrder: 7, priority: "S", kind: "plataforma", tip: "Frescura para las noches de calor (ideal para Snow Plus).", active: true },
+  { id: "regreso-clases", name: "Regreso a Clases", period: "Julio", monthOrder: 7, priority: "S", kind: "plataforma", tip: "Dormir bien para rendir: rutina de estudiantes y familias.", active: true },
+  { id: "independencia", name: "Día de la Independencia", period: "Septiembre", monthOrder: 9, priority: "S", kind: "plataforma", tip: "Mes patrio: contenido mexicano, orgullo de marca nacional.", active: true },
+  { id: "muertos-halloween", name: "Día de Muertos x Halloween", period: "Octubre", monthOrder: 10, priority: "S", kind: "plataforma", tip: "Temporada temática; arranca el cierre de año.", active: true },
+  { id: "buen-fin", name: "Buen Fin", period: "Noviembre", monthOrder: 11, priority: "SS", kind: "plataforma", tip: "La venta más fuerte del año en México. Planea contenido con anticipación.", active: true },
+  { id: "black-friday", name: "Black Friday", period: "Noviembre", monthOrder: 11, priority: "SS", kind: "plataforma", tip: "Cierra noviembre con todo: urgencia y descuentos reales.", active: true },
+  { id: "fin-de-ano", name: "Oferta de Fin de Año", period: "Diciembre", monthOrder: 12, priority: "S", kind: "plataforma", tip: "Regalos y propósitos de descanso para el año nuevo.", active: true },
+  // Campañas de MARCA (todo el año): el equipo las activa según la marca.
+  { id: "super-dia-marca", name: "Super Día de Marca", period: "Todo el año", monthOrder: 0, priority: "S", kind: "marca", tip: "El día grande de la marca: empújalo con tu mejor contenido.", active: true },
+  { id: "gran-estreno", name: "Gran Estreno", period: "Todo el año", monthOrder: 0, priority: "S", kind: "marca", tip: "Lanzamiento de producto nuevo: sé de las primeras en mostrarlo.", active: true },
+  { id: "novedades", name: "Novedades", period: "Todo el año", monthOrder: 0, priority: "A", kind: "marca", active: true },
+  { id: "dia-marca", name: "Día de Marca", period: "Todo el año", monthOrder: 0, priority: "A", kind: "marca", active: true },
+  // Recurrente: TikTok Shop corre ventas quincenales casi todo el mes.
+  { id: "ventas-quincenales", name: "Ventas Quincenales", period: "Cada ~2 semanas", monthOrder: 0, priority: "S", kind: "plataforma", tip: "Hay una venta quincenal casi siempre activa: contenido constante mueve ventas.", active: true },
+];
+
+// FAQ de Color Dreams (sobre todo de producto). PLANTILLA editable: respuestas con
+// hechos de categoría (bed-in-a-box), sin claims inventados. El equipo edita en /admin.
+const CD_FAQ: FaqItem[] = [
+  { id: "como-llega", question: "¿Cómo llega el colchón?", answer: "Llega comprimido y enrollado en una caja. Lo sacas, lo desenrollas y se infla solo en minutos. Es el famoso bed-in-a-box.", tag: "Producto", active: true },
+  { id: "prueba-casa", question: "¿Se puede probar en casa?", answer: "Sí, esa es la idea: lo pruebas en tu propia cama, sin filas ni vendedores. Consulta con el equipo las condiciones vigentes de prueba.", tag: "Producto", active: true },
+  { id: "tamanos", question: "¿Qué tamaños hay?", answer: "Individual, Matrimonial, Queen y King. Confirma disponibilidad y modelo exacto con el equipo antes de grabar.", tag: "Producto", active: true },
+  { id: "mi-link", question: "¿Dónde está mi link de afiliado?", answer: "Lo generas desde TikTok Shop al unirte al programa de afiliados de la marca. Si tienes dudas para conectarlo, escríbele a tu Affiliate Manager.", tag: "Contenido", active: true },
+  { id: "que-puedo-decir", question: "¿Qué SÍ y qué NO puedo decir del producto?", answer: "Sí: que llega en caja, se infla en minutos y se prueba en casa. No: prometer resultados médicos, curar dolencias, ni inventar precios o promociones que el equipo no confirmó.", tag: "Contenido", active: true },
+];
+
 // ── Registro de marcas ──────────────────────────────────────────────────────
 type RawBrand = BrandIdentity & BrandMechanics & BrandMeta;
 
@@ -203,6 +248,11 @@ const BRANDS: Record<string, RawBrand> = {
       "Qué gusto tenerte. Aquí eres parte del equipo de Color Dreams: te damos las herramientas, los productos y las campañas para que crees tu mejor contenido y crezcas con nosotros. Cualquier duda, escríbenos. ¡Vamos a soñar en grande!",
     // TODO Oscar: pega un embed de bienvenida (video o nota de voz) de Color Dreams.
     // welcomeVideoUrl: "https://www.youtube.com/embed/XXXXXXXXXXX",
+    supportName: "Paulina, tu Affiliate Manager",
+    // WhatsApp de Paulina (+52 474 794 6569). Formato WhatsApp MX actual = 52 + 10
+    // dígitos. Si WhatsApp marca el número como incorrecto al probarlo, cambia a la
+    // variante vieja con 1: "5214747946569".
+    supportWhatsapp: "524747946569",
     cream: "#EFEDDF",
     creamDeep: "#E4E1CF",
     violet: "#7979EC",
@@ -220,6 +270,8 @@ const BRANDS: Record<string, RawBrand> = {
     rewards: CD_REWARDS,
     campaignSeed: CD_CAMPAIGN_SEED,
     products: CD_PRODUCTS,
+    calendar: CD_CALENDAR,
+    faq: CD_FAQ,
   },
 
   // ── PLANTILLA: copia y ajusta para una marca nueva ──
@@ -320,6 +372,13 @@ export function hasOwnMechanics(slug: string): boolean {
 export function getBrandConfig(slug: string): BrandConfig | null {
   const cfg = BRANDS[slug];
   if (!cfg) return null;
+  // La MECÁNICA (niveles/misiones/recompensas/campañas) cae a Color Dreams como
+  // esqueleto base (y publicBrandConfigured bloquea ir público con ella). Pero los
+  // CATÁLOGOS DE CONTENIDO de marca (productos, calendario, FAQ) son datos propios y
+  // específicos de mercado/categoría: para una marca que NO sea Color Dreams caen a
+  // VACÍO, no al seed de CD (si no, una marca de USA/beauty mostraría el calendario
+  // MX y el FAQ de colchones de Color Dreams). Empatado con setup-airtable (|| []).
+  const isCD = slug === "color-dreams";
   return {
     ...cfg,
     tierSystem: cfg.tierSystem ?? MX_TIERS,
@@ -327,7 +386,9 @@ export function getBrandConfig(slug: string): BrandConfig | null {
     missions: cfg.missions ?? CD_MISSIONS,
     rewards: cfg.rewards ?? CD_REWARDS,
     campaignSeed: cfg.campaignSeed ?? CD_CAMPAIGN_SEED,
-    products: cfg.products ?? CD_PRODUCTS,
+    products: cfg.products ?? (isCD ? CD_PRODUCTS : []),
+    calendar: cfg.calendar ?? (isCD ? CD_CALENDAR : []),
+    faq: cfg.faq ?? (isCD ? CD_FAQ : []),
   };
 }
 

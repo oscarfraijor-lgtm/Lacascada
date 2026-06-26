@@ -26,6 +26,8 @@ import {
 } from "@/lib/campaigns";
 import type { Reward, RewardInput, RewardKind } from "@/lib/types";
 import type { Product, ProductInput, ProductSource } from "@/lib/products";
+import type { CalendarEvent, CalendarEventInput, EventPriority, EventKind } from "@/lib/calendar";
+import type { FaqItem, FaqInput } from "@/lib/faq";
 import { BRAND } from "@/lib/schema";
 import { parseTiers, serializeTiers } from "@/lib/tiers";
 
@@ -76,6 +78,8 @@ interface DB {
   activaciones?: Activacion[];
   products?: Product[];
   muestras?: Muestra[];
+  calendar?: CalendarEvent[];
+  faq?: FaqItem[];
 }
 
 async function readDB(): Promise<DB> {
@@ -91,6 +95,8 @@ async function readDB(): Promise<DB> {
       activaciones: db.activaciones ?? [],
       products: db.products,
       muestras: db.muestras ?? [],
+      calendar: db.calendar,
+      faq: db.faq,
     };
   } catch {
     return { creators: [], participations: [], canjes: [], misiones: [], activaciones: [], muestras: [] };
@@ -1273,5 +1279,227 @@ export async function deleteProduct(id: string, conn?: Conn): Promise<void> {
   }
   const db = await readDB();
   db.products = (db.products ?? BRAND.products.map((p) => ({ ...p }))).filter((x) => x.id !== id);
+  await writeDB(db);
+}
+
+// ── Calendario de fechas (campañas de TikTok Shop; el equipo lo edita en /admin) ──
+// Espejo de Productos: catálogo admin-manejable, solo informativo. Cada marca tiene
+// su base, así que el calendario de México vive en bases MX y el de USA en bases USA.
+interface CalendarioFields {
+  Id?: string;
+  Nombre?: string;
+  Periodo?: string;
+  MesOrden?: number;
+  Prioridad?: string;
+  Tipo?: string;
+  Tip?: string;
+  Activa?: boolean;
+}
+
+const PRIORITIES: EventPriority[] = ["SS", "S", "A"];
+function coercePriority(p?: string): EventPriority {
+  return PRIORITIES.includes(p as EventPriority) ? (p as EventPriority) : "S";
+}
+function coerceKind2(k?: string): EventKind {
+  return k === "marca" ? "marca" : "plataforma";
+}
+
+function eventToAirtableFields(e: Partial<CalendarEventInput>): Record<string, unknown> {
+  const f: Record<string, unknown> = {};
+  if (e.id !== undefined) f.Id = e.id;
+  if (e.name !== undefined) f.Nombre = e.name;
+  if (e.period !== undefined) f.Periodo = e.period;
+  if (e.monthOrder !== undefined) f.MesOrden = e.monthOrder;
+  if (e.priority !== undefined) f.Prioridad = e.priority;
+  if (e.kind !== undefined) f.Tipo = e.kind;
+  if (e.tip !== undefined) f.Tip = e.tip ?? "";
+  if (e.active !== undefined) f.Activa = e.active;
+  return f;
+}
+
+// Asegura un mes válido 0-12 (0 = todo el año). Una edición manual en Airtable con
+// un valor fuera de rango caería a 0 en vez de desaparecer de la vista de la creadora.
+function clampMonth(v: unknown): number {
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 0 && n <= 12 ? n : 0;
+}
+
+function eventFromAirtable(rec: { id: string; fields: CalendarioFields }): CalendarEvent {
+  const f = rec.fields;
+  return {
+    recordId: rec.id,
+    id: f.Id || slugify(f.Nombre ?? rec.id),
+    name: f.Nombre ?? "(sin nombre)",
+    period: f.Periodo ?? "",
+    monthOrder: clampMonth(f.MesOrden),
+    priority: coercePriority(f.Prioridad),
+    kind: coerceKind2(f.Tipo),
+    tip: f.Tip || undefined,
+    active: f.Activa !== false,
+  };
+}
+
+export async function listCalendar(conn?: Conn): Promise<CalendarEvent[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<CalendarioFields>(TABLES.Calendario, {}, conn);
+    return recs.map(eventFromAirtable);
+  }
+  const db = await readDB();
+  if (!db.calendar) {
+    db.calendar = BRAND.calendar.map((e) => ({ ...e, active: e.active !== false }));
+    await writeDB(db);
+  }
+  return db.calendar;
+}
+
+export async function listActiveCalendar(conn?: Conn): Promise<CalendarEvent[]> {
+  return (await listCalendar(conn)).filter((e) => e.active !== false);
+}
+
+export async function getCalendarEventById(id: string, conn?: Conn): Promise<CalendarEvent | undefined> {
+  return (await listCalendar(conn)).find((e) => e.id === id);
+}
+
+export async function createCalendarEvent(input: CalendarEventInput, conn?: Conn): Promise<CalendarEvent> {
+  const all = await listCalendar(conn);
+  const id = await uniqueSlug(input.name, all);
+  const ev: CalendarEvent = { ...input, id, active: input.active ?? true };
+  if (airtableConfigured(conn)) {
+    const r = await airtableCreate(TABLES.Calendario, eventToAirtableFields({ ...input, id }), conn);
+    return { ...ev, recordId: r.id };
+  }
+  const db = await readDB();
+  db.calendar = db.calendar ?? all.map((e) => ({ ...e }));
+  db.calendar.push(ev);
+  await writeDB(db);
+  return ev;
+}
+
+export async function updateCalendarEvent(id: string, patch: Partial<CalendarEventInput>, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getCalendarEventById(id, conn);
+    if (!current?.recordId) throw new Error(`Evento ${id} no encontrado`);
+    await airtableUpdate(TABLES.Calendario, current.recordId, eventToAirtableFields(patch), conn);
+    return;
+  }
+  const db = await readDB();
+  db.calendar = db.calendar ?? BRAND.calendar.map((e) => ({ ...e }));
+  const e = db.calendar.find((x) => x.id === id);
+  if (e) {
+    Object.assign(e, patch);
+    await writeDB(db);
+  }
+}
+
+export async function setCalendarEventActive(id: string, active: boolean, conn?: Conn): Promise<void> {
+  await updateCalendarEvent(id, { active }, conn);
+}
+
+export async function deleteCalendarEvent(id: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getCalendarEventById(id, conn);
+    if (current?.recordId) await airtableDelete(TABLES.Calendario, current.recordId, conn);
+    return;
+  }
+  const db = await readDB();
+  db.calendar = (db.calendar ?? BRAND.calendar.map((e) => ({ ...e }))).filter((x) => x.id !== id);
+  await writeDB(db);
+}
+
+// ── FAQ / Centro de ayuda (el equipo lo edita en /admin) ──────────────────
+interface FaqFields {
+  Id?: string;
+  Pregunta?: string;
+  Respuesta?: string;
+  Tag?: string;
+  Activa?: boolean;
+}
+
+function faqToAirtableFields(q: Partial<FaqInput>): Record<string, unknown> {
+  const f: Record<string, unknown> = {};
+  if (q.id !== undefined) f.Id = q.id;
+  if (q.question !== undefined) f.Pregunta = q.question;
+  if (q.answer !== undefined) f.Respuesta = q.answer;
+  if (q.tag !== undefined) f.Tag = q.tag ?? "";
+  if (q.active !== undefined) f.Activa = q.active;
+  return f;
+}
+
+function faqFromAirtable(rec: { id: string; fields: FaqFields }): FaqItem {
+  const f = rec.fields;
+  return {
+    recordId: rec.id,
+    id: f.Id || slugify(f.Pregunta ?? rec.id),
+    question: f.Pregunta ?? "(sin pregunta)",
+    answer: f.Respuesta ?? "",
+    tag: f.Tag || undefined,
+    active: f.Activa !== false,
+  };
+}
+
+export async function listFaq(conn?: Conn): Promise<FaqItem[]> {
+  if (airtableConfigured(conn)) {
+    const recs = await fetchAll<FaqFields>(TABLES.FAQ, {}, conn);
+    return recs.map(faqFromAirtable);
+  }
+  const db = await readDB();
+  if (!db.faq) {
+    db.faq = BRAND.faq.map((q) => ({ ...q, active: q.active !== false }));
+    await writeDB(db);
+  }
+  return db.faq;
+}
+
+export async function listActiveFaq(conn?: Conn): Promise<FaqItem[]> {
+  return (await listFaq(conn)).filter((q) => q.active !== false);
+}
+
+export async function getFaqById(id: string, conn?: Conn): Promise<FaqItem | undefined> {
+  return (await listFaq(conn)).find((q) => q.id === id);
+}
+
+export async function createFaq(input: FaqInput, conn?: Conn): Promise<FaqItem> {
+  const all = await listFaq(conn);
+  const id = await uniqueSlug(input.question, all);
+  const item: FaqItem = { ...input, id, active: input.active ?? true };
+  if (airtableConfigured(conn)) {
+    const r = await airtableCreate(TABLES.FAQ, faqToAirtableFields({ ...input, id }), conn);
+    return { ...item, recordId: r.id };
+  }
+  const db = await readDB();
+  db.faq = db.faq ?? all.map((q) => ({ ...q }));
+  db.faq.push(item);
+  await writeDB(db);
+  return item;
+}
+
+export async function updateFaq(id: string, patch: Partial<FaqInput>, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getFaqById(id, conn);
+    if (!current?.recordId) throw new Error(`FAQ ${id} no encontrada`);
+    await airtableUpdate(TABLES.FAQ, current.recordId, faqToAirtableFields(patch), conn);
+    return;
+  }
+  const db = await readDB();
+  db.faq = db.faq ?? BRAND.faq.map((q) => ({ ...q }));
+  const q = db.faq.find((x) => x.id === id);
+  if (q) {
+    Object.assign(q, patch);
+    await writeDB(db);
+  }
+}
+
+export async function setFaqActive(id: string, active: boolean, conn?: Conn): Promise<void> {
+  await updateFaq(id, { active }, conn);
+}
+
+export async function deleteFaq(id: string, conn?: Conn): Promise<void> {
+  if (airtableConfigured(conn)) {
+    const current = await getFaqById(id, conn);
+    if (current?.recordId) await airtableDelete(TABLES.FAQ, current.recordId, conn);
+    return;
+  }
+  const db = await readDB();
+  db.faq = (db.faq ?? BRAND.faq.map((q) => ({ ...q }))).filter((x) => x.id !== id);
   await writeDB(db);
 }

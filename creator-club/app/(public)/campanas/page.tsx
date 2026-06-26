@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users, Eye, Lock } from "lucide-react";
+import { Star, Clock, Check, Send, AlertCircle, ListChecks, Users, Eye, Lock, CalendarDays, ArrowRight } from "lucide-react";
 import { getClubViewer } from "@/lib/club-viewer";
 import { participationsFor, listOpenCampaigns, listParticipations, type Participation } from "@/lib/store";
 import SubmitButton from "@/components/SubmitButton";
@@ -73,6 +73,18 @@ export default async function CampanasPage({
           </Link>
         )}
       </header>
+
+      {/* Contenido: calendario de fechas clave (cuándo crear) */}
+      <Link
+        href="/calendario"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3 transition hover:border-brand/40"
+      >
+        <span className="flex items-center gap-2.5 text-sm font-semibold text-ink">
+          <CalendarDays size={18} className="text-brand-deep" />
+          Calendario de contenido: las fechas grandes de TikTok Shop para planear tus videos
+        </span>
+        <ArrowRight size={16} className="shrink-0 text-brand-deep" />
+      </Link>
 
       <TrustBar />
 

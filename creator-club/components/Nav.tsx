@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, Megaphone, Package, PackageOpen, Target, Trophy, Gift, Zap, LogOut, ShieldCheck, UserCog } from "lucide-react";
+import { Home, Megaphone, Package, PackageOpen, Target, Trophy, Gift, Zap, HelpCircle, LogOut, ShieldCheck, UserCog } from "lucide-react";
 import { BRAND } from "@/lib/schema";
 import { getCurrentCreator, currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/misiones", label: "Misiones", icon: Target },
   { href: "/leaderboard", label: "Ranking", icon: Trophy },
   { href: "/recompensas", label: "Recompensas", icon: Gift },
+  { href: "/ayuda", label: "Ayuda", icon: HelpCircle },
 ];
 
 export default async function Nav() {

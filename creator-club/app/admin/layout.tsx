@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Megaphone, Package, PackageOpen, Inbox, Target, Award, Gift, Zap, Users, ShieldCheck, ChevronLeft, ExternalLink } from "lucide-react";
+import { Megaphone, Package, PackageOpen, Inbox, Target, Award, Gift, Zap, Users, CalendarDays, HelpCircle, ShieldCheck, ChevronLeft, ExternalLink } from "lucide-react";
 import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { getAdminContext } from "@/lib/brand-admin";
@@ -17,6 +17,7 @@ const TAB_GROUPS = [
       { href: "/admin", label: "Campañas", icon: Megaphone },
       { href: "/admin/productos", label: "Productos", icon: Package },
       { href: "/admin/recompensas", label: "Premios", icon: Award },
+      { href: "/admin/calendario", label: "Calendario", icon: CalendarDays },
     ],
   },
   {
@@ -31,7 +32,10 @@ const TAB_GROUPS = [
   },
   {
     label: "Comunidad",
-    tabs: [{ href: "/admin/creadoras", label: "Creadoras", icon: Users }],
+    tabs: [
+      { href: "/admin/creadoras", label: "Creadoras", icon: Users },
+      { href: "/admin/faq", label: "FAQ", icon: HelpCircle },
+    ],
   },
 ];
 

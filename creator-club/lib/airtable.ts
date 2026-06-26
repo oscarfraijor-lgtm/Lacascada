@@ -18,6 +18,8 @@ export const TABLES = {
   Activaciones: "Activaciones",
   Productos: "Productos",
   Muestras: "Muestras",
+  Calendario: "Calendario",
+  FAQ: "FAQ",
   Niveles: "Niveles",
 } as const;
 

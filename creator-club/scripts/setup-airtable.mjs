@@ -93,6 +93,21 @@ const TABLES = [
       multiline("Direccion"), multiline("Nota"), text("Estado"), text("Motivo"),
     ],
   },
+  {
+    name: "Calendario",
+    description: "Fechas clave de TikTok Shop (campañas). Solo informativo, el equipo lo edita en /admin. Por marca (MX/USA en su base)",
+    fields: [
+      text("Id"), text("Nombre"), text("Periodo"), number("MesOrden"),
+      text("Prioridad"), text("Tipo"), multiline("Tip"), checkbox("Activa"),
+    ],
+  },
+  {
+    name: "FAQ",
+    description: "Preguntas frecuentes (Centro de ayuda). El equipo las edita en /admin",
+    fields: [
+      text("Id"), text("Pregunta"), multiline("Respuesta"), text("Tag"), checkbox("Activa"),
+    ],
+  },
 ];
 
 // Seed por marca (espejo de lib/brands.ts -> campaignSeed). Una marca nueva
@@ -135,6 +150,44 @@ const PRODUCTS_SEED_BY_BRAND = {
   ],
 };
 const PRODUCT_SEED = PRODUCTS_SEED_BY_BRAND[BRAND_SLUG] || [];
+
+// Seed del CALENDARIO de TikTok Shop (espejo de lib/brands.ts -> calendar).
+// México 2026. Para marcas de USA, su seed va aquí cuando se lancen.
+const CALENDAR_SEED_BY_BRAND = {
+  "color-dreams": [
+    { Id: "dia-reyes", Nombre: "Día de Reyes", Periodo: "Enero", MesOrden: 1, Prioridad: "S", Tipo: "plataforma", Tip: "Contenido de inicio de año y descanso para arrancar parejo.", Activa: true },
+    { Id: "san-valentin", Nombre: "Día de San Valentín", Periodo: "Febrero", MesOrden: 2, Prioridad: "S", Tipo: "plataforma", Tip: "Regálate (o regalen) descanso: ángulo pareja / autocuidado.", Activa: true },
+    { Id: "dia-nino", Nombre: "Día del Niño", Periodo: "Abril", MesOrden: 4, Prioridad: "S", Tipo: "plataforma", Tip: "Descanso en familia, recámara de los peques.", Activa: true },
+    { Id: "hot-sale", Nombre: "Hot Sale", Periodo: "Mayo", MesOrden: 5, Prioridad: "SS", Tipo: "plataforma", Tip: "La venta más grande del primer semestre. Prepara tu mejor video con tu link.", Activa: true },
+    { Id: "dia-madres", Nombre: "Día de las Madres", Periodo: "Mayo", MesOrden: 5, Prioridad: "S", Tipo: "plataforma", Tip: "Regálale buen descanso a mamá: testimonio emotivo.", Activa: true },
+    { Id: "dia-padres", Nombre: "Día del Padre", Periodo: "Junio", MesOrden: 6, Prioridad: "S", Tipo: "plataforma", Tip: "Descanso para papá: ángulo regalo práctico.", Activa: true },
+    { Id: "ofertas-verano", Nombre: "Ofertas de Verano", Periodo: "Julio", MesOrden: 7, Prioridad: "S", Tipo: "plataforma", Tip: "Frescura para las noches de calor (ideal para Snow Plus).", Activa: true },
+    { Id: "regreso-clases", Nombre: "Regreso a Clases", Periodo: "Julio", MesOrden: 7, Prioridad: "S", Tipo: "plataforma", Tip: "Dormir bien para rendir: rutina de estudiantes y familias.", Activa: true },
+    { Id: "independencia", Nombre: "Día de la Independencia", Periodo: "Septiembre", MesOrden: 9, Prioridad: "S", Tipo: "plataforma", Tip: "Mes patrio: contenido mexicano, orgullo de marca nacional.", Activa: true },
+    { Id: "muertos-halloween", Nombre: "Día de Muertos x Halloween", Periodo: "Octubre", MesOrden: 10, Prioridad: "S", Tipo: "plataforma", Tip: "Temporada temática; arranca el cierre de año.", Activa: true },
+    { Id: "buen-fin", Nombre: "Buen Fin", Periodo: "Noviembre", MesOrden: 11, Prioridad: "SS", Tipo: "plataforma", Tip: "La venta más fuerte del año en México. Planea contenido con anticipación.", Activa: true },
+    { Id: "black-friday", Nombre: "Black Friday", Periodo: "Noviembre", MesOrden: 11, Prioridad: "SS", Tipo: "plataforma", Tip: "Cierra noviembre con todo: urgencia y descuentos reales.", Activa: true },
+    { Id: "fin-de-ano", Nombre: "Oferta de Fin de Año", Periodo: "Diciembre", MesOrden: 12, Prioridad: "S", Tipo: "plataforma", Tip: "Regalos y propósitos de descanso para el año nuevo.", Activa: true },
+    { Id: "super-dia-marca", Nombre: "Super Día de Marca", Periodo: "Todo el año", MesOrden: 0, Prioridad: "S", Tipo: "marca", Tip: "El día grande de la marca: empújalo con tu mejor contenido.", Activa: true },
+    { Id: "gran-estreno", Nombre: "Gran Estreno", Periodo: "Todo el año", MesOrden: 0, Prioridad: "S", Tipo: "marca", Tip: "Lanzamiento de producto nuevo: sé de las primeras en mostrarlo.", Activa: true },
+    { Id: "novedades", Nombre: "Novedades", Periodo: "Todo el año", MesOrden: 0, Prioridad: "A", Tipo: "marca", Tip: "", Activa: true },
+    { Id: "dia-marca", Nombre: "Día de Marca", Periodo: "Todo el año", MesOrden: 0, Prioridad: "A", Tipo: "marca", Tip: "", Activa: true },
+    { Id: "ventas-quincenales", Nombre: "Ventas Quincenales", Periodo: "Cada ~2 semanas", MesOrden: 0, Prioridad: "S", Tipo: "plataforma", Tip: "Hay una venta quincenal casi siempre activa: contenido constante mueve ventas.", Activa: true },
+  ],
+};
+const CALENDAR_SEED = CALENDAR_SEED_BY_BRAND[BRAND_SLUG] || [];
+
+// Seed del FAQ (espejo de lib/brands.ts -> faq).
+const FAQ_SEED_BY_BRAND = {
+  "color-dreams": [
+    { Id: "como-llega", Pregunta: "¿Cómo llega el colchón?", Respuesta: "Llega comprimido y enrollado en una caja. Lo sacas, lo desenrollas y se infla solo en minutos. Es el famoso bed-in-a-box.", Tag: "Producto", Activa: true },
+    { Id: "prueba-casa", Pregunta: "¿Se puede probar en casa?", Respuesta: "Sí, esa es la idea: lo pruebas en tu propia cama, sin filas ni vendedores. Consulta con el equipo las condiciones vigentes de prueba.", Tag: "Producto", Activa: true },
+    { Id: "tamanos", Pregunta: "¿Qué tamaños hay?", Respuesta: "Individual, Matrimonial, Queen y King. Confirma disponibilidad y modelo exacto con el equipo antes de grabar.", Tag: "Producto", Activa: true },
+    { Id: "mi-link", Pregunta: "¿Dónde está mi link de afiliado?", Respuesta: "Lo generas desde TikTok Shop al unirte al programa de afiliados de la marca. Si tienes dudas para conectarlo, escríbele a tu Affiliate Manager.", Tag: "Contenido", Activa: true },
+    { Id: "que-puedo-decir", Pregunta: "¿Qué SÍ y qué NO puedo decir del producto?", Respuesta: "Sí: que llega en caja, se infla en minutos y se prueba en casa. No: prometer resultados médicos, curar dolencias, ni inventar precios o promociones que el equipo no confirmó.", Tag: "Contenido", Activa: true },
+  ],
+};
+const FAQ_SEED = FAQ_SEED_BY_BRAND[BRAND_SLUG] || [];
 
 // 1) Crear tablas (idempotente)
 for (const t of TABLES) {
@@ -198,6 +251,21 @@ async function ensureFields() {
     { table: "Muestras", field: multiline("Nota") },
     { table: "Muestras", field: text("Estado") },
     { table: "Muestras", field: text("Motivo") },
+    // Calendario
+    { table: "Calendario", field: text("Id") },
+    { table: "Calendario", field: text("Nombre") },
+    { table: "Calendario", field: text("Periodo") },
+    { table: "Calendario", field: number("MesOrden") },
+    { table: "Calendario", field: text("Prioridad") },
+    { table: "Calendario", field: text("Tipo") },
+    { table: "Calendario", field: multiline("Tip") },
+    { table: "Calendario", field: checkbox("Activa") },
+    // FAQ
+    { table: "FAQ", field: text("Id") },
+    { table: "FAQ", field: text("Pregunta") },
+    { table: "FAQ", field: multiline("Respuesta") },
+    { table: "FAQ", field: text("Tag") },
+    { table: "FAQ", field: checkbox("Activa") },
   ];
   for (const w of want) {
     const t = tables.find((x) => x.name === w.table);
@@ -312,5 +380,35 @@ if (missingProducts.length === 0) {
     else console.log(`✗ Seed productos: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
   }
 }
+
+// 4) Sembrar Calendario + FAQ (genérico, solo los que falten por Id)
+async function seedByIds(table, seed) {
+  if (!seed.length) return;
+  const ids = new Set();
+  let offset;
+  do {
+    const url = new URL(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}`);
+    url.searchParams.set("pageSize", "100");
+    if (offset) url.searchParams.set("offset", offset);
+    const res = await fetch(url, { headers });
+    if (!res.ok) { console.log(`✗ No se pudo leer ${table}: ${res.status}`); return; }
+    const j = await res.json();
+    for (const r of j.records ?? []) if (r.fields?.Id) ids.add(r.fields.Id);
+    offset = j.offset;
+  } while (offset);
+  const missing = seed.filter((x) => !ids.has(x.Id));
+  if (missing.length === 0) { console.log(`• ${table}: seed ya presente, nada que sembrar`); return; }
+  for (let i = 0; i < missing.length; i += 10) {
+    const batch = missing.slice(i, i + 10).map((fields) => ({ fields }));
+    const res = await fetch(`https://api.airtable.com/v0/${BASE}/${encodeURIComponent(table)}`, {
+      method: "POST", headers, body: JSON.stringify({ records: batch, typecast: true }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok) console.log(`✓ ${table} sembrado: ${batch.map((b) => b.fields.Id).join(", ")}`);
+    else console.log(`✗ Seed ${table}: ${res.status} ${JSON.stringify(j).slice(0, 200)}`);
+  }
+}
+await seedByIds("Calendario", CALENDAR_SEED);
+await seedByIds("FAQ", FAQ_SEED);
 
 console.log("Listo. Reinicia el dev server para que tome Airtable.");
