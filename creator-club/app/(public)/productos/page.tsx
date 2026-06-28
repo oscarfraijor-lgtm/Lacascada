@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Package, PackageOpen, Check, X, Sparkles, ExternalLink, Download, ImageIcon, Megaphone, Link2, Tag,
 } from "lucide-react";
-import { listActiveProducts, listCampaigns } from "@/lib/store";
+import { listActiveProducts, listOpenCampaigns } from "@/lib/store";
 import { type Product, splitLines, parseDeepLinks, productImages } from "@/lib/products";
 import type { Campaign } from "@/lib/campaigns";
 import { getClubViewer } from "@/lib/club-viewer";
@@ -12,7 +12,9 @@ import AdminPreviewBanner from "@/components/AdminPreviewBanner";
 
 export default async function ProductosPage() {
   const { isAdminPreview } = await getClubViewer();
-  const [products, campaigns] = await Promise.all([listActiveProducts(), listCampaigns()]);
+  // Solo campañas ABIERTAS para el chip "Parte de la campaña X": una cerrada no
+  // aparece en /campanas, así que enlazar a ella sería un callejón sin salida.
+  const [products, campaigns] = await Promise.all([listActiveProducts(), listOpenCampaigns()]);
   const campaignById = new Map(campaigns.map((c) => [c.id, c]));
 
   return (

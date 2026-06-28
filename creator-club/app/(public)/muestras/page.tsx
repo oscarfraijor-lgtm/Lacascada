@@ -26,6 +26,9 @@ export default async function MuestrasPage({
   }
   const productName = new Map(products.map((p) => [p.id, p.name]));
   const affiliateOk = me ? looksLikeAffiliate(me.affiliateHandle) : false;
+  // ?producto= de un link viejo a un producto desactivado/inexistente: avisa en vez
+  // de preseleccionar callado el primero (la creadora pediría el producto equivocado).
+  const productoInvalido = !!producto && products.length > 0 && !productName.has(producto);
 
   return (
     <div className="space-y-6">
@@ -44,6 +47,11 @@ export default async function MuestrasPage({
       {err === "producto" && (
         <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
           Elige un producto disponible para pedir tu muestra.
+        </p>
+      )}
+      {productoInvalido && (
+        <p className="rounded-lg bg-brand/10 px-3 py-2 text-center text-sm font-semibold text-brand-deep">
+          Ese producto ya no está disponible. Elige otro de la lista.
         </p>
       )}
 

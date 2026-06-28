@@ -66,9 +66,16 @@ export function parseDeepLinks(s?: string): DeepLink[] {
   const out: DeepLink[] = [];
   for (const line of splitLines(s)) {
     const i = line.indexOf("|");
-    const label = i >= 0 ? line.slice(0, i).trim() : "";
-    const url = (i >= 0 ? line.slice(i + 1) : line).trim();
-    if (!/^https?:\/\//i.test(url)) continue; // solo enlaces http(s) válidos
+    let label = i >= 0 ? line.slice(0, i).trim() : "";
+    let url = (i >= 0 ? line.slice(i + 1) : line).trim();
+    // Si el lado derecho del primer '|' no es http(s), ese '|' era parte de la URL
+    // (no un separador label|url): trata la línea COMPLETA como URL sin etiqueta.
+    // Evita perder shortlinks/UTM con pipe interno y sin etiqueta.
+    if (!/^https?:\/\//i.test(url)) {
+      url = line.trim();
+      label = "";
+    }
+    if (!/^https?:\/\//i.test(url)) continue; // sigue sin ser http(s): se ignora
     out.push({ label: label || hostOf(url), url });
   }
   return out;

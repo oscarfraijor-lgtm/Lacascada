@@ -36,6 +36,20 @@ export function envConn(): Conn | null {
   return baseId && token ? { baseId, token } : null;
 }
 
+// ¿Runtime de producción? (Vercel o NODE_ENV=production). Mismo criterio que el
+// guard de AUTH_SECRET en lib/token.ts.
+export function isProdRuntime(): boolean {
+  return process.env.NODE_ENV === "production" || !!process.env.VERCEL;
+}
+
+// ¿Se puede usar el archivo local (.data/store.json) como almacén "configurado"?
+// SOLO en dev: en producción un solo archivo compartido entre marcas cruzaría
+// datos (creadoras/GMV/canjes). Si en prod falta Airtable, NO se cae al archivo:
+// el admin/cliente ve "marca no configurada" en vez de datos de otra marca.
+export function fileStoreAllowed(): boolean {
+  return !envConn() && !isProdRuntime();
+}
+
 // Resuelve la conexión a usar: la explícita (otra marca) o la del env.
 function resolve(conn?: Conn | null): Conn {
   const c = conn ?? envConn();

@@ -14,8 +14,10 @@ export default async function LeaderboardPage({
   const { creator: me } = await getClubViewer();
   const myTier = me ? creatorTier(me.gmvMXN ?? 0) : null;
 
-  // El bracket solicitado solo es válido si existe en el sistema de la marca.
-  const validTier = tier && BRAND.tierSystem.tiers.some((t) => t.key === tier) ? tier : undefined;
+  // El bracket segmentado solo se permite para TU PROPIA categoría: no se puede
+  // consultar el ranking de otro nivel vía ?tier= (evita inferir qué creadoras
+  // compiten en brackets de GMV superiores). Sin sesión/categoría => ranking global.
+  const validTier = tier && myTier && tier === myTier.key ? tier : undefined;
   const rows = await getLeaderboard(validTier ? { tierKey: validTier } : undefined);
   const bracketName = validTier ? tierName(BRAND.tierSystem, validTier) : null;
 

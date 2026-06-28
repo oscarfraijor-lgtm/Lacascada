@@ -5,7 +5,7 @@
 // dirigen a la base de ESA marca (los datos nunca se cruzan). El lado público
 // NO usa esta cookie: siempre sirve la marca del env (NEXT_PUBLIC_BRAND).
 import { cookies } from "next/headers";
-import { type Conn, envConn } from "@/lib/airtable";
+import { type Conn, envConn, fileStoreAllowed } from "@/lib/airtable";
 import { getAllBrandSlugs, getBrandConfig, getBrand, hasOwnMechanics, type BrandConfig } from "@/lib/brands";
 
 const COOKIE = "cc_admin_brand";
@@ -54,7 +54,9 @@ export interface BrandSummary {
 
 // Todas las marcas del registro con su estado de configuración para el selector.
 export function managedBrands(): BrandSummary[] {
-  const fileStore = !airtableMode();
+  // En prod el archivo local NO cuenta como "configurado" (un store.json compartido
+  // entre marcas cruzaría datos): cada marca exige su propia base Airtable.
+  const fileOk = fileStoreAllowed();
   const env = envBrandSlug();
   return getAllBrandSlugs().map((slug) => {
     const cfg = getBrandConfig(slug)!;
@@ -65,7 +67,7 @@ export function managedBrands(): BrandSummary[] {
       club: cfg.club,
       isEnvBrand: slug === env,
       hasBase,
-      configured: fileStore || hasBase,
+      configured: fileOk || hasBase,
       ownMechanics: hasOwnMechanics(slug),
       deployUrl: cfg.deployUrl,
     };
@@ -99,7 +101,8 @@ export async function getAdminContext(): Promise<AdminContext> {
     slug,
     brand,
     conn,
-    configured: fileStore || conn !== null,
+    // En prod el archivo local NO cuenta como configurado (evita cruce entre marcas).
+    configured: fileStoreAllowed() || conn !== null,
     fileStore,
     isEnvBrand: slug === envBrandSlug(),
   };

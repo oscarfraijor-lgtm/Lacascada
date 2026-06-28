@@ -9,7 +9,7 @@
 //   BRAND_ACCOUNTS="color-dreams:yamila@correo.com,color-dreams:otra@correo.com,anyeluz:x@y.com"
 // Varios correos pueden mapear a la misma marca. Un slug inválido se ignora.
 import { currentEmail } from "@/lib/session";
-import { envConn, type Conn } from "@/lib/airtable";
+import { envConn, fileStoreAllowed, type Conn } from "@/lib/airtable";
 import { getAllBrandSlugs, getBrandConfig, type BrandConfig } from "@/lib/brands";
 import { resolveConn } from "@/lib/brand-admin";
 
@@ -57,5 +57,6 @@ export async function getBrandContext(): Promise<BrandContext | null> {
   if (!brand) return null;
   const conn = resolveConn(slug);
   const fileStore = !envConn();
-  return { email, slug, brand, conn, configured: fileStore || conn !== null, fileStore };
+  // En prod el archivo local NO cuenta como configurado (evita cruce entre marcas).
+  return { email, slug, brand, conn, configured: fileStoreAllowed() || conn !== null, fileStore };
 }
