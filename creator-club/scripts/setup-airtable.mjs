@@ -226,6 +226,7 @@ async function ensureFields() {
     { table: "Creadoras", field: text("ConsentimientoVersion") },
     { table: "Canjes", field: text("Titulo") },
     { table: "Canjes", field: text("Motivo") },
+    { table: "Canjes", field: number("GmvAlSolicitar") },
     // Productos: asegura columnas si la tabla ya existía sin alguna.
     { table: "Productos", field: text("Id") },
     { table: "Productos", field: text("Nombre") },

@@ -202,6 +202,9 @@ export async function cambiarEstadoEntrega(formData: FormData) {
   const status = String(formData.get("status") || "") as ParticipationStatus;
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !PARTICIPATION_STATUS.includes(status)) return;
+  // Estado previo: para NO re-disparar el correo si no hubo cambio real (re-set al
+  // mismo estado / doble submit). Solo notificamos cuando el estado realmente cambió.
+  const prev = (await getParticipationById(id, conn))?.status;
   await setParticipationStatus(id, status, status === "rechazada" ? reason : undefined, conn);
   // Aprobar otorga estrellas automáticamente (se derivan de entregas aprobadas).
   revalidatePath("/admin/inscripciones");
@@ -210,7 +213,7 @@ export async function cambiarEstadoEntrega(formData: FormData) {
   revalidatePath("/");
 
   // Aviso por correo en las transiciones que le importan a la creadora.
-  if (status === "aceptada" || status === "aprobada" || status === "rechazada") {
+  if (prev !== status && (status === "aceptada" || status === "aprobada" || status === "rechazada")) {
     const part = await getParticipationById(id, conn);
     if (part) {
       const campaign = await getCampaignById(part.campaignId, conn);
@@ -278,7 +281,11 @@ export async function cambiarEstadoCanje(formData: FormData) {
     if (!canje) return;
     const reward = await getRewardById(canje.rewardId, conn);
     const creator = await getCreatorByEmail(canje.creatorEmail, conn);
-    const gmv = creator?.gmvMXN ?? 0;
+    // GMV efectivo para el gate = el actual O el que tenía al solicitar (lo que sea
+    // mayor): así un canje legítimo no se congela si el GMV mensual se reseteó al
+    // cambiar de mes. Anti-fuga intacto: el snapshot prueba una venta real al pedirlo,
+    // y un canje sin snapshot (forjado) cae a 0 y se bloquea igual.
+    const gmv = Math.max(creator?.gmvMXN ?? 0, canje.gmvSnapshot ?? 0);
     // Fail-closed: recompensa desconocida (catálogo cambió) o sin GMV suficiente
     // => no procede (no-op, sin 500). La UI ya esconde el botón; esto cubre el
     // POST directo y los canjes huérfanos.
@@ -298,7 +305,8 @@ export async function cambiarEstadoCanje(formData: FormData) {
 
   // Aviso por correo a la creadora (tolerante). Solo si el cambio sucedió: en
   // aprobada el gate puede haber hecho return antes (no se manda "aprobada" sin GMV).
-  if (canje) {
+  // canje.status es el PREVIO (se cargó antes del set): no re-notificar si no cambió.
+  if (canje && canje.status !== status) {
     const title = canje.rewardTitle || canje.rewardId;
     if (status === "aprobada") {
       await notifyCreator(
@@ -361,8 +369,10 @@ export async function cambiarEstadoMision(formData: FormData) {
   revalidatePath("/");
 
   // Aviso por correo a la creadora (tolerante) en las transiciones que le importan.
+  // mision.status es el PREVIO (se cargó antes del set): no re-notificar si no cambió.
   const title = mission.title;
-  if (status === "aprobada") {
+  const changed = mision.status !== status;
+  if (changed && status === "aprobada") {
     const stars = mission.stars;
     await notifyCreator(
       ctx,
@@ -374,7 +384,7 @@ export async function cambiarEstadoMision(formData: FormData) {
         : "Tu misión quedó aprobada. Revisa tu progreso en tu club.",
       "/"
     );
-  } else if (status === "rechazada") {
+  } else if (changed && status === "rechazada") {
     await notifyCreator(
       ctx,
       mision.creatorEmail,
@@ -401,12 +411,14 @@ export async function cambiarEstadoActivacion(formData: FormData) {
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !ACTIVACION_STATUS.includes(status)) return;
 
+  const prev = (await getActivacionById(id, conn))?.status;
   await setActivacionStatus(id, status, status === "rechazada" ? reason : undefined, conn);
   revalidatePath("/admin/activaciones");
   revalidatePath("/activaciones");
 
   // Aviso por correo (tolerante) en las transiciones que le importan a la creadora.
-  if (status === "otorgada" || status === "rechazada") {
+  // Solo si el estado cambió de verdad (no re-disparar en un re-set al mismo estado).
+  if (prev !== status && (status === "otorgada" || status === "rechazada")) {
     const act = await getActivacionById(id, conn);
     if (act) {
       const label = getActivacionMeta(act.tipo)?.label ?? act.tipo;
@@ -449,12 +461,14 @@ export async function cambiarEstadoMuestra(formData: FormData) {
   const reason = String(formData.get("reason") || "").trim();
   if (!id || !MUESTRA_STATUS.includes(status)) return;
 
+  const prev = (await getMuestraById(id, conn))?.status;
   await setMuestraStatus(id, status, status === "rechazada" ? reason : undefined, conn);
   revalidatePath("/admin/muestras");
   revalidatePath("/muestras");
 
   // Aviso por correo (tolerante) en las transiciones que le importan a la creadora.
-  if (status === "aprobada" || status === "enviada" || status === "rechazada") {
+  // Solo si el estado cambió de verdad (no re-disparar en un re-set al mismo estado).
+  if (prev !== status && (status === "aprobada" || status === "enviada" || status === "rechazada")) {
     const m = await getMuestraById(id, conn);
     if (m) {
       const name = m.productName || "tu muestra";

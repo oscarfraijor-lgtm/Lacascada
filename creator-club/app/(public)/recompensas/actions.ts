@@ -41,7 +41,9 @@ export async function solicitarCanje(formData: FormData) {
   // (es automático) y lo bloqueado no aplica.
   if (rewardState(reward, stars, gmv) !== "desbloqueada") return;
 
-  await requestCanje(me.email, reward.id, reward.title);
+  // Guarda el GMV de la creadora AL solicitar: el gate de aprobación lo respeta para
+  // no congelar un canje legítimo si su GMV mensual se resetea antes de aprobarlo.
+  await requestCanje(me.email, reward.id, reward.title, gmv);
   revalidatePath("/recompensas");
   revalidatePath("/");
 }

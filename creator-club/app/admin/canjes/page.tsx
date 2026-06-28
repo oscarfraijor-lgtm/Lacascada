@@ -34,9 +34,14 @@ export default async function AdminCanjesPage() {
     const reward = rewardById.get(c.rewardId);
     const meta = STATUS_META[c.status] ?? STATUS_META.solicitada;
     const gmv = creator?.gmvMXN ?? 0;
+    const snap = c.gmvSnapshot ?? 0;
+    // GMV efectivo = el actual o el que tenía al solicitar (lo mayor), igual que el
+    // gate del servidor: un canje legítimo no se "congela" si el GMV mensual se reseteó.
+    const gmvEff = Math.max(gmv, snap);
+    const snapCarries = snap > gmv && snap > 0; // el snapshot es lo que lo mantiene aprobable
     const hasCost = reward ? rewardHasCost(reward) : true;
     // Recompensa fuera del catálogo (retirada) => no aprobable (fail-closed).
-    const approvable = reward ? canApproveCanje(reward, gmv) : false;
+    const approvable = reward ? canApproveCanje(reward, gmvEff) : false;
     return {
       key: c.id ?? `${c.creatorEmail}-${c.rewardId}`,
       search: [creator?.name, creator?.email ?? c.creatorEmail, creator?.handle, c.rewardTitle || reward?.title || c.rewardId]
@@ -75,6 +80,11 @@ export default async function AdminCanjesPage() {
                 <Star size={11} className="fill-lime text-lime" />
                 {gmv > 0 ? `$${gmv.toLocaleString("es-MX")} MXN` : "sin GMV"}
               </span>
+              {snapCarries && (
+                <span className="ml-1 text-[11px] text-ink-soft" title="GMV que tenía al solicitar; califica aunque su GMV del mes se haya reseteado">
+                  (calificó al solicitar: ${snap.toLocaleString("es-MX")})
+                </span>
+              )}
               <span className="mx-1.5 text-ink/30">·</span>
               {creator?.handle || c.creatorEmail}
             </p>

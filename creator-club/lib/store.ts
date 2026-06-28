@@ -381,6 +381,12 @@ export interface Canje {
   rewardTitle: string; // snapshot para el panel y el historial
   status: string; // CanjeStatus
   reason?: string; // motivo de rechazo (visible para la creadora)
+  // GMV atribuible que tenía la creadora AL SOLICITAR. solicitarCanje solo crea el
+  // canje si la recompensa estaba desbloqueada (para una con costo => GMV>0), así que
+  // este número prueba que existió una venta atribuible real al pedirlo. El gate de
+  // aprobación lo usa para NO congelar un canje legítimo si el GMV mensual se resetea
+  // al cambiar de mes (anti-fuga intacto: un canje forjado sin venta no tiene snapshot).
+  gmvSnapshot?: number;
   createdAt?: string;
 }
 
@@ -390,6 +396,7 @@ interface CanjeFields {
   Titulo?: string;
   Estado: string;
   Motivo?: string;
+  GmvAlSolicitar?: number;
 }
 
 function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: string }): Canje {
@@ -400,6 +407,7 @@ function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: strin
     rewardTitle: r.fields.Titulo ?? "",
     status: r.fields.Estado,
     reason: r.fields.Motivo,
+    gmvSnapshot: r.fields.GmvAlSolicitar != null ? Number(r.fields.GmvAlSolicitar) : undefined,
     createdAt: r.createdTime,
   };
 }
@@ -407,7 +415,10 @@ function canjeToRecord(r: { id: string; fields: CanjeFields; createdTime?: strin
 // Solicitar un canje. Dedupe: una sola solicitud ABIERTA (solicitada o aprobada)
 // por recompensa y creadora. Un rechazo permite volver a solicitar sobre el mismo
 // registro (no se acumulan canjes muertos).
-export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string, conn?: Conn): Promise<Canje> {
+// gmvSnapshot = GMV atribuible de la creadora al momento de solicitar (lo pasa
+// solicitarCanje, que ya validó que la recompensa estaba desbloqueada). Se guarda
+// para honrar el canje aunque el GMV mensual se resetee antes de aprobarlo.
+export async function requestCanje(creatorEmail: string, rewardId: string, rewardTitle: string, gmvSnapshot: number, conn?: Conn): Promise<Canje> {
   if (airtableConfigured(conn)) {
     const existing = await fetchAll<CanjeFields>(TABLES.Canjes, {
       filterByFormula: `AND(LOWER({Email})='${escFormula(creatorEmail.toLowerCase())}',{Recompensa}='${escFormula(rewardId)}')`,
@@ -420,16 +431,18 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
     if (open) return canjeToRecord(open);
     const rejected = existing.find((r) => r.fields.Estado === "rechazada");
     if (rejected) {
-      await airtableUpdate(TABLES.Canjes, rejected.id, { Estado: "solicitada", Motivo: "", Titulo: rewardTitle }, conn);
-      return { ...canjeToRecord(rejected), status: "solicitada", reason: undefined, rewardTitle };
+      // Re-solicitar tras un rechazo refresca el snapshot con el GMV actual.
+      await airtableUpdate(TABLES.Canjes, rejected.id, { Estado: "solicitada", Motivo: "", Titulo: rewardTitle, GmvAlSolicitar: gmvSnapshot }, conn);
+      return { ...canjeToRecord(rejected), status: "solicitada", reason: undefined, rewardTitle, gmvSnapshot };
     }
     const r = await airtableCreate(TABLES.Canjes, {
       Email: creatorEmail,
       Recompensa: rewardId,
       Titulo: rewardTitle,
       Estado: "solicitada",
+      GmvAlSolicitar: gmvSnapshot,
     }, conn);
-    return { id: r.id, creatorEmail, rewardId, rewardTitle, status: "solicitada" };
+    return { id: r.id, creatorEmail, rewardId, rewardTitle, status: "solicitada", gmvSnapshot };
   }
   const db = await readDB();
   db.canjes = db.canjes ?? [];
@@ -441,10 +454,11 @@ export async function requestCanje(creatorEmail: string, rewardId: string, rewar
     rejected.status = "solicitada";
     rejected.reason = undefined;
     rejected.rewardTitle = rewardTitle;
+    rejected.gmvSnapshot = gmvSnapshot;
     await writeDB(db);
     return rejected;
   }
-  const rec: Canje = { id: "loc_" + randomUUID(), creatorEmail, rewardId, rewardTitle, status: "solicitada", createdAt: new Date().toISOString() };
+  const rec: Canje = { id: "loc_" + randomUUID(), creatorEmail, rewardId, rewardTitle, status: "solicitada", gmvSnapshot, createdAt: new Date().toISOString() };
   db.canjes.push(rec);
   await writeDB(db);
   return rec;
