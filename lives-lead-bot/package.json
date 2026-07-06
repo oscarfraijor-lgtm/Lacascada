@@ -1,0 +1,17 @@
+{
+  "name": "lives-lead-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "chat": "node harness/chat.js",
+    "demo": "node harness/chat.js --script harness/demo-prospecto.txt --reset"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "dotenv": "latest"
+  }
+}
