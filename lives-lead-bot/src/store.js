@@ -107,15 +107,32 @@ async function upsertAirtable(ficha) {
 }
 
 async function pingCallMeBot(ficha) {
-  if (!config.CALLMEBOT_APIKEY || !config.CALLMEBOT_PHONE) return;
   // HOT va directo a direccion y HUMANO pidio persona: esos ameritan ping inmediato.
   if (ficha.nivel !== "HOT" && ficha.nivel !== "HUMANO") return;
-  try {
-    const text = encodeURIComponent(`Lead ${ficha.nivel}: ${ficha.marca}. ${ficha.gancho}`);
-    const url = `https://api.callmebot.com/whatsapp.php?phone=${config.CALLMEBOT_PHONE}&apikey=${config.CALLMEBOT_APIKEY}&text=${text}`;
-    await fetch(url);
-  } catch {
-    // silencioso: el ping es un extra, no debe tumbar el flujo principal
+
+  // Destinatarios: Oscar recibe HOT y HUMANO; Sergio (Checo) SOLO los HOT.
+  const destinos = [
+    {
+      phone: config.CALLMEBOT_PHONE,
+      apikey: config.CALLMEBOT_APIKEY,
+      niveles: ["HOT", "HUMANO"],
+    },
+    {
+      phone: config.CALLMEBOT_PHONE_SERGIO,
+      apikey: config.CALLMEBOT_APIKEY_SERGIO,
+      niveles: ["HOT"],
+    },
+  ];
+
+  const text = encodeURIComponent(`Lead ${ficha.nivel}: ${ficha.marca}. ${ficha.gancho}`);
+  for (const d of destinos) {
+    if (!d.phone || !d.apikey || !d.niveles.includes(ficha.nivel)) continue;
+    try {
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${d.phone}&apikey=${d.apikey}&text=${text}`;
+      await fetch(url);
+    } catch {
+      // silencioso: el ping es un extra, no debe tumbar el flujo principal
+    }
   }
 }
 

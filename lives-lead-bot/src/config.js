@@ -23,6 +23,10 @@ export const config = {
   COPILOT_MODE: process.env.COPILOT_MODE !== "false",
   CALLMEBOT_APIKEY: process.env.CALLMEBOT_APIKEY || "",
   CALLMEBOT_PHONE: process.env.CALLMEBOT_PHONE || "",
+  // Segundo destinatario (Sergio/Checo): SOLO recibe los HOT. Cada numero
+  // necesita su propia apikey de CallMeBot (la activa el desde su WhatsApp).
+  CALLMEBOT_APIKEY_SERGIO: process.env.CALLMEBOT_APIKEY_SERGIO || "",
+  CALLMEBOT_PHONE_SERGIO: process.env.CALLMEBOT_PHONE_SERGIO || "",
   MAX_TURNS: parseInt(process.env.MAX_TURNS || "12", 10),
 };
 
