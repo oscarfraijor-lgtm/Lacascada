@@ -202,6 +202,46 @@ const CD_FAQ: FaqItem[] = [
   { id: "que-puedo-decir", question: "¿Qué SÍ y qué NO puedo decir del producto?", answer: "Sí: que llega en caja, se infla en minutos y se prueba en casa. No: prometer resultados médicos, curar dolencias, ni inventar precios o promociones que el equipo no confirmó.", tag: "Contenido", active: true },
 ];
 
+// ── Anyeluz (marca USA de hair care / beauty; opera ESH Creative Lab) ────────
+// PALETA DERIVADA de los docs de Anyeluz (rosa/berry). CONFIRMAR con el brandkit
+// oficial antes de lanzar. Mercado USA => USA_TIERS. OJO: la app aún rotula "MXN";
+// para una marca USD hay que volver los montos currency-aware antes de ir en vivo
+// (ver checklist de lanzamiento). Los umbrales de nivel aquí van en USD.
+const ANY_LEVELS: Level[] = [
+  { key: "brote", name: "Brote", minStars: 0, minGmvMXN: 0, perk: "Acceso al club, misiones y ranking. Comisión base.", badge: "🌱" },
+  { key: "glow", name: "Glow", minStars: 500, minGmvMXN: 0, perk: "Muestra de producto a resultado + boost de comisión.", badge: "✨" },
+  { key: "radiante", name: "Radiante", minStars: 1500, minGmvMXN: 2000, perk: "Kit de producto + early access + prioridad en Lives.", badge: "💫" },
+  { key: "iconica", name: "Icónica", minStars: 4000, minGmvMXN: 8000, perk: "Fee de campaña + experiencia + co-creación de producto.", badge: "👑" },
+];
+
+const ANY_MISSIONS: Mission[] = [
+  { id: "perfil", title: "Completa tu perfil", detail: "Cuéntanos de ti y acepta los términos del club.", stars: 50, category: "perfil", action: "auto", requiresSale: false },
+  { id: "conectar-tt", title: "Conecta tu TikTok afiliado", detail: "Vincula tu cuenta al shop de Anyeluz (obligatorio para ganar).", stars: 100, category: "perfil", action: "auto", requiresSale: false },
+  { id: "induccion", title: "Conoce cómo funciona el club", detail: "Aprende cómo funciona el club en 3 minutos.", stars: 30, category: "perfil", action: "watch", requiresSale: false },
+  { id: "showcase", title: "Fija tu mejor video", detail: "Fija tu mejor video de Anyeluz y agrega el producto a tu perfil de TikTok Shop.", stars: 100, category: "contenido", action: "submit", requiresSale: false },
+  { id: "primera-venta", title: "Tu primera venta", detail: "Genera tu primera venta atribuible en TikTok Shop.", stars: 300, category: "venta", action: "sale", requiresSale: true },
+  { id: "sigue-vendiendo", title: "Sigue vendiendo", detail: "Cada venta atribuible cuenta para tu nivel y tus recompensas.", stars: 100, category: "venta", action: "sale", requiresSale: true },
+  { id: "5-ventas", title: "5 ventas en un mes", detail: "Bonus por cerrar 5 ventas atribuibles en un mismo mes.", stars: 250, category: "venta", action: "sale", requiresSale: true },
+  { id: "tu-live", title: "Hostea tu Live", detail: "Transmite mostrando Anyeluz (mínimo 30 min). Tus ventas en Live cuentan para tu nivel.", stars: 250, category: "live", action: "submit", requiresSale: false },
+  { id: "referir", title: "Refiere a otra creadora", detail: "Invita a alguien que se active y venda.", stars: 200, category: "comunidad", action: "sale", requiresSale: true },
+];
+
+const ANY_REWARDS: Reward[] = [
+  { id: "r-status", title: "Subir de nivel + insignia", detail: "Estatus, badge y acceso a misiones premium.", cost: "Acumula estrellas", kind: "estatus", payer: "club", minStars: 0, minGmvMXN: 0 },
+  { id: "r-muestra", title: "Muestra de producto", detail: "Prueba el producto y crea tu contenido (atado a tu primera venta).", cost: "Nivel Glow + tu primera venta", kind: "producto", payer: "marca", minStars: 500, minGmvMXN: 0 },
+  { id: "r-boost", title: "Boost de comisión", detail: "Ganas comisión extra por cada venta que cierres.", cost: "Nivel Glow + tu primera venta", kind: "boost", payer: "marca", minStars: 500, minGmvMXN: 0 },
+  { id: "r-kit", title: "Kit de producto (regalo)", detail: "Un kit de Anyeluz para ti.", cost: "Nivel Radiante", kind: "producto", payer: "marca", minStars: 1500, minGmvMXN: 2000 },
+  { id: "r-experiencia", title: "Experiencia Anyeluz", detail: "Sesión de fotos + kit de creadora + co-creación.", cost: "Nivel Icónica", kind: "experiencia", payer: "marca", minStars: 4000, minGmvMXN: 8000 },
+];
+
+const ANY_CAMPAIGN_SEED: Campaign[] = [
+  { id: "rutina-anyeluz", title: "Mi Rutina con Anyeluz", requirements: "Perfil completo + link de afiliado de TikTok Shop.", brand: "Anyeluz", brief: "Muestra tu rutina real usando Anyeluz, paso a paso. Auténtico y fácil de grabar. Pega tu link de TikTok Shop.", reward: "150 estrellas + boost de comisión", stars: 150, deadline: "Cupo abierto", tag: "Contenido", open: true },
+  { id: "antes-despues", title: "Antes y Después", requirements: "Perfil completo. No necesitas seguidores.", brand: "Anyeluz", brief: "Tu antes y después honesto con Anyeluz. La comparación auténtica convierte.", reward: "200 estrellas", stars: 200, deadline: "Cupo abierto", tag: "Reseña", open: true },
+  { id: "unboxing", title: "Unboxing Anyeluz", requirements: "Perfil completo + link de afiliado.", brand: "Anyeluz", brief: "Tu primer video mostrando cómo llega el producto y tu primera impresión. Pega tu link de TikTok Shop.", reward: "150 estrellas", stars: 150, deadline: "Cupo abierto", tag: "Contenido", open: true },
+  { id: "resena-real", title: "Reseña Real", requirements: "Haber usado el producto al menos 2 semanas.", brand: "Anyeluz", brief: "Comparte tu opinión honesta tras usar Anyeluz. La autenticidad vende.", reward: "150 estrellas", stars: 150, deadline: "Cupo abierto", tag: "Reseña", open: true },
+  { id: "promo-flash", title: "Promo Flash con tu Link", requirements: "Link de afiliado de TikTok Shop activo.", brand: "Anyeluz", brief: "En días de promoción, sube un video corto invitando a comprar con tu link de afiliado.", reward: "100 estrellas + tu comisión por venta", stars: 100, deadline: "Por temporada", tag: "Afiliado", open: false },
+];
+
 // ── Registro de marcas ──────────────────────────────────────────────────────
 type RawBrand = BrandIdentity & BrandMechanics & BrandMeta;
 
@@ -304,11 +344,39 @@ const BRANDS: Record<string, RawBrand> = {
     slug: "anyeluz",
     name: "Anyeluz",
     club: "Anyeluz Club",
-    tagline: "Crea y brilla.",
-    category: "belleza y skincare",
-    tierSystem: USA_TIERS, // Anyeluz opera en USA (badges de gema en USD)
-    ...STUB_OPERATOR,
-    ...STUB_PALETTE,
+    tagline: "Crea, cuida y brilla.", // PLANTILLA editable: confirmar el tagline oficial
+    category: "cuidado del cabello y beauty",
+    // USA: opera ESH Creative Lab (entity Creativity Group LLC). Contacto ESH.
+    operator: "Creativity Group LLC",
+    operatorShort: "ESH Creative Lab",
+    contactEmail: "oscar@eshcreativelab.com",
+    tierSystem: USA_TIERS, // Anyeluz opera en USA (badges de gema, montos en USD)
+    deployUrl: "https://anyeluz.getcreatorclub.com",
+    // PALETA DERIVADA de los docs de Anyeluz (rosa/berry). CONFIRMAR con el brandkit
+    // oficial antes de lanzar (colores, logo, tagline).
+    cream: "#FCE9F2",
+    creamDeep: "#F6BBD8",
+    violet: "#7A0C4A",
+    violetDeep: "#5E1539",
+    ink: "#2B1F27",
+    inkSoft: "#6B5560",
+    lime: "#E8467F",
+    // Contenido editable (confirmar la voz real de Anyeluz):
+    story:
+      "Anyeluz es una marca de cuidado del cabello y beauty.\n" +
+      "El Anyeluz Club es nuestra comunidad de creadoras: mujeres reales que comparten su experiencia, crean contenido y crecen con la marca.\n" +
+      "Aquí no necesitas miles de seguidores, necesitas ganas de crear.",
+    welcomeTitle: "¡Bienvenida al Anyeluz Club!",
+    welcomeMessage:
+      "Qué gusto tenerte. Aquí eres parte del equipo de Anyeluz: te damos las herramientas, los productos y las campañas para que crees tu mejor contenido y crezcas con nosotros. Cualquier duda, escríbenos.",
+    supportName: "Paulina, tu Affiliate Manager",
+    // supportWhatsapp: pendiente (definir el contacto de soporte para USA).
+    levels: ANY_LEVELS,
+    missions: ANY_MISSIONS,
+    rewards: ANY_REWARDS,
+    campaignSeed: ANY_CAMPAIGN_SEED,
+    // products/calendar/faq quedan vacíos (se cargan en /admin); el calendario de
+    // USA (fechas TikTok Shop US) lo provee Oscar como seed cuando se defina.
   },
   "origen-botanico": {
     slug: "origen-botanico",
