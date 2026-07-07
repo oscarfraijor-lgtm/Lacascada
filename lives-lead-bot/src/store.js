@@ -21,7 +21,28 @@ function pendingPath(phone) {
 }
 
 // Mapeo de campos internos de la ficha -> nombres de columna en Airtable.
+const BUCKET_LABELS = {
+  mas_200k: "+200K",
+  vende_quiere_mas: "Vende, quiere mas",
+  aun_no_vende: "Aun no vende",
+  desconocido: "Desconocido",
+};
+
+const ROL_LABELS = {
+  dueno_fundador: "Dueno o fundador",
+  direccion_gerencia: "Direccion o gerencia",
+  marketing: "Marketing",
+  desconocido: "",
+};
+
 function toAirtableFields(ficha) {
+  // YaEnTTS se deriva del bucket de ventas (si vende, ya esta en TTS).
+  const yaEnTts =
+    ficha.ventas_bucket === "aun_no_vende"
+      ? "no"
+      : ficha.ventas_bucket === "mas_200k" || ficha.ventas_bucket === "vende_quiere_mas"
+        ? "si"
+        : "desconocido";
   return {
     Telefono: ficha.telefono || "",
     Nombre: ficha.nombre || "",
@@ -30,11 +51,13 @@ function toAirtableFields(ficha) {
     TikTok: ficha.tiktok || "",
     Instagram: ficha.instagram || "",
     Mercado: ficha.mercado || "",
-    YaEnTTS: ficha.ya_en_tts || "",
+    YaEnTTS: yaEnTts,
     Categoria: ficha.categoria || "",
-    NumProductos: ficha.num_productos_aprox || "",
-    HaceLives: ficha.hace_lives || "",
-    Ruta: ficha.ruta || "",
+    Nivel: ficha.nivel || "",
+    VentasBucket: BUCKET_LABELS[ficha.ventas_bucket] || "Desconocido",
+    Rol: ROL_LABELS[ficha.rol] ?? (ficha.rol || ""),
+    Ciudad: ficha.ciudad || "",
+    Correo: ficha.correo || "",
     Score: ficha.score ?? null,
     Tier: ficha.tier || "",
     Gancho: ficha.gancho || "",
@@ -84,9 +107,10 @@ async function upsertAirtable(ficha) {
 
 async function pingCallMeBot(ficha) {
   if (!config.CALLMEBOT_APIKEY || !config.CALLMEBOT_PHONE) return;
-  if (ficha.ruta !== "A" && ficha.ruta !== "H") return;
+  // HOT va directo a direccion y HUMANO pidio persona: esos ameritan ping inmediato.
+  if (ficha.nivel !== "HOT" && ficha.nivel !== "HUMANO") return;
   try {
-    const text = encodeURIComponent(`Lead ${ficha.ruta}: ${ficha.marca}. ${ficha.gancho}`);
+    const text = encodeURIComponent(`Lead ${ficha.nivel}: ${ficha.marca}. ${ficha.gancho}`);
     const url = `https://api.callmebot.com/whatsapp.php?phone=${config.CALLMEBOT_PHONE}&apikey=${config.CALLMEBOT_APIKEY}&text=${text}`;
     await fetch(url);
   } catch {
@@ -101,17 +125,53 @@ async function pingCallMeBot(ficha) {
  * ping de WhatsApp (silencioso si falla).
  */
 export async function saveLead(ficha) {
-  ensureDir();
-  writeFileSync(leadPath(ficha.telefono), JSON.stringify(ficha, null, 2));
+  // fs local es cache de desarrollo: en Vercel el filesystem es de solo lectura,
+  // por eso todo write local va en try/catch y la persistencia real es Airtable.
+  try {
+    ensureDir();
+    writeFileSync(leadPath(ficha.telefono), JSON.stringify(ficha, null, 2));
+  } catch {}
   await upsertAirtable(ficha);
   await pingCallMeBot(ficha);
 }
 
+// ---- Estado de conversacion: Airtable primero (tabla Conversaciones), fs como cache dev ----
+
+const CONV_TABLE = "Conversaciones";
+
+function airtableReady() {
+  return Boolean(config.AIRTABLE_TOKEN && config.AIRTABLE_BASE_ID);
+}
+
+function airtableHeaders() {
+  return {
+    Authorization: `Bearer ${config.AIRTABLE_TOKEN}`,
+    "Content-Type": "application/json",
+  };
+}
+
+async function findConvRecord(phone) {
+  const formula = encodeURIComponent(`{Telefono}='${phone}'`);
+  const url = `https://api.airtable.com/v0/${config.AIRTABLE_BASE_ID}/${CONV_TABLE}?filterByFormula=${formula}&maxRecords=1`;
+  const res = await fetch(url, { headers: airtableHeaders() });
+  const data = await res.json();
+  return data?.records?.[0] || null;
+}
+
 /** Lee el estado de conversacion guardado para un telefono, o null si no existe. */
-export function getConversation(phone) {
-  const p = convPath(phone);
-  if (!existsSync(p)) return null;
+export async function getConversation(phone) {
+  if (airtableReady()) {
+    try {
+      const rec = await findConvRecord(phone);
+      if (rec?.fields?.StateJSON) return JSON.parse(rec.fields.StateJSON);
+      return null;
+    } catch (err) {
+      console.error("[store] Error leyendo conversacion de Airtable:", err);
+    }
+  }
   try {
+    const p = convPath(phone);
+    if (!existsSync(p)) return null;
     return JSON.parse(readFileSync(p, "utf-8"));
   } catch {
     return null;
@@ -119,15 +179,57 @@ export function getConversation(phone) {
 }
 
 /** Escribe el estado de conversacion para un telefono. */
-export function saveConversation(phone, state) {
-  ensureDir();
-  writeFileSync(convPath(phone), JSON.stringify(state, null, 2));
+export async function saveConversation(phone, state) {
+  if (airtableReady()) {
+    try {
+      const rec = await findConvRecord(phone);
+      const fields = {
+        Telefono: phone,
+        StateJSON: JSON.stringify(state),
+        Actualizado: new Date().toISOString(),
+      };
+      const url = `https://api.airtable.com/v0/${config.AIRTABLE_BASE_ID}/${CONV_TABLE}`;
+      const body = { records: [{ fields }], typecast: true };
+      if (rec) {
+        body.records[0].id = rec.id;
+        await fetch(url, { method: "PATCH", headers: airtableHeaders(), body: JSON.stringify(body) });
+      } else {
+        await fetch(url, { method: "POST", headers: airtableHeaders(), body: JSON.stringify(body) });
+      }
+    } catch (err) {
+      console.error("[store] Error guardando conversacion en Airtable:", err);
+    }
+  }
+  try {
+    ensureDir();
+    writeFileSync(convPath(phone), JSON.stringify(state, null, 2));
+  } catch {}
+}
+
+/** Ping generico a Oscar por CallMeBot (copiloto: respuesta sugerida, avisos). */
+export async function pingOscar(text) {
+  if (!config.CALLMEBOT_APIKEY || !config.CALLMEBOT_PHONE) return;
+  try {
+    const url = `https://api.callmebot.com/whatsapp.php?phone=${config.CALLMEBOT_PHONE}&apikey=${config.CALLMEBOT_APIKEY}&text=${encodeURIComponent(text)}`;
+    await fetch(url);
+  } catch {}
 }
 
 /** Borra el lead y la conversacion guardados de un telefono, si existen. */
-export function resetPhone(phone) {
+export async function resetPhone(phone) {
   for (const p of [leadPath(phone), convPath(phone), pendingPath(phone)]) {
-    if (existsSync(p)) unlinkSync(p);
+    try {
+      if (existsSync(p)) unlinkSync(p);
+    } catch {}
+  }
+  if (airtableReady()) {
+    try {
+      const rec = await findConvRecord(phone);
+      if (rec) {
+        const url = `https://api.airtable.com/v0/${config.AIRTABLE_BASE_ID}/${CONV_TABLE}/${rec.id}`;
+        await fetch(url, { method: "DELETE", headers: airtableHeaders() });
+      }
+    } catch {}
   }
 }
 

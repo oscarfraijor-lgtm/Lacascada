@@ -38,7 +38,7 @@ async function runScriptMode(phone, scriptPath) {
     .map((l) => l.trim())
     .filter((l) => l && !l.startsWith("#"));
 
-  let state = getConversation(phone);
+  let state = await getConversation(phone);
   let fichaSaved = false;
 
   for (const line of lines) {
@@ -47,7 +47,7 @@ async function runScriptMode(phone, scriptPath) {
     state = result.state;
     fichaSaved = result.fichaSaved;
     console.log(`<<< BOT: ${result.reply}`);
-    saveConversation(phone, state);
+    await saveConversation(phone, state);
   }
 
   if (fichaSaved) {
@@ -61,11 +61,11 @@ async function runScriptMode(phone, scriptPath) {
   }
 }
 
-function runInteractiveMode(phone) {
+async function runInteractiveMode(phone) {
   console.log(`lives-lead-bot -- chat interactivo (telefono: ${phone})`);
   console.log("Escribe tu mensaje y presiona enter. Comando /salir para terminar.\n");
 
-  let state = getConversation(phone);
+  let state = await getConversation(phone);
 
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   rl.setPrompt("Tu (prospecto)> ");
@@ -85,7 +85,7 @@ function runInteractiveMode(phone) {
     try {
       const result = await runTurn({ phone, userText: text, state, source: "harness-interactivo" });
       state = result.state;
-      saveConversation(phone, state);
+      await saveConversation(phone, state);
       console.log(`BOT: ${result.reply}`);
       if (result.fichaSaved) {
         console.log("(ficha guardada)");
@@ -112,14 +112,14 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.reset) {
-    resetPhone(args.phone);
+    await resetPhone(args.phone);
     console.log(`(estado reseteado para ${args.phone})`);
   }
 
   if (args.script) {
     await runScriptMode(args.phone, args.script);
   } else {
-    runInteractiveMode(args.phone);
+    await runInteractiveMode(args.phone);
   }
 }
 

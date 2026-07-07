@@ -11,6 +11,37 @@ const MAX_TOOL_ITERATIONS = 5;
 
 const client = new Anthropic({ apiKey: config.ANTHROPIC_API_KEY });
 
+// La PRIMERA compilacion de la gramatica de tools estrictas puede exceder el timeout
+// del API (400 "Grammar compilation timed out"); reintentar la misma llamada suele
+// pegar contra la gramatica ya cacheada. Solo se reintenta ese error especifico.
+async function createWithGrammarRetry(messages) {
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await client.messages.create({
+        model: config.MODEL,
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        tools: TOOLS,
+        messages,
+        output_config: { effort: config.EFFORT },
+      });
+    } catch (err) {
+      const esGrammarTimeout =
+        err instanceof Anthropic.BadRequestError &&
+        String(err.message).includes("Grammar compilation timed out");
+      if (esGrammarTimeout && attempt < 2) {
+        console.error(`[brain] Grammar timeout (intento ${attempt + 1}), reintentando...`);
+        await new Promise((r) => setTimeout(r, 1500));
+        lastErr = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw lastErr;
+}
+
 function extractText(content) {
   if (!Array.isArray(content)) return "";
   return content
@@ -72,14 +103,7 @@ export async function runTurn({ phone, userText, state, source }) {
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
     let response;
     try {
-      response = await client.messages.create({
-        model: config.MODEL,
-        max_tokens: 8192,
-        system: SYSTEM_PROMPT,
-        tools: TOOLS,
-        messages: state.messages,
-        output_config: { effort: config.EFFORT },
-      });
+      response = await createWithGrammarRetry(state.messages);
     } catch (err) {
       if (
         err instanceof Anthropic.RateLimitError ||
@@ -123,15 +147,16 @@ export async function runTurn({ phone, userText, state, source }) {
     const args = {
       nombre: "desconocido",
       marca: "desconocido",
-      website: "",
+      categoria: "desconocido",
+      ventas_bucket: "desconocido",
+      nivel: "HUMANO",
+      rol: "desconocido",
       tiktok: "",
       instagram: "",
+      website: "",
+      ciudad: "",
+      correo: "",
       mercado: "desconocido",
-      ya_en_tts: "desconocido",
-      categoria: "desconocido",
-      num_productos_aprox: "desconocido",
-      hace_lives: "desconocido",
-      ruta: "H",
       gancho: "Max turnos alcanzado, revisar transcript",
       resumen: "Conversacion larga sin cierre, revisar transcript completo",
       notas: "",

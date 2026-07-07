@@ -11,9 +11,20 @@
  * @param {string} params.phone - telefono del prospecto
  * @param {string} params.source - fuente del contacto (organico, ad:..., harness-demo, etc)
  */
+// Limpia artefactos de tool use (tags tipo XML fantasma) que a veces se cuelan
+// en los strings que genera el modelo. Solo toca strings.
+function sanitize(value) {
+  if (typeof value !== "string") return value;
+  return value.replace(/<[^>]*>/g, "").trim();
+}
+
 export function buildFicha({ args, enrich, messages, phone, source }) {
+  const clean = {};
+  for (const [key, value] of Object.entries(args || {})) {
+    clean[key] = sanitize(value);
+  }
   return {
-    ...args,
+    ...clean,
     telefono: phone,
     fuente: source,
     score: enrich?.score ?? null,
@@ -57,16 +68,17 @@ function extractAssistantText(content) {
 }
 
 /**
- * String corto multilinea para consola: marca, ruta, score/tier, mercado, ya_en_tts,
+ * String corto multilinea para consola: marca, nivel, bucket, score/tier, datos clave,
  * gancho, resumen.
  */
 export function formatFicha(ficha) {
   const lines = [
     `Marca: ${ficha.marca || "desconocido"}`,
-    `Ruta: ${ficha.ruta || "?"}`,
+    `Nivel: ${ficha.nivel || "?"}`,
+    `Ventas: ${ficha.ventas_bucket || "desconocido"}`,
+    `Rol: ${ficha.rol || "n/a"}`,
+    `TikTok: ${ficha.tiktok || "n/a"} | Ciudad: ${ficha.ciudad || "n/a"}`,
     `Score/Tier: ${ficha.score ?? "n/a"} / ${ficha.tier || "n/a"}`,
-    `Mercado: ${ficha.mercado || "desconocido"}`,
-    `Ya en TTS: ${ficha.ya_en_tts || "desconocido"}`,
     `Gancho: ${ficha.gancho || ""}`,
     `Resumen: ${ficha.resumen || ""}`,
   ];

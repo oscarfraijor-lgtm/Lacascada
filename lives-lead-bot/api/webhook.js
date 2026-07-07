@@ -9,12 +9,8 @@
 // para persistencia real entre invocaciones/cold starts.
 import { config } from "../src/config.js";
 import { runTurn } from "../src/brain.js";
-import { getConversation, saveConversation } from "../src/store.js";
+import { getConversation, saveConversation, pingOscar } from "../src/store.js";
 import { sendText } from "../src/whatsapp.js";
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { LEADS_DIR } from "../src/config.js";
-import { mkdirSync } from "node:fs";
 
 const seenMessageIds = new Set();
 
@@ -58,22 +54,26 @@ export default async function handler(req, res) {
             ? `ad:${referral.source_id || ""} ${referral.headline || ""}`.trim()
             : "organico";
 
-          const state = getConversation(from);
+          const state = await getConversation(from);
           const { reply, state: newState } = await runTurn({
             phone: from,
             userText,
             state,
             source,
           });
-          saveConversation(from, newState);
 
           if (config.COPILOT_MODE) {
-            mkdirSync(LEADS_DIR, { recursive: true });
-            writeFileSync(join(LEADS_DIR, `${from}-pending.json`), JSON.stringify({ reply, at: new Date().toISOString() }, null, 2));
+            // Copiloto: NO se envia al prospecto. La respuesta sugerida queda en el
+            // estado (visible en Airtable) y le llega a Oscar por CallMeBot para que
+            // la pegue desde su telefono (coexistencia: el chat vive en su app).
+            newState.pendingReply = { reply, at: new Date().toISOString() };
+            await pingOscar(`[COPILOTO] ${from} escribio. Respuesta sugerida:\n\n${reply.slice(0, 500)}`);
             console.log("[COPILOT] Respuesta pendiente para", from);
           } else {
             await sendText(from, reply);
           }
+
+          await saveConversation(from, newState);
         }
       }
     }
