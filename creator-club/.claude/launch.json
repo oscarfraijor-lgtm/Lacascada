@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "creator-club",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd /Users/apkuzz/CascadeProjects/creator-club && npm run dev"],
+      "port": 3000
+    }
+  ]
+}

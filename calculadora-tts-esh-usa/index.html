@@ -3,13 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyección de Costos TikTok Shop | Indie Pro Marketing</title>
+    <title>Calculadora TikTok Shop USA | ESH Creative Lab</title>
+    <meta name="description" content="Calculadora interactiva de costos y proyección de 6 meses para TikTok Shop USA. Modela unit economics, fees, comisiones y utilidad neta en USD en tiempo real.">
+    <meta property="og:title" content="Calculadora TikTok Shop USA | ESH Creative Lab">
+    <meta property="og:description" content="Modela unit economics, fees, comisiones y utilidad neta de tu tienda TikTok Shop USA en tiempo real.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%A5%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Montserrat', sans-serif; }
         .font-anton { font-family: 'Anton', sans-serif; }
-        
+
         @media print {
             @page { size: letter; margin: 0; }
             html, body {
@@ -20,7 +25,6 @@
             .print-hidden { display: none !important; }
             header { display: none !important; }
             body { background: white !important; }
-            /* Hide browser preview injected elements */
             [id^="elements-"], [id^="console-"],
             iframe, .preview-bar, #elements-panel, #console-panel,
             div[style*="position: fixed"], div[style*="z-index: 999"],
@@ -47,7 +51,7 @@
                 font-weight: 800 !important;
             }
         }
-        
+
         @media screen {
             .report-container {
                 max-width: 8.5in;
@@ -65,8 +69,8 @@
         }
 
         .input-field {
-            background: #FDD81118;
-            border: 1.5px solid #FDD81150;
+            background: #F5A62318;
+            border: 1.5px solid #F5A62350;
             border-radius: 4px;
             padding: 1px 4px;
             font-weight: 800;
@@ -79,9 +83,9 @@
         }
         .input-field:focus {
             outline: none;
-            border-color: #ED2450;
-            background: #ED245010;
-            box-shadow: 0 0 0 2px #ED245015;
+            border-color: #6B2D8B;
+            background: #6B2D8B10;
+            box-shadow: 0 0 0 2px #6B2D8B15;
         }
         .input-pct {
             width: 40px;
@@ -93,17 +97,17 @@
         .calc-positive { color: #059669; }
         .calc-negative { color: #DC2626; }
 
-        .data-row { 
-            display: flex; 
-            align-items: center; 
-            padding: 3px 0; 
+        .data-row {
+            display: flex;
+            align-items: center;
+            padding: 3px 0;
             border-bottom: 1px solid #f3f4f6;
         }
         .data-row:last-child { border-bottom: none; }
         .data-label { flex: 1; font-size: 9px; font-weight: 600; color: #374151; }
         .data-value { font-size: 9px; font-weight: 800; min-width: 90px; text-align: right; }
         .data-pct { font-size: 8px; font-weight: 700; color: #9CA3AF; min-width: 40px; text-align: right; }
-        
+
         .section-title {
             font-size: 10px;
             font-weight: 900;
@@ -115,34 +119,34 @@
         }
 
         .proj-table { width: 100%; border-collapse: collapse; font-size: 9px; }
-        .proj-table th { 
-            background: #010101; 
-            color: white; 
-            padding: 5px 6px; 
-            text-align: right; 
-            font-weight: 800; 
+        .proj-table th {
+            background: #010101;
+            color: white;
+            padding: 5px 6px;
+            text-align: right;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             font-size: 8px;
         }
         .proj-table th:first-child { text-align: left; border-radius: 6px 0 0 0; }
         .proj-table th:last-child { border-radius: 0 6px 0 0; }
-        .proj-table td { 
-            padding: 4px 6px; 
-            text-align: right; 
+        .proj-table td {
+            padding: 4px 6px;
+            text-align: right;
             font-weight: 700;
             border-bottom: 1px solid #f3f4f6;
         }
         .proj-table td:first-child { text-align: left; font-weight: 600; color: #374151; }
-        .proj-table tr:last-child td { 
-            border-bottom: none; 
-            font-weight: 900; 
+        .proj-table tr:last-child td {
+            border-bottom: none;
+            font-weight: 900;
             background: #01010108;
         }
         .proj-table .total-row td {
-            background: #ED245010;
+            background: #6B2D8B10;
             font-weight: 900;
-            border-top: 2px solid #ED2450;
+            border-top: 2px solid #6B2D8B;
             color: #010101;
         }
 
@@ -174,8 +178,26 @@
         .upsell-card {
             border-radius: 10px;
             padding: 10px 12px;
-            border: 1.5px solid #ED245030;
-            background: #ED245005;
+            border: 1.5px solid #6B2D8B30;
+            background: #6B2D8B05;
+        }
+
+        .scenario-btn {
+            font-size: 8px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 3px 9px;
+            border-radius: 9999px;
+            background: #E5E7EB;
+            color: #374151;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .scenario-btn.active {
+            background: #6B2D8B;
+            color: white;
         }
     </style>
 </head>
@@ -184,20 +206,25 @@
     <!-- Control Bar -->
     <header class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50 print-hidden shadow-sm">
         <div style="max-width: 8.5in" class="mx-auto px-8 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <a href="index.html" class="flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-all hover:-translate-x-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    <span class="text-sm font-semibold">Documentos</span>
-                </a>
-                <div class="h-4 w-px bg-gray-200"></div>
-                <span class="text-sm font-bold tracking-tight">Calculadora de Costos</span>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background: #6B2D8B">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152-.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clip-rule="evenodd"/></svg>
+                </div>
+                <div>
+                    <div class="text-sm font-bold tracking-tight">Calculadora TikTok Shop USA</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400">ESH Creative Lab</div>
+                </div>
             </div>
             <div class="flex items-center gap-3">
                 <button onclick="resetDefaults()" class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     Reset
                 </button>
-                <button onclick="window.print()" class="flex items-center gap-2 px-5 py-2 bg-[#ED2450] text-white text-sm font-bold rounded-xl hover:bg-[#E4003B] transition-all shadow-lg shadow-red-500/20 active:scale-95">
+                <button id="copyLinkBtn" onclick="copyLink()" class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-bold rounded-xl hover:bg-gray-200 transition-all active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    <span id="copyLinkLabel">Copy link</span>
+                </button>
+                <button onclick="window.print()" class="flex items-center gap-2 px-5 py-2 text-white text-sm font-bold rounded-xl transition-all shadow-lg active:scale-95" style="background: #6B2D8B; box-shadow: 0 10px 15px -3px rgba(107, 45, 139, 0.2);">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                     Descargar PDF
                 </button>
@@ -209,35 +236,35 @@
 
         <!-- PAGE 1: Cover + Tarifas + Unit Economics -->
         <div class="report-page bg-white relative overflow-hidden" id="page1">
-            <div class="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mt-40" style="background: #ED2450"></div>
-            <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl opacity-10 -ml-32 -mb-32" style="background: #00C1B2"></div>
+            <div class="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mt-40" style="background: #6B2D8B"></div>
+            <div class="absolute bottom-0 left-0 w-64 h-64 rounded-full blur-3xl opacity-10 -ml-32 -mb-32" style="background: #F5A623"></div>
 
             <div class="flex flex-col h-full relative z-10">
                 <!-- Header -->
-                <div class="flex items-center justify-between border-b-2 pb-2 mb-3" style="border-color: #ED2450">
+                <div class="flex items-center justify-between border-b-2 pb-2 mb-3" style="border-color: #6B2D8B">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: #ED2450">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: #6B2D8B">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152-.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clip-rule="evenodd"/></svg>
                         </div>
                         <div>
-                            <div class="font-anton text-xl tracking-wide" style="color: #010101">INDIE PRO MARKETING</div>
-                            <div class="text-[10px] font-bold uppercase tracking-widest" style="color: #ED2450">TikTok Shop Experts</div>
+                            <div class="font-anton text-xl tracking-wide" style="color: #010101">ESH CREATIVE LAB</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest" style="color: #6B2D8B">TikTok Shop USA Experts</div>
                         </div>
                     </div>
                     <div class="text-right">
                         <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Documento</div>
-                        <div class="text-sm font-extrabold" style="color: #ED2450">Proyección de Costos</div>
+                        <div class="text-sm font-extrabold" style="color: #6B2D8B">Proyección de Costos</div>
                     </div>
                 </div>
 
                 <!-- Title + Client -->
                 <div class="mb-3">
                     <div class="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Ejercicio Personalizado</div>
-                    <h1 class="font-anton text-2xl tracking-wide mb-1" style="color: #010101">PROYECCIÓN DE COSTOS TIKTOK SHOP</h1>
-                    <div class="h-1 w-16 rounded-full mb-1" style="background: linear-gradient(135deg, #ED2450 0%, #FDD811 50%, #00C1B2 100%)"></div>
+                    <h1 class="font-anton text-2xl tracking-wide mb-1" style="color: #010101">PROYECCIÓN DE COSTOS TIKTOK SHOP USA</h1>
+                    <div class="h-1 w-16 rounded-full mb-1" style="background: linear-gradient(135deg, #6B2D8B 0%, #F5A623 100%)"></div>
                     <div class="flex gap-6 text-[10px] font-bold text-gray-500">
-                        <span>Cliente: <input type="text" id="clientName" value="Mamita Linda" class="input-field text-left" style="width: 140px; font-size: 10px;"></span>
-                        <span>Producto: <input type="text" id="productName" value="Kit Postparto" class="input-field text-left" style="width: 140px; font-size: 10px;"></span>
+                        <span>Cliente: <input type="text" id="clientName" value="Your Brand" class="input-field text-left" style="width: 140px; font-size: 10px;"></span>
+                        <span>Producto: <input type="text" id="productName" value="Your Product" class="input-field text-left" style="width: 140px; font-size: 10px;"></span>
                         <span>Fecha: <span class="font-extrabold text-gray-800" id="dateLabel"></span></span>
                     </div>
                 </div>
@@ -246,7 +273,7 @@
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <!-- Left: Tarifas -->
                     <div>
-                        <div class="section-title" style="background: #ED245010; color: #ED2450">Tarifas de Plataforma y Programa</div>
+                        <div class="section-title" style="background: #6B2D8B10; color: #6B2D8B">Tarifas de Plataforma y Programa</div>
                         <div class="rounded-xl border border-gray-100 p-3">
                             <div class="data-row">
                                 <div class="data-label">Comisión de TikTok</div>
@@ -254,9 +281,9 @@
                                 <div class="data-pct"><input type="number" id="tiktokFee" value="6" step="0.5" class="input-field input-pct">%</div>
                             </div>
                             <div class="data-row">
-                                <div class="data-label">Comisión de Indie Pro Marketing</div>
-                                <div class="data-value">(Fija)</div>
-                                <div class="data-pct"><input type="number" id="indieProFee" value="10" step="1" class="input-field input-pct">%</div>
+                                <div class="data-label">Comisión de ESH Creative Lab</div>
+                                <div class="data-value">(Escalonada)</div>
+                                <div class="data-pct"><input type="number" id="eshFee" value="10" step="1" class="input-field input-pct">%</div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">Comisión de Afiliados</div>
@@ -266,11 +293,11 @@
                         </div>
 
                         <!-- Ingresos y Deducciones -->
-                        <div class="section-title mt-2" style="background: #00C1B210; color: #00C1B2">Ingresos y Deducciones de TikTok (Mensual)</div>
+                        <div class="section-title mt-2" style="background: #8B5FAD10; color: #8B5FAD">Ingresos y Deducciones de TikTok (Mensual — USD)</div>
                         <div class="rounded-xl border border-gray-100 p-3">
                             <div class="data-row">
                                 <div class="data-label">Órdenes Mensuales Proyectadas</div>
-                                <div class="data-value"><input type="number" id="ordenesMes" value="120" step="10" class="input-field" style="width: 65px;"></div>
+                                <div class="data-value"><input type="number" id="ordenesMes" value="100" step="10" class="input-field" style="width: 65px;"></div>
                                 <div class="data-pct"></div>
                             </div>
                             <div class="data-row" style="background: #f9fafb; border-radius: 4px; padding: 4px 6px;">
@@ -281,7 +308,7 @@
                             <div class="data-row">
                                 <div class="data-label">(-) Devoluciones / Reembolsos</div>
                                 <div class="data-value calc-negative" id="devolucionesVal"></div>
-                                <div class="data-pct"><input type="number" id="devolucionesPct" value="1" step="0.5" class="input-field input-pct">%</div>
+                                <div class="data-pct"><input type="number" id="devolucionesPct" value="2" step="0.5" class="input-field input-pct">%</div>
                             </div>
                             <div class="data-row">
                                 <div class="data-label">(-) Tarifas de TikTok (fees de la plataforma)</div>
@@ -289,23 +316,23 @@
                                 <div class="data-pct" id="tiktokFeesPct"></div>
                             </div>
                             <div class="data-row" style="background: #f9fafb; border-radius: 4px; padding: 4px 6px;">
-                                <div class="data-label font-extrabold" style="color: #010101">(=) Base de Comisión de Indie Pro</div>
+                                <div class="data-label font-extrabold" style="color: #010101">(=) Base de Comisión de ESH</div>
                                 <div class="data-value calc-result" id="baseComisionVal"></div>
                                 <div class="data-pct"></div>
                             </div>
                             <div class="data-row">
-                                <div class="data-label">Tarifa de Indie Pro (%)</div>
+                                <div class="data-label">Tarifa de ESH (%)</div>
                                 <div class="data-value">-</div>
-                                <div class="data-pct" id="indieProFeePctDisplay"></div>
+                                <div class="data-pct" id="eshFeePctDisplay"></div>
                             </div>
-                            <div class="data-row" style="background: #ED245008; border-radius: 4px; padding: 4px 6px;">
-                                <div class="data-label font-extrabold" style="color: #ED2450">(=) Fee de Indie Pro (Mensual)</div>
-                                <div class="data-value" style="color: #ED2450; font-weight: 900;" id="feeIndieProMensualVal"></div>
-                                <div class="data-pct" id="feeIndieProMensualPct"></div>
+                            <div class="data-row" style="background: #6B2D8B08; border-radius: 4px; padding: 4px 6px;">
+                                <div class="data-label font-extrabold" style="color: #6B2D8B">(=) Fee de ESH (Mensual)</div>
+                                <div class="data-value" style="color: #6B2D8B; font-weight: 900;" id="feeEshMensualVal"></div>
+                                <div class="data-pct" id="feeEshMensualPct"></div>
                             </div>
                             <div class="data-row">
-                                <div class="data-label">(=) Fee de Indie Pro Asignado por Orden</div>
-                                <div class="data-value calc-result" id="feeIndiePorOrdenVal"></div>
+                                <div class="data-label">(=) Fee de ESH Asignado por Orden</div>
+                                <div class="data-value calc-result" id="feeEshPorOrdenVal"></div>
                                 <div class="data-pct"></div>
                             </div>
                         </div>
@@ -316,14 +343,15 @@
                         <div class="section-title" style="background: #01010108; color: #010101">Cómo leer esta calculadora</div>
                         <div class="rounded-xl border border-gray-100 p-3 text-[9px] text-gray-600 leading-relaxed">
                             <p class="font-bold text-gray-800 mb-2">Esta calculadora está dividida en dos secciones:</p>
-                            
+
                             <p class="font-bold text-gray-800 mb-1">1) Ingresos y Deducciones de TikTok (Mensual)</p>
-                            <p class="mb-2">Estima el desempeño mensual en TikTok Shop y cómo se distribuyen los fees.</p>
+                            <p class="mb-2">Estima el desempeño mensual en TikTok Shop USA y cómo se distribuyen los fees.</p>
                             <p class="mb-1">- <strong>Órdenes Mensuales:</strong> número de pedidos esperados al mes.</p>
                             <p class="mb-1">- <strong>GMV:</strong> se calcula automáticamente (Precio de Venta × Órdenes).</p>
-                            <p class="mb-1">- <strong>Tarifas de TikTok:</strong> calculadas al 6% del GMV neto.</p>
-                            <p class="mb-2">- <strong>Fee de Indie Pro:</strong> porcentaje sobre la base de comisión.</p>
-                            
+                            <p class="mb-1">- <strong>Tarifas de TikTok:</strong> calculadas al 6% del GMV neto (la tasa real varía según la categoría del producto; el campo es editable).</p>
+                            <p class="mb-1">- <strong>Fee de ESH:</strong> porcentaje sobre la base de comisión (escalonado: 10/8/6/4% según GMV mensual).</p>
+                            <p class="mb-2">- <strong>Sales tax:</strong> en USA, TikTok Shop actúa como <em>marketplace facilitator</em> y cobra/remite el sales tax al comprador en la mayoría de los estados. No reduce tu margen, por eso no aparece como costo. Confirma tu situación de nexus con tu CPA.</p>
+
                             <p class="font-bold text-gray-800 mb-1">2) Economía por Unidad (Por Orden)</p>
                             <p class="mb-2">Desglose de costos por cada orden vendida en TikTok Shop.</p>
                             <p class="mb-1">- Precio de venta, costo del producto, empaque, inserto, pick & pack y comisiones.</p>
@@ -332,7 +360,7 @@
                             <!-- Legend -->
                             <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-gray-100">
                                 <div class="flex items-center gap-2">
-                                    <div class="legend-dot" style="background: #FDD811"></div>
+                                    <div class="legend-dot" style="background: #F5A623"></div>
                                     <span class="text-[8px] font-bold text-gray-500">Campos editables</span>
                                 </div>
                                 <div class="flex items-center gap-2">
@@ -340,49 +368,56 @@
                                     <span class="text-[8px] font-bold text-gray-500">Valores fijos / predefinidos</span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="legend-dot" style="background: #00C1B2"></div>
+                                    <div class="legend-dot" style="background: #8B5FAD"></div>
                                     <span class="text-[8px] font-bold text-gray-500">Resultado calculado automáticamente</span>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-2 pt-2 border-t border-gray-100">
                                 <p class="font-bold text-gray-800 mb-0.5">Campos Editables</p>
-                                <p class="mb-0.5">- Los campos con fondo amarillo son editables.</p>
+                                <p class="mb-0.5">- Los campos con fondo naranja son editables.</p>
                                 <p>- Al modificar cualquier valor, toda la proyección se recalcula.</p>
+                            </div>
+
+                            <div class="mt-2 pt-2 border-t border-gray-100 text-[8px] text-gray-500">
+                                <strong class="text-gray-700">Moneda:</strong> Todos los valores en USD (dólares estadounidenses).
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-gray-100">
+                                <p class="text-[7.5px] text-gray-400 leading-relaxed">Cifras estimadas con fines ilustrativos, no constituyen una cotización en firme ni asesoría fiscal, contable o legal. El sales tax (nexus, marketplace facilitator) y la estructura fiscal deben validarse con tu CPA. Las tarifas de TikTok Shop están sujetas a cambios y a la categoría del producto.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Unit Economics -->
-                <div class="section-title" style="background: #FDD81115; color: #010101">Economía por Unidad — <span id="productNameDisplay">Kit Postparto</span></div>
+                <div class="section-title" style="background: #F5A62315; color: #010101">Economía por Unidad — <span id="productNameDisplay">Your Product</span></div>
                 <div class="grid grid-cols-2 gap-4 flex-1">
                     <!-- Left: Product costs -->
                     <div class="rounded-xl border border-gray-100 p-3">
-                        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Producto</div>
+                        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Producto (USD)</div>
                         <div class="data-row">
                             <div class="data-label">Precio de Venta</div>
-                            <div class="data-value">$<input type="number" id="precioVenta" value="1670" step="50" class="input-field"></div>
+                            <div class="data-value">$<input type="number" id="precioVenta" value="30" step="5" class="input-field"></div>
                             <div class="data-pct"></div>
                         </div>
                         <div class="data-row">
                             <div class="data-label">(-) Costo del Producto (COGS)</div>
-                            <div class="data-value">$<input type="number" id="cogs" value="250" step="10" class="input-field" style="width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="cogs" value="7" step="0.5" class="input-field" style="width: 65px;"></div>
                             <div class="data-pct" id="cogsPct"></div>
                         </div>
                         <div class="data-row">
                             <div class="data-label">(-) Empaque (Caja / Sobre)</div>
-                            <div class="data-value">$<input type="number" id="empaque" value="50" step="5" class="input-field" style="width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="empaque" value="1.5" step="0.25" class="input-field" style="width: 65px;"></div>
                             <div class="data-pct" id="empaquePct"></div>
                         </div>
                         <div class="data-row">
                             <div class="data-label">(-) Inserto (Tarjeta de Agradecimiento)</div>
-                            <div class="data-value">$<input type="number" id="inserto" value="15" step="1" class="input-field" style="width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="inserto" value="0.25" step="0.05" class="input-field" style="width: 65px;"></div>
                             <div class="data-pct" id="insertoPct"></div>
                         </div>
                         <div class="data-row">
                             <div class="data-label">(-) Pick & Pack (Fulfillment)</div>
-                            <div class="data-value">$<input type="number" id="pickpack" value="50" step="5" class="input-field" style="width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="pickpack" value="4" step="0.5" class="input-field" style="width: 65px;"></div>
                             <div class="data-pct" id="pickpackPct"></div>
                         </div>
                         <div class="data-row">
@@ -411,57 +446,65 @@
                     <div class="rounded-xl border border-gray-100 p-3">
                         <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Resumen de Utilidad Neta</div>
                         <div class="data-row">
-                            <div class="data-label">Utilidad de Contribución (antes del fee de Indie Pro)</div>
+                            <div class="data-label">Utilidad de Contribución (antes del fee de ESH)</div>
                             <div class="data-value calc-result" id="ucBeforeFeeVal"></div>
                             <div class="data-pct" id="ucBeforeFeePct"></div>
                         </div>
-                        <div class="data-row" style="background: #ED245008; border-radius: 4px; padding: 4px 6px;">
-                            <div class="data-label">(-) Fee de Indie Pro (Por orden)</div>
-                            <div class="data-value" style="color: #ED2450; font-weight: 800;" id="feeIndieOrdenSummaryVal"></div>
+                        <div class="data-row" style="background: #6B2D8B08; border-radius: 4px; padding: 4px 6px;">
+                            <div class="data-label">(-) Fee de ESH (Por orden)</div>
+                            <div class="data-value" style="color: #6B2D8B; font-weight: 800;" id="feeEshOrdenSummaryVal"></div>
                             <div class="data-pct"></div>
                         </div>
                         <div class="data-row">
-                            <div class="data-label">(-) Costo Total (incluyendo asignación de Indie Pro)</div>
-                            <div class="data-value calc-negative" id="costoTotalConIndieVal"></div>
-                            <div class="data-pct" id="costoTotalConIndiePct"></div>
+                            <div class="data-label">(-) Costo Total (incluyendo asignación de ESH)</div>
+                            <div class="data-value calc-negative" id="costoTotalConEshVal"></div>
+                            <div class="data-pct" id="costoTotalConEshPct"></div>
                         </div>
                         <div class="data-row" style="background: #05966910; border-radius: 4px; padding: 6px; margin-top: 4px;">
-                            <div class="data-label font-extrabold" style="color: #059669; font-size: 11px;">(=) Utilidad Neta (después del fee de Indie Pro)</div>
+                            <div class="data-label font-extrabold" style="color: #059669; font-size: 11px;">(=) Utilidad Neta (después del fee de ESH)</div>
                             <div class="data-value" style="color: #059669; font-weight: 900; font-size: 12px;" id="utilidadNetaVal"></div>
                             <div class="data-pct" style="color: #059669; font-weight: 800;" id="utilidadNetaPct"></div>
                         </div>
 
                         <!-- Key Insight Box -->
-                        <div class="mt-3 rounded-xl p-3 border-2" style="border-color: #00C1B230; background: #00C1B208">
-                            <div class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: #00C1B2">Insight Clave</div>
+                        <div class="mt-3 rounded-xl p-3 border-2" style="border-color: #8B5FAD30; background: #8B5FAD08">
+                            <div class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: #8B5FAD">Insight Clave</div>
                             <div class="text-[10px] font-bold text-gray-700 leading-relaxed">
-                                Por cada <strong style="color: #010101" id="insightPrecio">$1,670</strong> de venta, la utilidad neta es de <strong style="color: #059669" id="insightUtilidad">$X</strong> (<strong id="insightPct">X%</strong>) después de todos los costos incluyendo el fee de gestión.
+                                Por cada <strong style="color: #010101" id="insightPrecio">$30</strong> de venta, la utilidad neta es de <strong style="color: #059669" id="insightUtilidad">$X</strong> (<strong id="insightPct">X%</strong>) después de todos los costos incluyendo el fee de gestión.
                             </div>
                             <div class="text-[10px] font-bold text-gray-700 leading-relaxed mt-2">
-                                Con <strong id="insightOrdenes">120</strong> órdenes/mes = <strong style="color: #059669" id="insightMensual">$X</strong> de utilidad mensual.
+                                Con <strong id="insightOrdenes">100</strong> órdenes/mes = <strong style="color: #059669" id="insightMensual">$X</strong> de utilidad mensual.
                             </div>
                         </div>
 
                         <!-- Fee Structure -->
                         <div class="mt-3 rounded-xl p-3" style="background: #01010105; border: 1px solid #01010110">
-                            <div class="text-[9px] font-black uppercase tracking-widest mb-2" style="color: #ED2450">Comisión Indie Pro</div>
+                            <div class="text-[9px] font-black uppercase tracking-widest mb-2" style="color: #6B2D8B">Comisión Escalonada de ESH (sobre ventas en TikTok Shop)</div>
                             <div class="data-row" style="border: none; padding: 2px 0;">
-                                <div class="data-label" style="font-size: 9px;">Tasa flat sobre GMV mensual</div>
-                                <div class="data-value" style="font-size: 11px; color: #ED2450; font-weight: 900;">10%</div>
+                                <div class="data-label" style="font-size: 9px;">$0 - $50,000 USD GMV/mes</div>
+                                <div class="data-value" style="font-size: 9px; color: #6B2D8B;">10%</div>
                             </div>
                             <div class="data-row" style="border: none; padding: 2px 0;">
-                                <div class="data-label" style="font-size: 8.5px; color: #777;">Sin tramos. Una sola tasa sobre el GMV neto.</div>
+                                <div class="data-label" style="font-size: 9px;">$50,000 - $250,000 USD GMV/mes</div>
+                                <div class="data-value" style="font-size: 9px; color: #6B2D8B;">8%</div>
                             </div>
                             <div class="data-row" style="border: none; padding: 2px 0;">
-                                <div class="data-label" style="font-size: 8.5px; color: #777;">Base: GMV menos devoluciones y cargos de plataforma.</div>
+                                <div class="data-label" style="font-size: 9px;">$250,000 - $1,000,000 USD GMV/mes</div>
+                                <div class="data-value" style="font-size: 9px; color: #6B2D8B;">6%</div>
+                            </div>
+                            <div class="data-row" style="border: none; padding: 2px 0;">
+                                <div class="data-label" style="font-size: 9px;">+$1,000,000 USD GMV/mes</div>
+                                <div class="data-value" style="font-size: 9px; color: #6B2D8B;">4%</div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="mt-auto pt-3 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
-                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div>&copy; 2026 ESH Creative Lab</div>
+                    <div class="normal-case tracking-normal font-medium text-gray-300 text-center px-2" style="font-size: 7px;">Estimates only, not tax or legal advice. Confirm with your CPA.</div>
                     <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 1 de 3</div>
                 </div>
             </div>
@@ -469,68 +512,102 @@
 
         <!-- PAGE 2: Monthly Projection + Inversión Total -->
         <div class="report-page bg-white relative overflow-hidden" id="page2">
-            <div class="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 -mr-32 -mt-32" style="background: #FDD811"></div>
+            <div class="absolute top-0 right-0 w-64 h-64 rounded-full blur-3xl opacity-10 -mr-32 -mt-32" style="background: #F5A623"></div>
 
             <div class="flex flex-col h-full relative z-10">
                 <!-- Mini Header -->
                 <div class="mb-3 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #ED2450">
-                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #6B2D8B">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152-.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clip-rule="evenodd"/></svg>
                         </div>
-                        <span>Indie Pro Marketing</span> | <span>Proyección — <span id="clientNameP2"></span></span>
+                        <span>ESH Creative Lab</span> | <span>Proyección — <span id="clientNameP2"></span></span>
                     </div>
                     <div></div>
                 </div>
 
                 <!-- Inversión Estimada -->
-                <div class="section-title" style="background: #ED245010; color: #ED2450">Inversión Estimada para Arrancar</div>
+                <div class="section-title" style="background: #6B2D8B10; color: #6B2D8B">Inversión Estimada para Arrancar (USD)</div>
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <!-- Left: Fixed costs -->
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="rounded-xl p-2.5 text-center border" style="background: #ED245008; border-color: #ED245020">
+                        <div class="rounded-xl p-2.5 text-center border" style="background: #6B2D8B08; border-color: #6B2D8B20">
                             <div class="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-1">Fee Gestión</div>
-                            <div class="text-base font-black" style="color: #ED2450">$35,000</div>
-                            <div class="text-[7px] font-bold text-gray-400">MXN / mes</div>
+                            <div class="text-base font-black" style="color: #6B2D8B">$<input type="number" id="feeGestionInput" value="3500" step="100" class="input-field" style="font-size: 14px; width: 80px; text-align: center; color: #6B2D8B;"></div>
+                            <div class="text-[7px] font-bold text-gray-400">USD / mes</div>
                         </div>
-                        <div class="rounded-xl p-2.5 text-center border" style="background: #FDD81108; border-color: #FDD81140">
+                        <div class="rounded-xl p-2.5 text-center border" style="background: #F5A62308; border-color: #F5A62340">
                             <div class="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-1">Ads Mínimo</div>
-                            <div class="text-base font-black" style="color: #010101">$<input type="number" id="adsBudget" value="30000" step="5000" class="input-field" style="font-size: 14px; width: 70px; text-align: center;"></div>
-                            <div class="text-[7px] font-bold text-gray-400">MXN / mes</div>
+                            <div class="text-base font-black" style="color: #010101">$<input type="number" id="adsBudget" value="2000" step="100" class="input-field" style="font-size: 14px; width: 70px; text-align: center;"></div>
+                            <div class="text-[7px] font-bold text-gray-400">USD / mes</div>
                         </div>
                         <div class="rounded-xl p-2.5 text-center border-2 col-span-2" style="background: #01010108; border-color: #01010120">
                             <div class="text-[7px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Inversión Mensual (sin muestras)</div>
-                            <div class="text-lg font-black" style="color: #010101" id="boxTotalMensual">$65,000</div>
+                            <div class="text-lg font-black" style="color: #010101" id="boxTotalMensual">$4,500</div>
                             <div class="text-[7px] font-bold text-gray-400">Fee + Ads + Comisión (varía con ventas)</div>
                         </div>
                     </div>
                     <!-- Right: Sample cost calculator -->
                     <div class="rounded-xl border border-gray-100 p-2.5">
-                        <div class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Costo de Muestras para Creadores (100 unids)</div>
+                        <div class="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Costo de Muestras para Creadores</div>
+                        <div class="data-row">
+                            <div class="data-label">Número de muestras / mes</div>
+                            <div class="data-value"><input type="number" id="numMuestras" value="200" min="0" step="10" class="input-field" style="font-size: 9px; width: 65px;"></div>
+                        </div>
                         <div class="data-row">
                             <div class="data-label">Costo del producto por muestra</div>
-                            <div class="data-value">$<input type="number" id="costoMuestra" value="250" step="10" class="input-field" style="font-size: 9px; width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="costoMuestra" value="35" step="1" class="input-field" style="font-size: 9px; width: 65px;"></div>
                         </div>
                         <div class="data-row">
                             <div class="data-label">Costo de envío por muestra</div>
-                            <div class="data-value">$<input type="number" id="envioMuestra" value="115" step="5" class="input-field" style="font-size: 9px; width: 65px;"></div>
+                            <div class="data-value">$<input type="number" id="envioMuestra" value="15" step="1" class="input-field" style="font-size: 9px; width: 65px;"></div>
+                        </div>
+                        <div class="data-row">
+                            <div class="data-label">Meses con envío de muestras (desde Mes 2)</div>
+                            <div class="data-value"><input type="number" id="muestrasEnvios" value="2" min="0" max="5" step="1" class="input-field input-pct" style="font-size: 9px;"></div>
                         </div>
                         <div class="data-row" style="background: #f9fafb; border-radius: 4px; padding: 3px 6px;">
                             <div class="data-label font-extrabold" style="color: #010101">= Costo por muestra</div>
                             <div class="data-value calc-result" id="costoPorMuestra"></div>
                         </div>
-                        <div class="data-row" style="background: #00C1B210; border-radius: 4px; padding: 3px 6px; margin-top: 2px;">
-                            <div class="data-label font-extrabold" style="color: #00C1B2">× 100 muestras = Total</div>
-                            <div class="data-value" style="color: #00C1B2; font-weight: 900;" id="totalMuestras"></div>
+                        <div class="data-row" style="background: #8B5FAD10; border-radius: 4px; padding: 3px 6px; margin-top: 2px;">
+                            <div class="data-label font-extrabold" style="color: #8B5FAD">× <span id="numMuestrasLabel">200</span> muestras = Total</div>
+                            <div class="data-value" style="color: #8B5FAD; font-weight: 900;" id="totalMuestras"></div>
                         </div>
                         <div class="mt-1.5 text-[7px] text-gray-400 leading-relaxed">
-                            <strong class="text-gray-500">Ref. envío por peso:</strong> 0-0.5kg: $75-85 | 0.5-1kg: $95-115 | 1-2kg: $115-135 | 2-5kg: $135-175
+                            <strong class="text-gray-500">Ref. envío USA (USPS/UPS):</strong> 0-1 lb: $6-9 | 1-3 lb: $9-13 | 3-5 lb: $13-18 | 5-10 lb: $18-30
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Break-even -->
+                <div class="rounded-xl p-3 border-2 mb-3 flex items-center justify-between" style="border-color: #6B2D8B; background: #6B2D8B08" id="breakEvenBox">
+                    <div>
+                        <div class="text-[9px] font-black uppercase tracking-widest" style="color: #6B2D8B">Break-Even Point</div>
+                        <div class="text-[8px] text-gray-500 font-medium leading-tight mt-0.5" id="breakEvenNote">Costos fijos (Fee + Ads) ÷ utilidad neta por orden. No incluye muestras (gasto inicial).</div>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <div class="font-anton tracking-wide" style="color: #6B2D8B; font-size: 28px; line-height: 1;" id="breakEvenOrdenes">—</div>
+                            <div class="text-[7px] font-bold text-gray-500 uppercase tracking-widest">órdenes / mes</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="font-anton tracking-wide" style="color: #010101; font-size: 22px; line-height: 1;" id="breakEvenGMV">—</div>
+                            <div class="text-[7px] font-bold text-gray-400 uppercase tracking-widest">GMV de equilibrio</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Monthly Projection Table -->
-                <div class="section-title" style="background: #00C1B210; color: #00C1B2">Proyección Mensual (6 Meses)</div>
+                <div class="flex items-center justify-between mb-1">
+                    <div class="section-title" style="background: #8B5FAD10; color: #8B5FAD; margin-bottom: 0;">Proyección Mensual (6 Meses — USD)</div>
+                    <div class="flex items-center gap-1">
+                        <span class="text-[7px] font-black text-gray-400 uppercase tracking-widest mr-1">Escenario</span>
+                        <button class="scenario-btn" data-scenario="conservador" onclick="setScenario('conservador')">Conservador</button>
+                        <button class="scenario-btn" data-scenario="base" onclick="setScenario('base')">Base</button>
+                        <button class="scenario-btn" data-scenario="agresivo" onclick="setScenario('agresivo')">Agresivo</button>
+                    </div>
+                </div>
                 <div class="rounded-xl border border-gray-100 overflow-hidden mb-3">
                     <table class="proj-table" id="projTable">
                         <thead>
@@ -554,19 +631,19 @@
                 <div class="grid grid-cols-4 gap-2 mb-2">
                     <div class="rounded-xl border border-gray-100 p-2">
                         <div class="flex items-center gap-1.5 mb-1">
-                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #ED245010">
-                                <svg class="w-3 h-3" style="color: #ED2450" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #6B2D8B10">
+                                <svg class="w-3 h-3" style="color: #6B2D8B" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
                             </div>
                             <div class="text-[8px] font-extrabold text-gray-900 uppercase">Tienda y Operación</div>
                         </div>
                         <div class="text-[7px] text-gray-500 font-medium leading-relaxed">
-                            Apertura TikTok Shop. Catálogo completo. Bundles y combos. Cupones y promociones.
+                            Apertura TikTok Shop USA. Catálogo completo. Bundles y combos. Cupones y promociones.
                         </div>
                     </div>
                     <div class="rounded-xl border border-gray-100 p-2">
                         <div class="flex items-center gap-1.5 mb-1">
-                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #FDD81115">
-                                <svg class="w-3 h-3" style="color: #010101" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>
+                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #F5A62315">
+                                <svg class="w-3 h-3" style="color: #F5A623" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/></svg>
                             </div>
                             <div class="text-[8px] font-extrabold text-gray-900 uppercase">TikTok Ads</div>
                         </div>
@@ -576,8 +653,8 @@
                     </div>
                     <div class="rounded-xl border border-gray-100 p-2">
                         <div class="flex items-center gap-1.5 mb-1">
-                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #00C1B210">
-                                <svg class="w-3 h-3" style="color: #00C1B2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0" style="background: #8B5FAD10">
+                                <svg class="w-3 h-3" style="color: #8B5FAD" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                             </div>
                             <div class="text-[8px] font-extrabold text-gray-900 uppercase">Afiliados y Creadores</div>
                         </div>
@@ -599,24 +676,25 @@
                 </div>
 
                 <!-- Client Responsibilities -->
-                <div class="rounded-xl p-2 border-2 flex-1" style="border-color: #FDD81140; background: #FDD81108">
+                <div class="rounded-xl p-2 border-2 flex-1" style="border-color: #F5A62340; background: #F5A62308">
                     <div class="text-[8px] font-black uppercase tracking-widest mb-1" style="color: #010101">Responsabilidades del Cliente</div>
                     <div class="grid grid-cols-3 gap-2 text-[7px] text-gray-600 font-medium leading-relaxed">
                         <div>
-                            <strong class="text-gray-800">Fulfillment:</strong> Envío, almacén y preparación de pedidos es del cliente. Indie Pro asesora pero no opera el fulfillment.
+                            <strong class="text-gray-800">Fulfillment:</strong> Envío, almacén y preparación de pedidos es del cliente (USA warehouse, ShipBob, Shipmonk, etc.). ESH asesora pero no opera el fulfillment.
                         </div>
                         <div>
-                            <strong class="text-gray-800">Servicio al Cliente:</strong> Se requiere una persona dedicada al chat de TikTok Shop para atender compradores.
+                            <strong class="text-gray-800">Servicio al Cliente:</strong> Se requiere una persona dedicada al chat de TikTok Shop para atender compradores en inglés.
                         </div>
                         <div>
-                            <strong class="text-gray-800">Inventario:</strong> Mantener inventario estable. Enviar mín. 100 muestras a creadores (costo a cargo del cliente).
+                            <strong class="text-gray-800">Inventario:</strong> Mantener inventario estable en USA. Enviar mín. 200 muestras/mes a creadores (costo a cargo del cliente).
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="mt-auto pt-3 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
-                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div>&copy; 2026 ESH Creative Lab</div>
+                    <div class="normal-case tracking-normal font-medium text-gray-300 text-center px-2" style="font-size: 7px;">Estimates only, not tax or legal advice. Confirm with your CPA.</div>
                     <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 2 de 3</div>
                 </div>
             </div>
@@ -624,38 +702,38 @@
 
         <!-- PAGE 3: Roadmap + Upsells -->
         <div class="report-page bg-white relative overflow-hidden" id="page3">
-            <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mb-40" style="background: #00C1B2"></div>
+            <div class="absolute bottom-0 right-0 w-80 h-80 rounded-full blur-3xl opacity-10 -mr-40 -mb-40" style="background: #8B5FAD"></div>
 
             <div class="flex flex-col h-full relative z-10">
                 <!-- Mini Header -->
                 <div class="mb-3 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #ED2450">
-                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <div class="w-5 h-5 rounded flex items-center justify-center" style="background: #6B2D8B">
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="#F5A623" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152-.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" clip-rule="evenodd"/></svg>
                         </div>
-                        <span>Indie Pro Marketing</span> | <span>Roadmap y Upsells — <span id="clientNameP3"></span></span>
+                        <span>ESH Creative Lab</span> | <span>Roadmap y Upsells — <span id="clientNameP3"></span></span>
                     </div>
                     <div></div>
                 </div>
 
                 <!-- Roadmap -->
-                <div class="section-title" style="background: #00C1B210; color: #00C1B2">Roadmap de Implementación</div>
-                
+                <div class="section-title" style="background: #8B5FAD10; color: #8B5FAD">Roadmap de Implementación</div>
+
                 <!-- Timeline bar -->
                 <div class="flex gap-1 mb-3">
-                    <div class="flex-[2] rounded-l-full rounded-r h-6 flex items-center justify-center" style="background: #ED2450">
+                    <div class="flex-[2] rounded-l-full rounded-r h-6 flex items-center justify-center" style="background: #6B2D8B">
                         <span class="text-[7px] font-black text-white uppercase tracking-wider">Setup</span>
                     </div>
-                    <div class="flex-[2] rounded h-6 flex items-center justify-center" style="background: #FDD811">
+                    <div class="flex-[2] rounded h-6 flex items-center justify-center" style="background: #F5A623">
                         <span class="text-[7px] font-black uppercase tracking-wider" style="color: #010101">Optimización</span>
                     </div>
-                    <div class="flex-[2] rounded h-6 flex items-center justify-center" style="background: #00C1B2">
+                    <div class="flex-[2] rounded h-6 flex items-center justify-center" style="background: #8B5FAD">
                         <span class="text-[7px] font-black text-white uppercase tracking-wider">Afiliados</span>
                     </div>
                     <div class="flex-[2] rounded h-6 flex items-center justify-center" style="background: #010101">
                         <span class="text-[7px] font-black text-white uppercase tracking-wider">Ads</span>
                     </div>
-                    <div class="flex-[3] rounded-l rounded-r-full h-6 flex items-center justify-center" style="background: linear-gradient(135deg, #ED2450, #E4003B)">
+                    <div class="flex-[3] rounded-l rounded-r-full h-6 flex items-center justify-center" style="background: linear-gradient(135deg, #6B2D8B, #4A1F66)">
                         <span class="text-[7px] font-black text-white uppercase tracking-wider">Operación Continua</span>
                     </div>
                 </div>
@@ -669,22 +747,22 @@
 
                 <!-- Phase Cards -->
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="phase-card" style="border-color: #ED245030; background: #ED245005">
+                    <div class="phase-card" style="border-color: #6B2D8B30; background: #6B2D8B05">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="phase-num" style="background: #ED2450">1</div>
+                            <div class="phase-num" style="background: #6B2D8B">1</div>
                             <div>
                                 <div class="text-[10px] font-extrabold text-gray-900">Setup Inicial</div>
-                                <div class="text-[8px] font-bold" style="color: #ED2450">Semanas 1-2</div>
+                                <div class="text-[8px] font-bold" style="color: #6B2D8B">Semanas 1-2</div>
                             </div>
                         </div>
                         <div class="text-[8px] text-gray-600 font-medium leading-relaxed">
-                            Sesión de onboarding y briefing. Config. TikTok Shop Seller Center. Carga de catálogo completo. Config. logística, fulfillment y pagos.
+                            Sesión de onboarding y briefing. Config. TikTok Shop Seller Center USA. Carga de catálogo completo. Config. logística, fulfillment y pagos.
                         </div>
-                        <div class="mt-2 text-[8px] font-bold" style="color: #ED2450">→ Entregable: Tienda activa con catálogo</div>
+                        <div class="mt-2 text-[8px] font-bold" style="color: #6B2D8B">→ Entregable: Tienda activa con catálogo</div>
                     </div>
-                    <div class="phase-card" style="border-color: #FDD81150; background: #FDD81108">
+                    <div class="phase-card" style="border-color: #F5A62350; background: #F5A62308">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="phase-num" style="background: #FDD811; color: #010101">2</div>
+                            <div class="phase-num" style="background: #F5A623; color: #010101">2</div>
                             <div>
                                 <div class="text-[10px] font-extrabold text-gray-900">Optimización</div>
                                 <div class="text-[8px] font-bold" style="color: #010101">Semanas 3-4</div>
@@ -695,18 +773,18 @@
                         </div>
                         <div class="mt-2 text-[8px] font-bold" style="color: #010101">→ Entregable: Listings optimizados para conversión</div>
                     </div>
-                    <div class="phase-card" style="border-color: #00C1B230; background: #00C1B208">
+                    <div class="phase-card" style="border-color: #8B5FAD30; background: #8B5FAD08">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="phase-num" style="background: #00C1B2">3</div>
+                            <div class="phase-num" style="background: #8B5FAD">3</div>
                             <div>
                                 <div class="text-[10px] font-extrabold text-gray-900">Afiliados y Creadores</div>
-                                <div class="text-[8px] font-bold" style="color: #00C1B2">Semanas 5-6</div>
+                                <div class="text-[8px] font-bold" style="color: #8B5FAD">Semanas 5-6</div>
                             </div>
                         </div>
                         <div class="text-[8px] text-gray-600 font-medium leading-relaxed">
-                            Configuración del programa de afiliados. Publicación de ofertas. Envío de muestras a creadores. Inicio de generación de UGC.
+                            Configuración del programa de afiliados. Publicación de ofertas. Envío de muestras a creadores USA. Inicio de generación de UGC.
                         </div>
-                        <div class="mt-2 text-[8px] font-bold" style="color: #00C1B2">→ Entregable: Programa de creadores activo</div>
+                        <div class="mt-2 text-[8px] font-bold" style="color: #8B5FAD">→ Entregable: Programa de creadores activo</div>
                     </div>
                     <div class="phase-card" style="border-color: #01010120; background: #01010105">
                         <div class="flex items-center gap-2 mb-2">
@@ -724,7 +802,7 @@
                 </div>
 
                 <!-- Important Notes -->
-                <div class="rounded-xl p-3 mb-4 border-2" style="border-color: #FDD81140; background: #FDD81108">
+                <div class="rounded-xl p-3 mb-4 border-2" style="border-color: #F5A62340; background: #F5A62308">
                     <div class="text-[9px] font-black uppercase tracking-widest mb-1" style="color: #010101">Notas Importantes</div>
                     <div class="text-[9px] text-gray-600 font-medium leading-relaxed">
                         <strong>Los tiempos comienzan desde que recibimos el 100% de la información del checklist.</strong> Se te enviará un checklist detallado con 50+ ítems que necesitamos para arrancar. Duración mínima del contrato: 3-6 meses.
@@ -732,57 +810,48 @@
                 </div>
 
                 <!-- Upsells -->
-                <div class="section-title" style="background: #ED245010; color: #ED2450">Servicios Adicionales (Opcionales)</div>
+                <div class="section-title" style="background: #6B2D8B10; color: #6B2D8B">Servicios Adicionales (Opcionales)</div>
                 <div class="grid grid-cols-2 gap-3 flex-1">
                     <div class="upsell-card">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: #ED2450">
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: #6B2D8B">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             </div>
                             <div>
                                 <div class="text-[10px] font-extrabold text-gray-900">TikTok Lives</div>
-                                <div class="text-[8px] font-bold" style="color: #ED2450">Live Shopping Profesional</div>
+                                <div class="text-[8px] font-bold" style="color: #6B2D8B">Live Shopping Profesional</div>
                             </div>
                         </div>
-                        <div class="text-[9px] text-gray-600 font-medium mb-2">Host profesional, guiones optimizados, ofertas exclusivas en vivo.</div>
-                        <div class="flex justify-between items-center p-2 rounded-lg" style="background: #ED245008">
-                            <span class="text-[9px] font-bold text-gray-600">Precio por hora</span>
-                            <span class="text-sm font-black" style="color: #ED2450">$1,500 MXN</span>
+                        <div class="text-[9px] text-gray-600 font-medium mb-2">Host profesional bilingüe, guiones optimizados, ofertas exclusivas en vivo para audiencia USA.</div>
+                        <div class="flex justify-between items-center p-2 rounded-lg" style="background: #6B2D8B08">
+                            <span class="text-[9px] font-bold text-gray-600">Pricing</span>
+                            <span class="text-sm font-black" style="color: #6B2D8B">Cotización bajo solicitud</span>
                         </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg mt-1" style="background: #ED245008">
-                            <span class="text-[9px] font-bold text-gray-600">Mínimo</span>
-                            <span class="text-[10px] font-extrabold text-gray-900">40 horas = $60,000 MXN</span>
-                        </div>
+                        <div class="mt-1 text-[8px] text-gray-500 italic text-center">Quote on request — customized per brand</div>
                     </div>
                     <div class="upsell-card">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: #ED2450">
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: #6B2D8B">
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-10 0L5 6m12-2l2 2M5 6v12a2 2 0 002 2h10a2 2 0 002-2V6M5 6h14"/></svg>
                             </div>
                             <div>
                                 <div class="text-[10px] font-extrabold text-gray-900">Paquetes de UGC</div>
-                                <div class="text-[8px] font-bold" style="color: #ED2450">Videos de Creadores</div>
+                                <div class="text-[8px] font-bold" style="color: #6B2D8B">Videos de Creadores</div>
                             </div>
                         </div>
-                        <div class="text-[9px] text-gray-600 font-medium mb-2">Videos profesionales de creadores de contenido, optimizados para conversión.</div>
-                        <div class="flex justify-between items-center p-2 rounded-lg" style="background: #ED245008">
-                            <span class="text-[9px] font-bold text-gray-600">10 videos</span>
-                            <span class="text-sm font-black" style="color: #ED2450">$15,000 MXN</span>
+                        <div class="text-[9px] text-gray-600 font-medium mb-2">Videos profesionales de creadores USA, optimizados para conversión en TikTok Shop.</div>
+                        <div class="flex justify-between items-center p-2 rounded-lg" style="background: #6B2D8B08">
+                            <span class="text-[9px] font-bold text-gray-600">Pricing</span>
+                            <span class="text-sm font-black" style="color: #6B2D8B">Cotización bajo solicitud</span>
                         </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg mt-1" style="background: #ED245008">
-                            <span class="text-[9px] font-bold text-gray-600">20 videos</span>
-                            <span class="text-sm font-black" style="color: #ED2450">$25,000 MXN</span>
-                        </div>
-                        <div class="flex justify-between items-center p-2 rounded-lg mt-1" style="background: #ED245008">
-                            <span class="text-[9px] font-bold text-gray-600">30 videos</span>
-                            <span class="text-sm font-black" style="color: #ED2450">$33,000 MXN</span>
-                        </div>
+                        <div class="mt-1 text-[8px] text-gray-500 italic text-center">Quote on request — paquetes 10 / 20 / 30 videos</div>
                     </div>
                 </div>
 
                 <!-- Footer -->
                 <div class="mt-auto pt-3 flex justify-between items-center text-[8px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-100">
-                    <div>&copy; 2026 Indie Pro Marketing</div>
+                    <div>&copy; 2026 ESH Creative Lab</div>
+                    <div class="normal-case tracking-normal font-medium text-gray-300 text-center px-2" style="font-size: 7px;">Estimates only, not tax or legal advice. Confirm with your CPA.</div>
                     <div class="px-3 py-1 rounded-full border border-gray-100 bg-gray-50">Página 3 de 3</div>
                 </div>
             </div>
@@ -790,8 +859,16 @@
 
     </main>
 
+    <!-- Floating WhatsApp CTA -->
+    <button onclick="openWhatsApp()" class="print-hidden" id="waCta" style="position: fixed; bottom: 24px; right: 24px; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 14px 22px; background: #6B2D8B; color: white; font-weight: 800; font-size: 14px; border: none; border-radius: 9999px; cursor: pointer; box-shadow: 0 10px 30px -6px rgba(107,45,139,0.5); transition: all 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Talk to an expert
+    </button>
+
+    <!-- Toast -->
+    <div id="toast" class="print-hidden" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 70; background: #010101; color: white; font-weight: 700; font-size: 13px; padding: 12px 22px; border-radius: 9999px; box-shadow: 0 10px 30px -6px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: all 0.25s;"></div>
+
     <script>
-        // Format number as currency
         function fmt(n) {
             return '$' + Math.round(n).toLocaleString('en-US');
         }
@@ -802,55 +879,131 @@
             return n.toFixed(1) + '%';
         }
 
-        // Get input value
         function val(id) {
             return parseFloat(document.getElementById(id).value) || 0;
         }
 
-        // Set text content
         function set(id, text) {
             const el = document.getElementById(id);
             if (el) el.textContent = text;
         }
 
-        function resetDefaults() {
-            document.getElementById('clientName').value = 'MEDICAL AL';
-            document.getElementById('productName').value = 'SUNSCREEN / Protector solar';
-            document.getElementById('tiktokFee').value = 6;
-            document.getElementById('indieProFee').value = 8;
-            document.getElementById('affiliateFee').value = 10;
-            document.getElementById('devolucionesPct').value = 1;
-            document.getElementById('ordenesMes').value = 120;
-            document.getElementById('precioVenta').value = 695;
-            document.getElementById('cogs').value = 105;
-            document.getElementById('empaque').value = 15;
-            document.getElementById('inserto').value = 5;
-            document.getElementById('pickpack').value = 15;
-            document.getElementById('adsBudget').value = 25000;
-            document.getElementById('costoMuestra').value = 105;
-            document.getElementById('envioMuestra').value = 115;
+        // === Número de WhatsApp para leads (formato internacional sin + ni espacios) ===
+        const WHATSAPP_NUMBER = '526643155420';
+
+        // === Estado compartible vía URL ===
+        const STATE_FIELDS = ['clientName','productName','tiktokFee','eshFee','affiliateFee','devolucionesPct','ordenesMes','precioVenta','cogs','empaque','inserto','pickpack','adsBudget','feeGestionInput','costoMuestra','envioMuestra','numMuestras','muestrasEnvios'];
+
+        function buildShareUrl() {
+            const p = new URLSearchParams();
+            STATE_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) p.set(id, el.value); });
+            p.set('escenario', scenario);
+            return location.origin + location.pathname + '?' + p.toString();
+        }
+
+        function syncUrl() {
+            try { history.replaceState(null, '', buildShareUrl()); } catch (e) {}
+        }
+
+        function applyParams(p) {
+            STATE_FIELDS.forEach(id => { if (p.has(id)) { const el = document.getElementById(id); if (el) el.value = p.get(id); } });
+            const sc = p.get('escenario');
+            if (sc && SCENARIOS[sc]) scenario = sc;
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.toggle('active', b.dataset.scenario === scenario));
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.opacity = '1';
+            t.style.transform = 'translateX(-50%) translateY(0)';
+            clearTimeout(window.__toastT);
+            window.__toastT = setTimeout(() => {
+                t.style.opacity = '0';
+                t.style.transform = 'translateX(-50%) translateY(20px)';
+            }, 2200);
+        }
+
+        function copyLink() {
+            const url = buildShareUrl();
+            const done = () => {
+                const lbl = document.getElementById('copyLinkLabel');
+                lbl.textContent = 'Copied!';
+                setTimeout(() => { lbl.textContent = 'Copy link'; }, 1800);
+                showToast('Link copied with your numbers. Paste it in WhatsApp.');
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(done).catch(() => { prompt('Copy this link:', url); });
+            } else {
+                prompt('Copy this link:', url);
+            }
+        }
+
+        function openWhatsApp() {
+            const cliente = document.getElementById('clientName').value;
+            const precio = document.getElementById('precioVenta').value;
+            const ordenes = document.getElementById('ordenesMes').value;
+            const link = buildShareUrl();
+            const msg = 'Hi ESH Creative Lab, I ran my numbers on the TikTok Shop calculator'
+                + (cliente && cliente !== 'Your Brand' ? ' for ' + cliente : '')
+                + '. Avg ticket $' + precio + ' and ~' + ordenes + ' orders/month. I\'d love to review these numbers with you. Here is my scenario: ' + link;
+            if (WHATSAPP_NUMBER === '__PENDIENTE__') {
+                showToast('WhatsApp number not configured yet.');
+                return;
+            }
+            window.open('https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg), '_blank');
+        }
+
+        // Escenarios de crecimiento para la proyección
+        const SCENARIOS = {
+            conservador: { growth: [0.0, 0.1, 0.3, 0.6, 0.9, 1.2], ads: [0.0, 0.0, 0.4, 0.7, 0.9, 1.0] },
+            base:        { growth: [0.0, 0.15, 0.5, 1.0, 1.6, 2.2], ads: [0.0, 0.0, 0.5, 1.0, 1.3, 1.5] },
+            agresivo:    { growth: [0.0, 0.25, 0.8, 1.5, 2.4, 3.4], ads: [0.0, 0.2, 0.8, 1.3, 1.8, 2.2] },
+        };
+        let scenario = 'base';
+        function setScenario(s) {
+            scenario = s;
+            document.querySelectorAll('.scenario-btn').forEach(b => b.classList.toggle('active', b.dataset.scenario === s));
             recalculate();
+        }
+
+        function resetDefaults() {
+            document.getElementById('clientName').value = 'Your Brand';
+            document.getElementById('productName').value = 'Your Product';
+            document.getElementById('tiktokFee').value = 6;
+            document.getElementById('eshFee').value = 10;
+            document.getElementById('affiliateFee').value = 10;
+            document.getElementById('devolucionesPct').value = 2;
+            document.getElementById('ordenesMes').value = 100;
+            document.getElementById('precioVenta').value = 30;
+            document.getElementById('cogs').value = 7;
+            document.getElementById('empaque').value = 1.5;
+            document.getElementById('inserto').value = 0.25;
+            document.getElementById('pickpack').value = 4;
+            document.getElementById('adsBudget').value = 2000;
+            document.getElementById('feeGestionInput').value = 3500;
+            document.getElementById('costoMuestra').value = 35;
+            document.getElementById('envioMuestra').value = 15;
+            document.getElementById('numMuestras').value = 200;
+            document.getElementById('muestrasEnvios').value = 2;
+            setScenario('base');
         }
 
         function recalculate() {
             const clientName = document.getElementById('clientName').value;
             const productName = document.getElementById('productName').value;
-            
-            // Update client names across pages
+
             set('clientNameP2', clientName);
             set('clientNameP3', clientName);
             set('productNameDisplay', productName);
-            
-            // Date
+
             const now = new Date();
             set('dateLabel', now.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }));
 
-            // Tarifas
             const tiktokFeePct = val('tiktokFee');
-            const indieProFeePct = val('indieProFee');
+            const eshFeePct = val('eshFee');
             const affiliateFeePct = val('affiliateFee');
-            
-            // Ingresos — GMV se calcula automáticamente
+
             const ordenes = val('ordenesMes');
             const precio = val('precioVenta');
             const gmv = ordenes * precio;
@@ -859,19 +1012,18 @@
             const devoluciones = gmv * devPct / 100;
             const tiktokFees = (gmv - devoluciones) * tiktokFeePct / 100;
             const baseComision = gmv - devoluciones - tiktokFees;
-            const feeIndieProMensual = baseComision * indieProFeePct / 100;
-            const feeIndiePorOrden = ordenes > 0 ? feeIndieProMensual / ordenes : 0;
+            const feeEshMensual = baseComision * eshFeePct / 100;
+            const feeEshPorOrden = ordenes > 0 ? feeEshMensual / ordenes : 0;
 
             set('devolucionesVal', fmt(devoluciones));
             set('tiktokFeesVal', fmt(tiktokFees));
             set('tiktokFeesPct', pct(tiktokFeePct));
             set('baseComisionVal', fmt(baseComision));
-            set('indieProFeePctDisplay', indieProFeePct + '%');
-            set('feeIndieProMensualVal', fmt(feeIndieProMensual));
-            set('feeIndieProMensualPct', pct(indieProFeePct));
-            set('feeIndiePorOrdenVal', fmtDec(feeIndiePorOrden));
+            set('eshFeePctDisplay', eshFeePct + '%');
+            set('feeEshMensualVal', fmt(feeEshMensual));
+            set('feeEshMensualPct', pct(eshFeePct));
+            set('feeEshPorOrdenVal', fmtDec(feeEshPorOrden));
 
-            // Unit Economics
             const cogs = val('cogs');
             const empaque = val('empaque');
             const inserto = val('inserto');
@@ -894,86 +1046,98 @@
             set('utilidadContribucionVal', fmtDec(utilidadContribucion));
             set('utilidadContribucionPct', pct(utilidadContribucion / precio * 100));
 
-            // Net Profit Summary
-            const costoTotalConIndie = costoVariable + feeIndiePorOrden;
-            const utilidadNeta = precio - costoTotalConIndie;
+            const costoTotalConEsh = costoVariable + feeEshPorOrden;
+            const utilidadNeta = precio - costoTotalConEsh;
 
             set('ucBeforeFeeVal', fmtDec(utilidadContribucion));
             set('ucBeforeFeePct', pct(utilidadContribucion / precio * 100));
-            set('feeIndieOrdenSummaryVal', fmtDec(feeIndiePorOrden));
-            set('costoTotalConIndieVal', fmtDec(costoTotalConIndie));
-            set('costoTotalConIndiePct', pct(costoTotalConIndie / precio * 100));
+            set('feeEshOrdenSummaryVal', fmtDec(feeEshPorOrden));
+            set('costoTotalConEshVal', fmtDec(costoTotalConEsh));
+            set('costoTotalConEshPct', pct(costoTotalConEsh / precio * 100));
             set('utilidadNetaVal', fmtDec(utilidadNeta));
             set('utilidadNetaPct', pct(utilidadNeta / precio * 100));
 
-            // Insights
             set('insightPrecio', fmt(precio));
             set('insightUtilidad', fmtDec(utilidadNeta));
             set('insightPct', pct(utilidadNeta / precio * 100));
             set('insightOrdenes', ordenes);
             set('insightMensual', fmt(utilidadNeta * ordenes));
 
-            // Page 2: Boxes
-            const feeGestion = 35000;
+            const feeGestion = val('feeGestionInput');
             const ads = val('adsBudget');
-            
-            // Sample cost calculator
+
+            // Punto de equilibrio: costos fijos (fee + ads) / utilidad neta por orden
+            const costosFijos = feeGestion + ads;
+            if (utilidadNeta > 0) {
+                const breakEvenOrd = Math.ceil(costosFijos / utilidadNeta);
+                set('breakEvenOrdenes', breakEvenOrd.toLocaleString());
+                set('breakEvenGMV', fmt(breakEvenOrd * precio));
+                set('breakEvenNote', `Costos fijos (${fmt(costosFijos)}) ÷ utilidad neta por orden (${fmtDec(utilidadNeta)}). No incluye muestras (gasto inicial).`);
+                document.getElementById('breakEvenBox').style.borderColor = '#6B2D8B';
+                document.getElementById('breakEvenOrdenes').style.color = '#6B2D8B';
+            } else {
+                set('breakEvenOrdenes', 'N/A');
+                set('breakEvenGMV', '—');
+                set('breakEvenNote', 'Con estos números la utilidad neta por orden es cero o negativa: el producto no alcanza punto de equilibrio. Sube el precio o baja costos.');
+                document.getElementById('breakEvenBox').style.borderColor = '#DC2626';
+                document.getElementById('breakEvenOrdenes').style.color = '#DC2626';
+            }
+
+            const numMuestras = val('numMuestras');
             const costoMuestra = val('costoMuestra');
             const envioMuestra = val('envioMuestra');
             const totalPorMuestra = costoMuestra + envioMuestra;
-            const totalMuestras = totalPorMuestra * 100;
+            const totalMuestras = totalPorMuestra * numMuestras;
+            set('numMuestrasLabel', numMuestras.toLocaleString());
             set('costoPorMuestra', fmt(totalPorMuestra));
             set('totalMuestras', fmt(totalMuestras));
-            
+
             set('boxTotalMensual', fmt(feeGestion + ads));
 
-            // Monthly Projection (growth curve)
-            // Mes 1-2: Setup y optimización, ventas mínimas
-            // Mes 3: Afiliados activos, primeras ventas reales
-            // Mes 4+: Ads activos, crecimiento acelerado y rentabilidad
-            const growthFactors = [0.0, 0.15, 0.5, 1.0, 1.6, 2.2];
-            const adsGrowth = [0.0, 0.0, 0.5, 1.0, 1.3, 1.5];
+            const growthFactors = SCENARIOS[scenario].growth;
+            const adsGrowth = SCENARIOS[scenario].ads;
             const baseOrdenes = ordenes;
-            
+
             let projHTML = '';
             let totalGMV = 0, totalIngreso = 0, totalCostoVar = 0, totalFeeGestion = 0, totalComision = 0, totalAds = 0, totalMuestrasProj = 0, totalUtilidad = 0;
-            
+
             const ucMarginPct = precio > 0 ? Math.round(utilidadContribucion / precio * 100) : 0;
             const rows = [
                 { label: 'Órdenes', key: 'ordenes' },
                 { label: 'GMV', key: 'gmv' },
                 { label: `Utilidad de Contribución (${ucMarginPct}%)`, key: 'ingreso', cls: '' },
-                { label: '(-) Fee Gestión Indie Pro', key: 'feeGestion', cls: '' },
-                { label: '(-) Comisión Indie Pro', key: 'comision', cls: '' },
+                { label: '(-) Fee Gestión ESH', key: 'feeGestion', cls: '' },
+                { label: '(-) Comisión ESH', key: 'comision', cls: '' },
                 { label: '(-) Presupuesto Ads', key: 'ads', cls: '' },
-                { label: '(-) Costo Muestras (100 unids)', key: 'muestras', cls: '' },
+                { label: `(-) Costo Muestras (${numMuestras.toLocaleString()} unids)`, key: 'muestras', cls: '' },
                 { label: '= Utilidad Neta', key: 'utilidad', cls: '', isTotal: true },
             ];
 
-            // Calculate monthly data
             const monthlyData = [];
             for (let m = 0; m < 6; m++) {
                 const mOrdenes = Math.round(baseOrdenes * growthFactors[m]);
                 const mGMV = mOrdenes * precio;
-                const ucPct = utilidadContribucion / precio;
-                const mIngreso = mGMV * ucPct;
-                const mCostoVar = mGMV * (costoVariable / precio);
+                const mIngreso = utilidadContribucion * mOrdenes;
+                const mCostoVar = costoVariable * mOrdenes;
                 const mFeeGestion = feeGestion;
-                
-                // Flat 10% commission on base de comisión (GMV - devoluciones - TikTok fees)
+
+                // Tiered commission: $0-50K=10%, $50K-250K=8%, $250K-1M=6%, $1M+=4%
                 const mNetGMV = mGMV * (1 - devPct / 100);
                 const mTiktokFees = mNetGMV * tiktokFeePct / 100;
                 const mBaseComision = mNetGMV - mTiktokFees;
-                const commRate = 0.10;
+                let commRate = 0.10;
+                if (mGMV >= 1000000) commRate = 0.04;
+                else if (mGMV >= 250000) commRate = 0.06;
+                else if (mGMV >= 50000) commRate = 0.08;
                 const mComision = mBaseComision * commRate;
-                
+
                 const mAds = Math.round(ads * adsGrowth[m]);
-                // Muestras: recurring cost from month 2 onwards (when affiliates start)
-                const mMuestras = (m >= 1) ? totalMuestras : 0;
+                const muestrasEnvios = val('muestrasEnvios');
+                const mMuestras = (m >= 1 && m < 1 + muestrasEnvios) ? totalMuestras : 0;
                 const mUtilidad = mIngreso - mFeeGestion - mComision - mAds - mMuestras;
-                
+
                 monthlyData.push({ ordenes: mOrdenes, gmv: mGMV, ingreso: mIngreso, costoVar: mCostoVar, feeGestion: mFeeGestion, comision: mComision, ads: mAds, muestras: mMuestras, utilidad: mUtilidad });
-                
+
                 totalGMV += mGMV;
                 totalIngreso += mIngreso;
                 totalCostoVar += mCostoVar;
@@ -984,7 +1148,6 @@
                 totalUtilidad += mUtilidad;
             }
 
-            // Build table rows
             rows.forEach(row => {
                 const isTotalRow = row.isTotal;
                 projHTML += `<tr class="${isTotalRow ? 'total-row' : ''}">`;
@@ -1008,20 +1171,41 @@
                 }
                 projHTML += '</tr>';
             });
-            
-            // Totals row
+
             projHTML += `<tr class="total-row"><td style="font-weight: 900">TOTAL 6 MESES</td>`;
             projHTML += `<td colspan="6" style="font-size: 11px; color: ${totalUtilidad >= 0 ? '#059669' : '#DC2626'}">GMV: ${fmt(totalGMV)} &nbsp;|&nbsp; Utilidad Neta: ${fmt(totalUtilidad)}</td>`;
             projHTML += '</tr>';
-            
+
             document.getElementById('projBody').innerHTML = projHTML;
+
+            syncUrl();
         }
 
-        // Recalculate on any input change
         document.addEventListener('input', recalculate);
-        
-        // Initial calculation
+
+        // Mobile: escalar las páginas de 8.5in al ancho del viewport
+        function fitMobile() {
+            const c = document.querySelector('.report-container');
+            if (!c) return;
+            const needed = 848;
+            c.style.zoom = window.innerWidth < needed ? (window.innerWidth / needed) : 1;
+        }
+        window.addEventListener('resize', fitMobile);
+        window.addEventListener('beforeprint', () => { document.querySelector('.report-container').style.zoom = 1; });
+        window.addEventListener('afterprint', fitMobile);
+
+        if (WHATSAPP_NUMBER === '__PENDIENTE__') {
+            const wa = document.getElementById('waCta');
+            if (wa) wa.style.display = 'none';
+        }
+
+        const INCOMING = new URLSearchParams(location.search);
         resetDefaults();
+        if ([...INCOMING.keys()].length) {
+            applyParams(INCOMING);
+            recalculate();
+        }
+        fitMobile();
     </script>
 
 </body>
