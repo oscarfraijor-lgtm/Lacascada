@@ -18,10 +18,21 @@ function sanitize(value) {
   return value.replace(/<[^>]*>/g, "").trim();
 }
 
+const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function buildFicha({ args, enrich, messages, phone, source }) {
   const clean = {};
   for (const [key, value] of Object.entries(args || {})) {
     clean[key] = sanitize(value);
+  }
+  // Reacomodo defensivo: el modelo a veces mete el correo en otro campo
+  // (ciudad, tiktok, etc). Si un campo trae un email y correo esta vacio,
+  // se mueve a donde va.
+  for (const key of ["ciudad", "tiktok", "instagram", "website", "rol"]) {
+    if (EMAIL_RX.test(clean[key] || "")) {
+      if (!clean.correo || clean.correo === "desconocido") clean.correo = clean[key];
+      clean[key] = "";
+    }
   }
   return {
     ...clean,
