@@ -4,6 +4,7 @@ import type { FaqItem } from "@/lib/faq";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmButton from "@/components/ConfirmButton";
 import { crearFaq, editarFaq, alternarFaq, eliminarFaq } from "../actions";
 
 export default async function AdminFaqPage() {
@@ -83,9 +84,9 @@ export default async function AdminFaqPage() {
               </form>
               <form action={eliminarFaq}>
                 <input type="hidden" name="id" value={q.id} />
-                <button type="submit" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10">
+                <ConfirmButton message={`¿Eliminar esta pregunta? No se puede deshacer.`} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10">
                   <Trash2 size={14} /> Eliminar
-                </button>
+                </ConfirmButton>
               </form>
             </div>
           </div>

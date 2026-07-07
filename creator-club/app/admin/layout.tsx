@@ -5,6 +5,27 @@ import { currentEmail } from "@/lib/session";
 import { isAdmin } from "@/lib/roles";
 import { getAdminContext } from "@/lib/brand-admin";
 import { brandThemeVars, OPERATOR_THEME } from "@/lib/theme";
+import { listParticipations, listMisiones, listCanjes, listActivaciones, listMuestras } from "@/lib/store";
+
+// Conteo de pendientes por bandeja (mismo criterio que la consola): lo que necesita
+// la atención de Paulina HOY. Tolerante: si la base falla, no rompe el menú.
+async function pendingCounts(conn: Awaited<ReturnType<typeof getAdminContext>>["conn"]): Promise<Record<string, number>> {
+  try {
+    const c = conn ?? undefined;
+    const [parts, misiones, canjes, activaciones, muestras] = await Promise.all([
+      listParticipations(c), listMisiones(c), listCanjes(c), listActivaciones(c), listMuestras(c),
+    ]);
+    return {
+      "/admin/inscripciones": parts.filter((p) => p.status === "inscrita" || p.status === "entregada").length,
+      "/admin/misiones": misiones.filter((m) => m.status === "enviada").length,
+      "/admin/canjes": canjes.filter((c) => c.status === "solicitada").length,
+      "/admin/activaciones": activaciones.filter((a) => a.status === "solicitada").length,
+      "/admin/muestras": muestras.filter((m) => m.status === "solicitada").length,
+    };
+  } catch {
+    return {};
+  }
+}
 
 // Menú agrupado (propuesta de Paulina): lo que OFRECES (catálogos), lo que
 // APRUEBAS (bandejas) y la COMUNIDAD. Nota: "Misiones" vive en "Por revisar"
@@ -72,6 +93,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ? (isProd ? (ctx.brand.deployUrl ?? "/") : "/")
     : ctx.brand.deployUrl;
 
+  // Pendientes por bandeja para pintar badges en el menú (dónde hay trabajo hoy).
+  const counts = ctx.configured ? await pendingCounts(ctx.conn) : {};
+
   return (
     <div style={brandThemeVars(ctx.brand)} className="min-h-screen bg-cream text-ink">
       {/* Barra superior: volver a la consola (nivel superior) + club actual */}
@@ -114,22 +138,36 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </header>
 
         <nav className="space-y-1.5 rounded-2xl border border-ink/10 bg-white p-2">
-          {TAB_GROUPS.map((group) => (
-            <div key={group.label} className="flex flex-wrap items-center gap-1">
-              <span className="px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-ink-soft/70">
-                {group.label}
-              </span>
-              {group.tabs.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
-                >
-                  <Icon size={16} /> {label}
-                </Link>
-              ))}
-            </div>
-          ))}
+          {TAB_GROUPS.map((group) => {
+            const groupTotal = group.tabs.reduce((s, t) => s + (counts[t.href] ?? 0), 0);
+            return (
+              <div key={group.label} className="flex flex-wrap items-center gap-1">
+                <span className="px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-ink-soft/70">
+                  {group.label}
+                  {group.label === "Por revisar" && groupTotal > 0 && (
+                    <span className="ml-1 text-brand-deep">({groupTotal})</span>
+                  )}
+                </span>
+                {group.tabs.map(({ href, label, icon: Icon }) => {
+                  const n = counts[href] ?? 0;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-ink-soft transition hover:bg-brand/10 hover:text-brand"
+                    >
+                      <Icon size={16} /> {label}
+                      {n > 0 && (
+                        <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[10px] font-bold text-white">
+                          {n}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         {children}

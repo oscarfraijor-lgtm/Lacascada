@@ -5,6 +5,7 @@ import { getAdminContext } from "@/lib/brand-admin";
 import type { TierSystem } from "@/lib/tiers";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmButton from "@/components/ConfirmButton";
 import TierScopeField from "@/components/TierScopeField";
 import { crearCampana, editarCampana, alternarCampana, eliminarCampana } from "./actions";
 
@@ -103,12 +104,12 @@ export default async function AdminCampanasPage() {
               ) : (
                 <form action={eliminarCampana}>
                   <input type="hidden" name="id" value={c.id} />
-                  <button
-                    type="submit"
+                  <ConfirmButton
+                    message={`¿Eliminar la campaña "${c.title}"? No se puede deshacer.`}
                     className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10"
                   >
                     <Trash2 size={14} /> Eliminar
-                  </button>
+                  </ConfirmButton>
                 </form>
               )}
             </div>

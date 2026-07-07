@@ -5,6 +5,7 @@ import type { Campaign } from "@/lib/campaigns";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmButton from "@/components/ConfirmButton";
 import { crearProducto, editarProducto, alternarProducto, eliminarProducto } from "../actions";
 
 export default async function AdminProductosPage() {
@@ -94,12 +95,12 @@ export default async function AdminProductosPage() {
               </form>
               <form action={eliminarProducto}>
                 <input type="hidden" name="id" value={p.id} />
-                <button
-                  type="submit"
+                <ConfirmButton
+                  message={`¿Eliminar el producto "${p.name}"? No se puede deshacer.`}
                   className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10"
                 >
                   <Trash2 size={14} /> Eliminar
-                </button>
+                </ConfirmButton>
               </form>
             </div>
           </div>

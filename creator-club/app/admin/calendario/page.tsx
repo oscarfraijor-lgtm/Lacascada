@@ -4,6 +4,7 @@ import type { CalendarEvent } from "@/lib/calendar";
 import { getAdminContext } from "@/lib/brand-admin";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmButton from "@/components/ConfirmButton";
 import { crearEvento, editarEvento, alternarEvento, eliminarEvento } from "../actions";
 
 const MONTHS = ["Todo el año", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -90,9 +91,9 @@ export default async function AdminCalendarioPage() {
               </form>
               <form action={eliminarEvento}>
                 <input type="hidden" name="id" value={e.id} />
-                <button type="submit" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10">
+                <ConfirmButton message={`¿Eliminar la fecha "${e.name}"? No se puede deshacer.`} className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10">
                   <Trash2 size={14} /> Eliminar
-                </button>
+                </ConfirmButton>
               </form>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { getAdminContext } from "@/lib/brand-admin";
 import type { TierSystem } from "@/lib/tiers";
 import AdminBrandPending from "@/components/AdminBrandPending";
 import SubmitButton from "@/components/SubmitButton";
+import ConfirmButton from "@/components/ConfirmButton";
 import TierScopeField from "@/components/TierScopeField";
 import { crearRecompensa, editarRecompensa, alternarRecompensa, eliminarRecompensa } from "../actions";
 
@@ -106,12 +107,12 @@ export default async function AdminRecompensasPage() {
               ) : (
                 <form action={eliminarRecompensa}>
                   <input type="hidden" name="id" value={r.id} />
-                  <button
-                    type="submit"
+                  <ConfirmButton
+                    message={`¿Eliminar el premio "${r.title}"? No se puede deshacer.`}
                     className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-brand-deep transition hover:bg-brand/10"
                   >
                     <Trash2 size={14} /> Eliminar
-                  </button>
+                  </ConfirmButton>
                 </form>
               )}
             </div>

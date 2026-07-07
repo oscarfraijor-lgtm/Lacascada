@@ -512,7 +512,11 @@ export async function capturarGmv(formData: FormData) {
   const ctx = await adminCtx();
   if (!ctx.configured) return;
   const id = String(formData.get("id") || "");
-  const gmv = Math.max(0, Math.round(Number(formData.get("gmv") || 0)) || 0);
+  // El equipo pega el número del export de TikTok Shop, que suele traer comas y "$"
+  // (ej. "$10,000"). Se limpia todo lo que no sea dígito/punto antes de parsear:
+  // antes "10,000" caía a 0 y borraba las ventas (re-bloqueando sus canjes).
+  const raw = String(formData.get("gmv") || "").replace(/[^0-9.]/g, "");
+  const gmv = Math.max(0, Math.round(Number(raw) || 0));
   const date = String(formData.get("date") || "").trim();
   if (!id) return;
   await setCreatorGmv(id, gmv, date, ctx.conn ?? undefined);

@@ -115,13 +115,13 @@ export default async function AdminCreadorasPage() {
         <form action={capturarGmv} className="mt-3 flex flex-wrap items-end gap-2 border-t border-ink/5 pt-3">
           <input type="hidden" name="id" value={creator.id} />
           <label className="block">
-            <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-ink-soft">GMV atribuido (MXN)</span>
+            <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-ink-soft">Ventas del mes (MXN)</span>
             <input
               name="gmv"
-              type="number"
-              min={0}
-              defaultValue={creator.gmvMXN ?? ""}
-              placeholder="0"
+              type="text"
+              inputMode="decimal"
+              defaultValue={creator.gmvMXN != null ? creator.gmvMXN.toLocaleString("es-MX") : ""}
+              placeholder="Ej. 10,000"
               className="w-32 rounded-lg border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand focus:bg-white"
             />
           </label>
@@ -130,6 +130,7 @@ export default async function AdminCreadorasPage() {
             <input
               name="date"
               type="date"
+              max={today}
               defaultValue={creator.gmvDate || today}
               className="rounded-lg border border-ink/15 bg-cream/40 px-2.5 py-1.5 text-sm text-ink outline-none focus:border-brand focus:bg-white"
             />
@@ -138,10 +139,10 @@ export default async function AdminCreadorasPage() {
             pendingLabel="Guardando…"
             className="font-display flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-2 text-xs font-extrabold text-white transition hover:bg-brand-deep"
           >
-            <Save size={13} /> Guardar GMV
+            <Save size={13} /> Guardar ventas
           </SubmitButton>
           <span className="ml-auto self-center text-xs text-ink-soft">
-            {gmv > 0 ? `$${gmv.toLocaleString("es-MX")} MXN${creator.gmvDate ? ` · al ${creator.gmvDate}` : ""}` : "Sin GMV registrado"}
+            {gmv > 0 ? `$${gmv.toLocaleString("es-MX")} MXN${creator.gmvDate ? ` · al ${creator.gmvDate}` : ""}` : "Sin ventas registradas"}
           </span>
         </form>
       </div>
@@ -164,6 +165,20 @@ export default async function AdminCreadorasPage() {
         )}
       </div>
 
+      {/* Guía: qué son las "ventas" y de dónde se sacan (el candado del anti-fuga). */}
+      <details className="rounded-2xl border border-brand/20 bg-white px-4 py-3 text-xs text-ink-soft [&_summary]:cursor-pointer">
+        <summary className="flex items-center gap-2 font-semibold text-ink">
+          <Star size={14} className="fill-lime text-lime" /> ¿Qué pongo en "Ventas del mes" y de dónde lo saco?
+        </summary>
+        <div className="mt-2 space-y-1.5 pl-6">
+          <p>Son las <b>ventas atribuidas a la creadora en TikTok Shop</b> este mes (lo que en TikTok aparece como "GMV"). Es lo que <b>desbloquea sus premios con costo</b>: sin ventas, no se le entrega producto/dinero (así se protege la marca).</p>
+          <p className="font-semibold text-ink">Cómo obtenerlo (3 pasos):</p>
+          <p>1. Entra a <b>TikTok Shop · Analytics</b> de la creadora (o al export mensual).</p>
+          <p>2. Copia su <b>GMV / ventas del mes</b> (el monto en pesos).</p>
+          <p>3. Pégalo en "Ventas del mes" de esa creadora y dale <b>Guardar ventas</b>. Puedes pegarlo con coma (10,000).</p>
+        </div>
+      </details>
+
       {creators.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-ink/15 bg-white p-6 text-center text-sm text-ink-soft">
           Todavía no hay creadoras inscritas.
@@ -174,7 +189,7 @@ export default async function AdminCreadorasPage() {
           statuses={levelOptions}
           sorts={[
             { value: "stars-desc", label: "Más estrellas", field: "stars", dir: "desc" },
-            { value: "gmv-desc", label: "Mayor GMV", field: "gmv", dir: "desc" },
+            { value: "gmv-desc", label: "Más ventas", field: "gmv", dir: "desc" },
             { value: "name-asc", label: "Nombre A-Z", field: "name", dir: "asc" },
           ]}
           searchPlaceholder="Buscar por nombre, correo, handle o afiliado…"
