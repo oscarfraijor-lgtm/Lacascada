@@ -34,6 +34,14 @@ export function buildFicha({ args, enrich, messages, phone, source }) {
       clean[key] = "";
     }
   }
+  // Y al reves: si correo trae algo que NO es email, es basura de otro campo.
+  if (clean.correo && clean.correo !== "desconocido" && !EMAIL_RX.test(clean.correo)) {
+    const roles = ["dueno_fundador", "direccion_gerencia", "marketing"];
+    if (roles.includes(clean.correo) && (!clean.rol || clean.rol === "desconocido")) {
+      clean.rol = clean.correo;
+    }
+    clean.correo = "";
+  }
   return {
     ...clean,
     telefono: phone,
