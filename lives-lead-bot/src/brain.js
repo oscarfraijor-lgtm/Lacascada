@@ -5,7 +5,7 @@ import { config } from "./config.js";
 import { SYSTEM_PROMPT, TOOLS } from "./prompts.js";
 import { enrichWebsite } from "./enrich.js";
 import { buildFicha } from "./ficha.js";
-import { saveLead } from "./store.js";
+import { saveLead, pingOscar } from "./store.js";
 
 const MAX_TOOL_ITERATIONS = 5;
 
@@ -111,6 +111,12 @@ export async function runTurn({ phone, userText, state, source }) {
         err instanceof Anthropic.APIError
       ) {
         console.error("[brain] Error de API/red:", err);
+        // Alarma a Oscar: el bot no pudo contestar (creditos agotados, key
+        // invalida, red caida). CallMeBot es independiente de la API de Anthropic.
+        const motivo = String(err?.message || "").includes("credit balance")
+          ? "SIN CREDITOS de la API de Anthropic, recargar YA en console.anthropic.com"
+          : `error de API: ${String(err?.message || err).slice(0, 120)}`;
+        await pingOscar(`ALERTA bot leads: no pude responder a ${phone}. Causa: ${motivo}`);
         reply = "Dame un momento, se me trabo el sistema. Te leo.";
         break;
       }
