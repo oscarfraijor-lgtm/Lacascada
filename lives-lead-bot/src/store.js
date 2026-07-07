@@ -65,7 +65,8 @@ function toAirtableFields(ficha) {
     Investigacion: JSON.stringify(ficha.investigacion || null),
     Transcript: ficha.transcript || "",
     Fuente: ficha.fuente || "",
-    Estado: "Nuevo",
+    // Los DESCARTADO nacen directo en su columna del pipeline; el resto arranca en Nuevo.
+    Estado: ficha.nivel === "DESCARTADO" ? "Descartado" : "Nuevo",
   };
 }
 
@@ -204,6 +205,36 @@ export async function saveConversation(phone, state) {
     ensureDir();
     writeFileSync(convPath(phone), JSON.stringify(state, null, 2));
   } catch {}
+}
+
+/** Lista todas las conversaciones guardadas en Airtable (para el barredor). */
+export async function listConversations() {
+  if (!airtableReady()) return [];
+  const out = [];
+  let offset;
+  try {
+    do {
+      const url = `https://api.airtable.com/v0/${config.AIRTABLE_BASE_ID}/${CONV_TABLE}?pageSize=100${offset ? `&offset=${offset}` : ""}`;
+      const res = await fetch(url, { headers: airtableHeaders() });
+      const data = await res.json();
+      for (const rec of data?.records || []) {
+        let state = null;
+        try {
+          state = JSON.parse(rec.fields?.StateJSON || "null");
+        } catch {}
+        out.push({
+          recordId: rec.id,
+          phone: rec.fields?.Telefono || "",
+          state,
+          actualizado: rec.fields?.Actualizado || "",
+        });
+      }
+      offset = data?.offset;
+    } while (offset);
+  } catch (err) {
+    console.error("[store] Error listando conversaciones:", err);
+  }
+  return out;
 }
 
 /** Ping generico a Oscar por CallMeBot (copiloto: respuesta sugerida, avisos). */
