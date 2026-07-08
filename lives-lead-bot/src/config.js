@@ -28,6 +28,8 @@ export const config = {
   CALLMEBOT_APIKEY_SERGIO: process.env.CALLMEBOT_APIKEY_SERGIO || "",
   CALLMEBOT_PHONE_SERGIO: process.env.CALLMEBOT_PHONE_SERGIO || "",
   MAX_TURNS: parseInt(process.env.MAX_TURNS || "12", 10),
+  // URL publica del deck PDF (servido desde public/ del propio bot en Vercel).
+  DECK_URL: process.env.DECK_URL || "https://lives-lead-bot.vercel.app/deck-indiepro-lives.pdf",
 };
 
 // Ruta absoluta a la carpeta leads/ en la raiz del proyecto (no depende de process.cwd()).

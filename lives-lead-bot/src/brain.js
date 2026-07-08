@@ -6,6 +6,7 @@ import { SYSTEM_PROMPT, TOOLS } from "./prompts.js";
 import { enrichWebsite } from "./enrich.js";
 import { buildFicha } from "./ficha.js";
 import { saveLead, pingOscar } from "./store.js";
+import { sendDocument } from "./whatsapp.js";
 
 const MAX_TOOL_ITERATIONS = 5;
 
@@ -57,6 +58,26 @@ async function runTool(block, state) {
     const result = await enrichWebsite(url, { seedIg: seed_ig, seedTiktok: seed_tiktok });
     state.enrich = result;
     return { content: JSON.stringify(result), is_error: false };
+  }
+
+  if (block.name === "enviar_deck") {
+    if (state.deckSent) {
+      return { content: JSON.stringify({ ok: true, note: "deck ya enviado antes" }), is_error: false };
+    }
+    try {
+      await sendDocument(
+        state.phone,
+        config.DECK_URL,
+        "Indie Pro Lives - Presentacion.pdf",
+        "Presentacion de Indie Pro Marketing, Partner Oficial de TikTok Shop."
+      );
+      state.deckSent = true;
+      return { content: JSON.stringify({ ok: true }), is_error: false };
+    } catch (err) {
+      console.error("[brain] enviar_deck fallo:", err);
+      // No tumbamos la conversacion: el bot puede seguir sin el adjunto.
+      return { content: JSON.stringify({ ok: false, error: "no se pudo enviar el deck" }), is_error: false };
+    }
   }
 
   if (block.name === "guardar_ficha") {
