@@ -1,0 +1,20 @@
+name: Lives bot follow-ups
+
+# Vercel Hobby solo permite crons diarios; este Action pega cada ~30 min al
+# endpoint de seguimiento del bot para mandar los recordatorios de 1h y 20h a
+# los leads que se quedaron callados. El secreto vive en el repo como
+# LIVES_BOT_CRON_SECRET (mismo valor que CRON_SECRET en Vercel del bot).
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping followup endpoint
+        run: |
+          curl -sS -X POST "https://lives-lead-bot.vercel.app/api/followup" \
+            -H "Authorization: Bearer ${{ secrets.LIVES_BOT_CRON_SECRET }}" \
+            --fail-with-body

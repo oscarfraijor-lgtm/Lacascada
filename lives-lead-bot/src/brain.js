@@ -117,6 +117,11 @@ export async function runTurn({ phone, userText, state, source }) {
   state.phone = phone;
   state.source = source;
 
+  // Marca cuando el lead escribio por ultima vez y reinicia los recordatorios:
+  // el seguimiento automatico (src/followup.js) mide el silencio desde aqui.
+  state.lastLeadAt = new Date().toISOString();
+  state.followups = {};
+
   state.messages.push({ role: "user", content: userText });
 
   let reply = "";
