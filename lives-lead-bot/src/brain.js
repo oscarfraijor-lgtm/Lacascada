@@ -115,7 +115,17 @@ export async function runTurn({ phone, userText, state, source }) {
   }
   // el phone y source viajan en el state para que runTool los use al armar la ficha
   state.phone = phone;
-  state.source = source;
+  // La Fuente se fija con el PRIMER dato que la identifique y NO se degrada. El referral
+  // del anuncio (source "ad:...") solo viaja en el primer mensaje del lead; los turnos
+  // siguientes llegan sin referral (source "organico") y antes pisaban la atribucion,
+  // marcando como "organico" a todo lead que respondia mas de una vez. Ahora se fija en
+  // el turno 1 y un "ad:..." nunca se degrada a "organico".
+  const incomingSource = source || "organico";
+  if (!state.source) {
+    state.source = incomingSource;
+  } else if (incomingSource.startsWith("ad:") && !state.source.startsWith("ad:")) {
+    state.source = incomingSource;
+  }
 
   // Marca cuando el lead escribio por ultima vez y reinicia los recordatorios:
   // el seguimiento automatico (src/followup.js) mide el silencio desde aqui.
